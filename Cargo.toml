@@ -1,0 +1,15 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/forge_core",
+    "crates/forge_render",
+    "crates/forge_physics",
+    "crates/forge_audio",
+    "crates/forge_assets",
+    "crates/forge_input",
+    "crates/forge_script",
+    "crates/forge_bridge",
+    "crates/forge_playtest",
+    "crates/forge_runtime",
+    "crates/forge_cli",
+]

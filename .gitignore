@@ -1,0 +1,38 @@
+# Rust
+/target/
+**/*.rs.bk
+# Cargo.lock
+
+# Node / pnpm
+node_modules/
+dist/
+.pnpm-store/
+.pnpm-debug.log*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Tauri
+apps/**/src-tauri/target/
+*.exe
+*.msi
+*.dmg
+*.app
+*.deb
+*.rpm
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# IDE & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS artifacts
+.DS_Store

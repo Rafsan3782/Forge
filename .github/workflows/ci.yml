@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  ci:
+    name: Build, Lint & Test
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@nextest
+
+      - name: Rust format check
+        run: cargo fmt --check
+
+      - name: Rust clippy lint
+        run: cargo clippy --workspace -- -D warnings
+
+      - name: Rust nextest
+        run: cargo nextest run
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install pnpm dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: TypeScript lint
+        run: pnpm -r lint
+
+      - name: TypeScript typecheck
+        run: pnpm -r typecheck
+
+      - name: TypeScript test
+        run: pnpm -r test

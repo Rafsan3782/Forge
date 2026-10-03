@@ -1,0 +1,4 @@
+# Clippy configuration
+avoid-breaking-exported-api = false
+cognitive-complexity-threshold = 25
+msrv = "1.80.0"
