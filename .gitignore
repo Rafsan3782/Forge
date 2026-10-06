@@ -39,3 +39,4 @@ $RECYCLE.BIN/
 
 # Tool cache
 .xwin-cache/
+.tools/

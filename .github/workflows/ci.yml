@@ -6,9 +6,13 @@ on:
   pull_request:
     branches: ["main"]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  ci:
-    name: Build, Lint & Test
+  rust:
+    name: Rust (Check, Lint & Test)
     runs-on: windows-latest
     steps:
       - name: Checkout code
@@ -18,6 +22,9 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
 
       - name: Install cargo-nextest
         uses: taiki-e/install-action@nextest
@@ -31,18 +38,27 @@ jobs:
       - name: Rust nextest
         run: cargo nextest run
 
+  typescript:
+    name: TypeScript (Lint, Typecheck & Test)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: 22
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+          cache: "pnpm"
 
       - name: Install pnpm dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Verify codegen is up to date
+        shell: bash
         run: |
           pnpm run codegen
           git diff --exit-code
@@ -55,3 +71,17 @@ jobs:
 
       - name: TypeScript test
         run: pnpm -r test
+
+  ci:
+    name: CI Status (Aggregator)
+    needs: [rust, typescript]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check required workflow results
+        run: |
+          if [ "${{ needs.rust.result }}" != "success" ] || [ "${{ needs.typescript.result }}" != "success" ]; then
+            echo "::error::One or more upstream CI jobs failed (Rust: ${{ needs.rust.result }}, TypeScript: ${{ needs.typescript.result }})."
+            exit 1
+          fi
+          echo "All upstream CI jobs completed successfully."
