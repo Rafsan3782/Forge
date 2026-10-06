@@ -9,6 +9,7 @@ members = [
     "crates/forge_input",
     "crates/forge_script",
     "crates/forge_bridge",
+    "crates/forge_protocol",
     "crates/forge_playtest",
     "crates/forge_runtime",
     "crates/forge_cli",

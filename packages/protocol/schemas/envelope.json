@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/envelope.json",
+  "title": "JsonRpcEnvelope",
+  "description": "Standard JSON-RPC 2.0 message envelopes for Forge IPC",
+  "definitions": {
+    "JsonRpcRequest": {
+      "type": "object",
+      "required": ["jsonrpc", "id", "method", "params"],
+      "properties": {
+        "jsonrpc": { "type": "string", "const": "2.0" },
+        "id": { "type": ["string", "integer"] },
+        "method": { "type": "string" },
+        "params": { "type": "object" }
+      },
+      "additionalProperties": true
+    },
+    "JsonRpcResponse": {
+      "type": "object",
+      "required": ["jsonrpc", "id", "result"],
+      "properties": {
+        "jsonrpc": { "type": "string", "const": "2.0" },
+        "id": { "type": ["string", "integer"] },
+        "result": { "type": "object" }
+      },
+      "additionalProperties": true
+    },
+    "JsonRpcErrorDetail": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": { "type": "integer" },
+        "message": { "type": "string" },
+        "data": { "type": "object" }
+      },
+      "additionalProperties": true
+    },
+    "JsonRpcError": {
+      "type": "object",
+      "required": ["jsonrpc", "id", "error"],
+      "properties": {
+        "jsonrpc": { "type": "string", "const": "2.0" },
+        "id": { "type": ["string", "integer", "null"] },
+        "error": { "$ref": "#/definitions/JsonRpcErrorDetail" }
+      },
+      "additionalProperties": false
+    },
+    "JsonRpcNotification": {
+      "type": "object",
+      "required": ["jsonrpc", "method", "params"],
+      "properties": {
+        "jsonrpc": { "type": "string", "const": "2.0" },
+        "method": { "type": "string" },
+        "params": { "type": "object" }
+      },
+      "additionalProperties": true
+    }
+  }
+}

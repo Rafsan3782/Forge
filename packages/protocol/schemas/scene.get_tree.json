@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/scene.get_tree.json",
+  "title": "SceneGetTree",
+  "description": "Fetch entity hierarchy and component manifests from the scene graph",
+  "definitions": {
+    "EntityNode": {
+      "type": "object",
+      "required": ["id", "name", "components", "children"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "components": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/EntityNode" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "SceneGetTreeParams": {
+      "type": "object",
+      "properties": {
+        "root_entity_id": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "SceneGetTreeResult": {
+      "type": "object",
+      "required": ["root_entities"],
+      "properties": {
+        "root_entities": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/EntityNode" }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

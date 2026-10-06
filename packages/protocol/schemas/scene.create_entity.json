@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/scene.create_entity.json",
+  "title": "SceneCreateEntity",
+  "description": "Create a new entity in the active scene graph",
+  "definitions": {
+    "SceneCreateEntityParams": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "parent_id": { "type": ["string", "null"] },
+        "name": { "type": "string" },
+        "components": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "SceneCreateEntityResult": {
+      "type": "object",
+      "required": ["entity_id"],
+      "properties": {
+        "entity_id": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

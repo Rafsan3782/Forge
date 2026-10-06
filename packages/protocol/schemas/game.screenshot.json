@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/game.screenshot.json",
+  "title": "GameScreenshot",
+  "description": "Capture a viewport screenshot from the running game instance",
+  "definitions": {
+    "GameScreenshotParams": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "string",
+          "enum": ["png", "jpeg"],
+          "default": "png"
+        },
+        "width": { "type": ["integer", "null"] },
+        "height": { "type": ["integer", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "GameScreenshotResult": {
+      "type": "object",
+      "required": ["data_base64", "width", "height", "format"],
+      "properties": {
+        "data_base64": { "type": "string" },
+        "width": { "type": "integer" },
+        "height": { "type": "integer" },
+        "format": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

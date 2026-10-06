@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/engine.ping.json",
+  "title": "EnginePing",
+  "description": "Heartbeat and liveness check for the Forge engine",
+  "definitions": {
+    "EnginePingParams": {
+      "type": "object",
+      "required": ["timestamp"],
+      "properties": {
+        "timestamp": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "EnginePingResult": {
+      "type": "object",
+      "required": ["status", "timestamp"],
+      "properties": {
+        "status": { "type": "string" },
+        "timestamp": { "type": "number" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,4 +1,5 @@
-﻿/**
+/**
  * @forge/protocol
+ * Single source of truth for messages between Studio, the agent runtime and the engine.
  */
-export const PACKAGE_NAME = "@forge/protocol";
+export * from "./generated/index.ts";

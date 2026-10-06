@@ -1,0 +1,23 @@
+{
+  "root_entities": [
+    {
+      "id": "entity-001",
+      "name": "MainCamera",
+      "components": ["Camera", "Transform"],
+      "children": []
+    },
+    {
+      "id": "entity-002",
+      "name": "Player",
+      "components": ["PlayerController", "Transform", "MeshRenderer"],
+      "children": [
+        {
+          "id": "entity-003",
+          "name": "Weapon",
+          "components": ["Transform", "WeaponComponent"],
+          "children": []
+        }
+      ]
+    }
+  ]
+}

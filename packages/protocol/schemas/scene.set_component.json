@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/scene.set_component.json",
+  "title": "SceneSetComponent",
+  "description": "Attach or update a component on a specific entity",
+  "definitions": {
+    "SceneSetComponentParams": {
+      "type": "object",
+      "required": ["entity_id", "component_name", "data"],
+      "properties": {
+        "entity_id": { "type": "string" },
+        "component_name": { "type": "string" },
+        "data": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "SceneSetComponentResult": {
+      "type": "object",
+      "required": ["success"],
+      "properties": {
+        "success": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

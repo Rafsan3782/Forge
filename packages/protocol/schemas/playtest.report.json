@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/playtest.report.json",
+  "title": "PlaytestReport",
+  "description": "Comprehensive telemetry, error diagnostics, and user notes from automated or interactive playtests",
+  "definitions": {
+    "PlaytestError": {
+      "type": "object",
+      "required": ["message"],
+      "properties": {
+        "message": { "type": "string" },
+        "stack_trace": { "type": ["string", "null"] },
+        "timestamp": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "PlaytestLog": {
+      "type": "object",
+      "required": ["level", "message"],
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["trace", "debug", "info", "warn", "error"]
+        },
+        "message": { "type": "string" },
+        "timestamp": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "PlaytestInputTrace": {
+      "type": "object",
+      "required": ["action", "timestamp"],
+      "properties": {
+        "action": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "payload": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "PlaytestPerfStats": {
+      "type": "object",
+      "required": ["fps_avg", "fps_min", "frame_time_ms_avg", "memory_mb"],
+      "properties": {
+        "fps_avg": { "type": "number" },
+        "fps_min": { "type": "number" },
+        "frame_time_ms_avg": { "type": "number" },
+        "memory_mb": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "PlaytestUserNote": {
+      "type": "object",
+      "required": ["timestamp", "note"],
+      "properties": {
+        "timestamp": { "type": "string" },
+        "note": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "PlaytestSeverity": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "PlaytestReport": {
+      "type": "object",
+      "required": [
+        "build_id",
+        "checkpoint_id",
+        "errors",
+        "logs",
+        "screenshots",
+        "input_trace",
+        "perf_stats",
+        "user_notes",
+        "severity"
+      ],
+      "properties": {
+        "build_id": { "type": "string" },
+        "checkpoint_id": { "type": "string" },
+        "errors": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/PlaytestError" }
+        },
+        "logs": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/PlaytestLog" }
+        },
+        "screenshots": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "input_trace": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/PlaytestInputTrace" }
+        },
+        "perf_stats": { "$ref": "#/definitions/PlaytestPerfStats" },
+        "user_notes": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/PlaytestUserNote" }
+        },
+        "severity": { "$ref": "#/definitions/PlaytestSeverity" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

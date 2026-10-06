@@ -5,6 +5,7 @@ Forge is an AI-native game engine and Windows Studio IDE engineered to merge bar
 ## Quick Start
 
 ### Prerequisites
+
 - Windows 11
 - Rust (stable toolchain)
 - cargo-nextest (`cargo install cargo-nextest` or download release)

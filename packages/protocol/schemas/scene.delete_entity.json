@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/scene.delete_entity.json",
+  "title": "SceneDeleteEntity",
+  "description": "Remove an entity and its descendants from the scene graph",
+  "definitions": {
+    "SceneDeleteEntityParams": {
+      "type": "object",
+      "required": ["entity_id"],
+      "properties": {
+        "entity_id": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "SceneDeleteEntityResult": {
+      "type": "object",
+      "required": ["success"],
+      "properties": {
+        "success": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

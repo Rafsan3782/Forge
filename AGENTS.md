@@ -3,6 +3,7 @@
 ## Project Summary
 
 **Forge** is an AI-native game engine and Windows Studio IDE designed for real-time collaboration between human creators and autonomous agent workflows.
+
 - **Engine Core:** High-performance systems built in Rust leveraging `wgpu` for graphics and `bevy_ecs` for entity-component orchestration.
 - **Studio IDE:** Desktop application built with Tauri 2, React 19, TypeScript, and Vite.
 - **Agents & Tooling:** TypeScript runtime and packages powering autonomous workflows, code generation, and scene manipulation.
@@ -23,6 +24,7 @@ forge/
 │   ├── forge_input/              # Input mapping & polling
 │   ├── forge_script/             # Scripting runtime & VM hooks
 │   ├── forge_bridge/             # IPC bridge between Rust engine and IDE host
+│   ├── forge_protocol/           # Shared protocol schemas & serde IPC types
 │   ├── forge_playtest/           # Headless playtesting & telemetry
 │   ├── forge_runtime/            # Standalone game runtime binary
 │   └── forge_cli/                # Developer command-line tool binary
@@ -67,6 +69,10 @@ Run from the repository root:
   ```powershell
   cargo nextest run
   ```
+- **Run protocol tests only:**
+  ```powershell
+  cargo nextest run -p forge_protocol
+  ```
 
 ### TypeScript Workspace
 
@@ -75,6 +81,10 @@ Run from the repository root:
 - **Install dependencies:**
   ```powershell
   pnpm install
+  ```
+- **Run protocol code generation:**
+  ```powershell
+  pnpm run codegen
   ```
 - **Typecheck all packages:**
   ```powershell
@@ -87,6 +97,10 @@ Run from the repository root:
 - **Run all package tests:**
   ```powershell
   pnpm -r test
+  ```
+- **Run protocol tests only:**
+  ```powershell
+  pnpm --filter @forge/protocol test
   ```
 - **Check code formatting:**
   ```powershell

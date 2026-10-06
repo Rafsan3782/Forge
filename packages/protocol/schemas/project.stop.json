@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/project.stop.json",
+  "title": "ProjectStop",
+  "description": "Terminate a running Forge game project session",
+  "definitions": {
+    "ProjectStopParams": {
+      "type": "object",
+      "required": ["session_id"],
+      "properties": {
+        "session_id": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "ProjectStopResult": {
+      "type": "object",
+      "required": ["stopped"],
+      "properties": {
+        "stopped": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

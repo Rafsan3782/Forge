@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/project.run.json",
+  "title": "ProjectRun",
+  "description": "Start execution of a Forge game project session",
+  "definitions": {
+    "ProjectRunParams": {
+      "type": "object",
+      "required": ["project_path"],
+      "properties": {
+        "project_path": { "type": "string" },
+        "mode": {
+          "type": "string",
+          "enum": ["debug", "release"],
+          "default": "debug"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ProjectRunResult": {
+      "type": "object",
+      "required": ["session_id", "process_id"],
+      "properties": {
+        "session_id": { "type": "string" },
+        "process_id": { "type": "integer" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

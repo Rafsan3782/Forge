@@ -4,3 +4,4 @@ target/
 .pnpm-store/
 Cargo.lock
 pnpm-lock.yaml
+packages/protocol/src/generated/

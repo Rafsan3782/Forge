@@ -1,0 +1,53 @@
+{
+  "build_id": "build-v0.1.0-alpha",
+  "checkpoint_id": "cp-level-01-boss",
+  "errors": [
+    {
+      "message": "NullReferenceException in PhysicsQuery",
+      "stack_trace": "at Forge.Physics.Raycast() in physics.rs:142\nat Player.Update()",
+      "timestamp": "2026-10-03T21:40:00Z"
+    }
+  ],
+  "logs": [
+    {
+      "level": "info",
+      "message": "Playtest harness initialized",
+      "timestamp": "2026-10-03T21:39:50Z"
+    },
+    {
+      "level": "warn",
+      "message": "Frame rate dropped below 30 fps",
+      "timestamp": "2026-10-03T21:40:05Z"
+    }
+  ],
+  "screenshots": ["screenshots/checkpoint_01.png", "screenshots/boss_encounter.png"],
+  "input_trace": [
+    {
+      "action": "jump",
+      "timestamp": 12.35,
+      "payload": {
+        "button": "Space"
+      }
+    },
+    {
+      "action": "primary_attack",
+      "timestamp": 13.1,
+      "payload": {
+        "button": "Mouse0"
+      }
+    }
+  ],
+  "perf_stats": {
+    "fps_avg": 59.4,
+    "fps_min": 28.1,
+    "frame_time_ms_avg": 16.8,
+    "memory_mb": 420.5
+  },
+  "user_notes": [
+    {
+      "timestamp": "2026-10-03T21:40:15Z",
+      "note": "Boss animation hitched during second phase transition."
+    }
+  ],
+  "severity": "medium"
+}

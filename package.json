@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "pnpm -r typecheck",
+    "codegen": "pnpm --filter @forge/protocol codegen",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",
     "format": "prettier --write .",

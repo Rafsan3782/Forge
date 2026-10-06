@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "@forge/protocol",
   "version": "0.1.0",
   "type": "module",
@@ -6,7 +6,14 @@
   "types": "./src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit",
+    "codegen": "node ./scripts/codegen.mjs",
     "lint": "eslint src",
-    "test": "node --test"
+    "test": "node --experimental-strip-types --test src/**/*.test.ts"
+  },
+  "dependencies": {
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4"
   }
 }

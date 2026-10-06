@@ -1,0 +1,8 @@
+{
+  "parent_id": "entity-002",
+  "name": "LightSource",
+  "components": {
+    "Transform": "{\"x\":0,\"y\":2,\"z\":0}",
+    "PointLight": "{\"intensity\":1000}"
+  }
+}

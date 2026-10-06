@@ -36,3 +36,6 @@ $RECYCLE.BIN/
 
 # OS artifacts
 .DS_Store
+
+# Tool cache
+.xwin-cache/
