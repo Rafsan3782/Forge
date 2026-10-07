@@ -87,7 +87,7 @@ export type JsonRpcNotification = z.infer<typeof JsonRpcNotificationSchema>;
 // -----------------------------------------------------------------------------
 
 export const EnginePingParamsSchema = z.object({
-  timestamp: z.number(),
+  timestamp: z.number().optional().default(0),
 });
 export type EnginePingParams = z.infer<typeof EnginePingParamsSchema>;
 
@@ -190,7 +190,7 @@ export const ProjectRunResultSchema = z.object({
 export type ProjectRunResult = z.infer<typeof ProjectRunResultSchema>;
 
 export const ProjectStopParamsSchema = z.object({
-  session_id: z.string(),
+  session_id: z.string().optional().default(""),
 });
 export type ProjectStopParams = z.infer<typeof ProjectStopParamsSchema>;
 
@@ -207,11 +207,13 @@ export const GameScreenshotParamsSchema = z.object({
   format: z.enum(["png", "jpeg"]).optional().default("png"),
   width: z.number().int().nullable().optional(),
   height: z.number().int().nullable().optional(),
+  file_path: z.string().nullable().optional(),
 });
 export type GameScreenshotParams = z.infer<typeof GameScreenshotParamsSchema>;
 
 export const GameScreenshotResultSchema = z.object({
-  data_base64: z.string(),
+  data_base64: z.string().nullable().optional(),
+  file_path: z.string().nullable().optional(),
   width: z.number().int(),
   height: z.number().int(),
   format: z.string(),
@@ -331,8 +333,9 @@ pub struct JsonRpcNotification {
 // engine.ping
 // -----------------------------------------------------------------------------
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
 pub struct EnginePingParams {
+    #[serde(default)]
     pub timestamp: f64,
 }
 
@@ -434,8 +437,9 @@ pub struct ProjectRunResult {
     pub process_id: i64,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
 pub struct ProjectStopParams {
+    #[serde(default)]
     pub session_id: String,
 }
 
@@ -456,6 +460,8 @@ pub struct GameScreenshotParams {
     pub width: Option<u32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub height: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub file_path: Option<String>,
 }
 
 fn default_screenshot_format() -> String {
@@ -464,7 +470,10 @@ fn default_screenshot_format() -> String {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct GameScreenshotResult {
-    pub data_base64: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub data_base64: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub file_path: Option<String>,
     pub width: u32,
     pub height: u32,
     pub format: String,

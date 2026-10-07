@@ -53,7 +53,7 @@ export type JsonRpcNotification = z.infer<typeof JsonRpcNotificationSchema>;
 // -----------------------------------------------------------------------------
 
 export const EnginePingParamsSchema = z.object({
-  timestamp: z.number(),
+  timestamp: z.number().optional().default(0),
 });
 export type EnginePingParams = z.infer<typeof EnginePingParamsSchema>;
 
@@ -156,7 +156,7 @@ export const ProjectRunResultSchema = z.object({
 export type ProjectRunResult = z.infer<typeof ProjectRunResultSchema>;
 
 export const ProjectStopParamsSchema = z.object({
-  session_id: z.string(),
+  session_id: z.string().optional().default(""),
 });
 export type ProjectStopParams = z.infer<typeof ProjectStopParamsSchema>;
 
@@ -173,11 +173,13 @@ export const GameScreenshotParamsSchema = z.object({
   format: z.enum(["png", "jpeg"]).optional().default("png"),
   width: z.number().int().nullable().optional(),
   height: z.number().int().nullable().optional(),
+  file_path: z.string().nullable().optional(),
 });
 export type GameScreenshotParams = z.infer<typeof GameScreenshotParamsSchema>;
 
 export const GameScreenshotResultSchema = z.object({
-  data_base64: z.string(),
+  data_base64: z.string().nullable().optional(),
+  file_path: z.string().nullable().optional(),
   width: z.number().int(),
   height: z.number().int(),
   format: z.string(),

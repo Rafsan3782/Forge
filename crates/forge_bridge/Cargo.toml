@@ -1,6 +1,16 @@
-﻿[package]
+[package]
 name = "forge_bridge"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+forge_core = { path = "../forge_core" }
+forge_protocol = { path = "../forge_protocol" }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "sync", "time", "io-util"] }
+tokio-tungstenite = "0.26"
+futures-util = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0"
+tracing = "0.1"
+base64 = "0.22"

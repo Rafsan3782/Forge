@@ -1,8 +1,10 @@
 //! Headless offscreen renderer executing fixed simulation steps and capturing PNG screenshots.
 
+use crate::bridge_ops::process_bridge_commands;
 use crate::cli::CliArgs;
 use crate::render_scene::{render_world_scene, DEFAULT_CLEAR_COLOR};
 use forge_assets::TextureStore;
+use forge_bridge::{create_bridge_channel, BridgeServer};
 use forge_core::{GameLoop, Scene, World};
 use forge_render::{OffscreenTarget, RenderContext, RenderOptions, Renderer2D};
 use std::path::Path;
@@ -12,7 +14,8 @@ use std::time::Duration;
 /// Executes the headless simulation loop without opening an interactive window.
 ///
 /// Runs N simulation frames of the fixed timestep loop from `forge_core`, renders to an offscreen
-/// texture, and optionally exports a PNG screenshot.
+/// texture, and optionally exports a PNG screenshot. If bridge is active and no fixed screenshot
+/// export was configured, runs continuously serving RPC requests until `project.stop`.
 pub fn run_headless(args: &CliArgs) -> Result<(), Box<dyn std::error::Error>> {
     tracing::info!(
         "Running headless mode: scene='{}', frames={}, resolution={}x{}",
@@ -39,45 +42,116 @@ pub fn run_headless(args: &CliArgs) -> Result<(), Box<dyn std::error::Error>> {
     scene.spawn_into_world(&mut world)?;
 
     let mut game_loop = GameLoop::new();
-    let frame_count = args.frames.max(1);
     let frame_delta = Duration::from_secs_f64(1.0 / 60.0);
 
-    for frame_idx in 0..frame_count {
-        game_loop.step(&mut world, frame_delta);
+    // Initialize the WebSocket bridge server if enabled
+    let (mut command_rx, _bridge_server) = if !args.no_bridge {
+        let (cmd_tx, cmd_rx) = create_bridge_channel();
+        let server = BridgeServer::start_background(args.bridge_token.clone(), cmd_tx)?;
+        (Some(cmd_rx), Some(server))
+    } else {
+        (None, None)
+    };
 
-        render_world_scene(
-            &world,
-            &mut renderer,
-            &mut texture_store,
-            &context,
-            &offscreen.view,
-            offscreen.format,
-            args.width as f32,
-            args.height as f32,
-            Some(DEFAULT_CLEAR_COLOR),
-        )?;
+    let continuous_mode = args.stay_open || (args.screenshot.is_none() && !args.no_bridge);
 
-        tracing::debug!("Rendered headless frame {}/{}", frame_idx + 1, frame_count);
-    }
+    if continuous_mode {
+        tracing::info!("Headless mode running continuously in RPC server mode");
+        let mut shutdown_requested = false;
 
-    if let Some(ref screenshot_path) = args.screenshot {
-        let rgba_bytes = offscreen.read_rgba(&context.device, &context.queue)?;
-        let path = Path::new(screenshot_path);
-        if let Some(parent) = path.parent() {
-            if !parent.as_os_str().is_empty() {
-                std::fs::create_dir_all(parent)?;
+        while !shutdown_requested {
+            game_loop.step(&mut world, frame_delta);
+
+            if let Some(ref mut rx) = command_rx {
+                process_bridge_commands(
+                    rx,
+                    &mut world,
+                    &mut renderer,
+                    &mut texture_store,
+                    &context,
+                    args.width,
+                    args.height,
+                    &mut shutdown_requested,
+                );
+            }
+
+            if shutdown_requested {
+                tracing::info!("Clean shutdown requested via bridge project.stop");
+                break;
+            }
+
+            let _ = render_world_scene(
+                &world,
+                &mut renderer,
+                &mut texture_store,
+                &context,
+                &offscreen.view,
+                offscreen.format,
+                args.width as f32,
+                args.height as f32,
+                Some(DEFAULT_CLEAR_COLOR),
+            );
+
+            std::thread::sleep(Duration::from_millis(16));
+        }
+    } else {
+        let frame_count = args.frames.max(1);
+        let mut shutdown_requested = false;
+
+        for frame_idx in 0..frame_count {
+            game_loop.step(&mut world, frame_delta);
+
+            if let Some(ref mut rx) = command_rx {
+                process_bridge_commands(
+                    rx,
+                    &mut world,
+                    &mut renderer,
+                    &mut texture_store,
+                    &context,
+                    args.width,
+                    args.height,
+                    &mut shutdown_requested,
+                );
+            }
+
+            render_world_scene(
+                &world,
+                &mut renderer,
+                &mut texture_store,
+                &context,
+                &offscreen.view,
+                offscreen.format,
+                args.width as f32,
+                args.height as f32,
+                Some(DEFAULT_CLEAR_COLOR),
+            )?;
+
+            tracing::debug!("Rendered headless frame {}/{}", frame_idx + 1, frame_count);
+
+            if shutdown_requested {
+                break;
             }
         }
 
-        image::save_buffer(
-            path,
-            &rgba_bytes,
-            args.width,
-            args.height,
-            image::ExtendedColorType::Rgba8,
-        )?;
+        if let Some(ref screenshot_path) = args.screenshot {
+            let rgba_bytes = offscreen.read_rgba(&context.device, &context.queue)?;
+            let path = Path::new(screenshot_path);
+            if let Some(parent) = path.parent() {
+                if !parent.as_os_str().is_empty() {
+                    std::fs::create_dir_all(parent)?;
+                }
+            }
 
-        tracing::info!("Saved headless screenshot to '{}'", screenshot_path);
+            image::save_buffer(
+                path,
+                &rgba_bytes,
+                args.width,
+                args.height,
+                image::ExtendedColorType::Rgba8,
+            )?;
+
+            tracing::info!("Saved headless screenshot to '{}'", screenshot_path);
+        }
     }
 
     Ok(())

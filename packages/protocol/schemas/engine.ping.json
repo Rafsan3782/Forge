@@ -6,9 +6,8 @@
   "definitions": {
     "EnginePingParams": {
       "type": "object",
-      "required": ["timestamp"],
       "properties": {
-        "timestamp": { "type": "number" }
+        "timestamp": { "type": "number", "default": 0 }
       },
       "additionalProperties": false
     },
