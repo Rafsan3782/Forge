@@ -20,6 +20,7 @@ pub struct GpuTexture {
 
 impl GpuTexture {
     /// Creates a new GPU texture from raw RGBA8 bytes.
+    #[allow(clippy::too_many_arguments)]
     pub fn from_rgba8(
         device: &wgpu::Device,
         queue: &wgpu::Queue,

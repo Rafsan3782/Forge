@@ -70,8 +70,7 @@ impl SpriteBatcher {
     /// with the same texture bind group are combined into a single draw call.
     pub fn build(&mut self) -> (Vec<SpriteVertex>, Vec<u32>, Vec<DrawBatch>) {
         // Sort stably by z-order ascending
-        self.sprites
-            .sort_by(|a, b| a.sprite.z_order.cmp(&b.sprite.z_order));
+        self.sprites.sort_by_key(|a| a.sprite.z_order);
 
         let mut vertices = Vec::with_capacity(self.sprites.len() * 4);
         let mut indices = Vec::with_capacity(self.sprites.len() * 6);

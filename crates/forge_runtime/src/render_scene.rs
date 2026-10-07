@@ -9,6 +9,7 @@ pub const DEFAULT_CLEAR_COLOR: [f64; 4] = [0.08, 0.09, 0.13, 1.0];
 
 /// Traverses entities in the ECS `World`, resolves camera uniforms, queues sprite quads,
 /// and executes the batched render pass.
+#[allow(clippy::too_many_arguments)]
 pub fn render_world_scene(
     world: &World,
     renderer: &mut Renderer2D,
