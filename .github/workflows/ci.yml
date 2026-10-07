@@ -83,6 +83,9 @@ jobs:
       - name: TypeScript test
         run: pnpm -r test
 
+      - name: Build Studio frontend
+        run: pnpm --filter studio build
+
   ci:
     name: CI Status (Aggregator)
     needs: [rust, typescript]

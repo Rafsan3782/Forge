@@ -1,0 +1,167 @@
+@import "tailwindcss";
+@import "@forge/tokens/css";
+@import "dockview-react/dist/styles/dockview.css";
+
+/* Base Resets & Font Families */
+:root {
+  font-family: var(--forge-font-sans);
+  background-color: var(--forge-bg-base);
+  color: var(--forge-text-primary);
+  color-scheme: dark;
+}
+
+code,
+kbd,
+samp,
+pre {
+  font-family: var(--forge-font-mono);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--forge-border);
+  border-radius: var(--forge-radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--forge-text-muted);
+}
+
+/* Accessible focus styling */
+:focus-visible {
+  outline: 2px solid var(--forge-accent-arc);
+  outline-offset: -1px;
+}
+
+/* Dockview Theme Customization for Forge */
+.dockview-theme-dark {
+  --dv-paneview-header-border-color: var(--forge-border);
+  --dv-tabs-and-actions-container-background-color: var(--forge-bg-base);
+  --dv-activegroup-visiblepanel-tab-background-color: var(--forge-bg-panel);
+  --dv-activegroup-hiddenpanel-tab-background-color: var(--forge-bg-base);
+  --dv-inactivegroup-visiblepanel-tab-background-color: var(--forge-bg-panel);
+  --dv-inactivegroup-hiddenpanel-tab-background-color: var(--forge-bg-base);
+  --dv-tab-divider-color: var(--forge-border-subtle);
+  --dv-separator-border: var(--forge-border);
+  --dv-drag-over-background-color: rgba(124, 92, 255, 0.15);
+  --dv-drag-over-border-color: var(--forge-accent-arc);
+  --dv-tabs-container-height: 32px;
+}
+
+.dockview-theme-dark .dockview-drop-target {
+  background: rgba(124, 92, 255, 0.12) !important;
+  border: 1px dashed var(--forge-accent-arc) !important;
+}
+
+.dockview-theme-dark .tab {
+  font-family: var(--forge-font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--forge-text-muted);
+  border-bottom: 2px solid transparent !important;
+  transition:
+    color var(--forge-motion-fast),
+    background-color var(--forge-motion-fast);
+}
+
+.dockview-theme-dark .tab:hover {
+  color: var(--forge-text-primary);
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.dockview-theme-dark .tab.active-tab {
+  color: var(--forge-text-primary);
+  background-color: var(--forge-bg-panel) !important;
+  border-bottom: 2px solid var(--forge-accent-ember) !important;
+}
+
+.dockview-theme-dark .tabs-and-actions-container {
+  border-bottom: 1px solid var(--forge-border);
+}
+
+.dockview-theme-dark .splitview-container {
+  background-color: var(--forge-bg-base);
+}
+
+.dockview-theme-dark .sash {
+  transition: background-color var(--forge-motion-fast);
+}
+
+.dockview-theme-dark .sash:hover,
+.dockview-theme-dark .sash.active {
+  background-color: var(--forge-accent-arc) !important;
+}
+
+/* Command Palette (cmdk) styling */
+[cmdk-root] {
+  max-width: 620px;
+  width: 100%;
+  background-color: var(--forge-bg-panel);
+  border: 1px solid var(--forge-border);
+  border-radius: var(--forge-radius-xl);
+  box-shadow:
+    0 20px 40px -10px rgba(0, 0, 0, 0.7),
+    0 0 0 1px var(--forge-border);
+  overflow: hidden;
+  transition: all var(--forge-motion-normal);
+}
+
+[cmdk-input] {
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 14px;
+  color: var(--forge-text-primary);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--forge-border);
+  outline: none;
+}
+
+[cmdk-input]::placeholder {
+  color: var(--forge-text-muted);
+}
+
+[cmdk-list] {
+  max-height: 330px;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+[cmdk-item] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--forge-text-primary);
+  border-radius: var(--forge-radius-md);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color var(--forge-motion-fast),
+    color var(--forge-motion-fast);
+}
+
+[cmdk-item][data-selected="true"] {
+  background-color: var(--forge-bg-active);
+  color: #ffffff;
+}
+
+[cmdk-group-heading] {
+  padding: 8px 12px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--forge-text-muted);
+}

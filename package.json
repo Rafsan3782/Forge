@@ -8,6 +8,7 @@
     "codegen": "pnpm --filter @forge/protocol codegen",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",
+    "build": "pnpm --filter studio build",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
