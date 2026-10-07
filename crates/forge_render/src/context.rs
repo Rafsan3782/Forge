@@ -55,16 +55,11 @@ pub struct RenderContext {
 }
 
 impl RenderContext {
-    /// Initializes the render context asynchronously with optional compatible surface.
-    pub async fn new_with_surface_async(
+    async fn init_with_instance(
+        instance: wgpu::Instance,
         options: RenderOptions,
         surface: Option<&wgpu::Surface<'_>>,
     ) -> Result<Self, RenderError> {
-        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
-            backends: options.backends,
-            ..Default::default()
-        });
-
         let adapter = match instance
             .request_adapter(&wgpu::RequestAdapterOptions {
                 power_preference: wgpu::PowerPreference::HighPerformance,
@@ -165,17 +160,34 @@ impl RenderContext {
         })
     }
 
-    /// Synchronous initialization blocking on async setup.
+    /// Synchronous initialization blocking on async setup (for offscreen/headless).
     pub fn new(options: RenderOptions) -> Result<Self, RenderError> {
-        pollster::block_on(Self::new_with_surface_async(options, None))
+        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
+            backends: options.backends,
+            ..Default::default()
+        });
+        pollster::block_on(Self::init_with_instance(instance, options, None))
     }
 
-    /// Synchronous initialization with a target window surface.
-    pub fn new_with_surface(
+    /// Initializes a RenderContext and creates a window surface from the same WGPU instance.
+    pub fn new_with_surface_target<T>(
         options: RenderOptions,
-        surface: &wgpu::Surface<'_>,
-    ) -> Result<Self, RenderError> {
-        pollster::block_on(Self::new_with_surface_async(options, Some(surface)))
+        target: T,
+    ) -> Result<(Self, wgpu::Surface<'static>), RenderError>
+    where
+        T: Into<wgpu::SurfaceTarget<'static>>,
+    {
+        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
+            backends: options.backends,
+            ..Default::default()
+        });
+
+        let surface = instance
+            .create_surface(target)
+            .map_err(|e| RenderError::SurfaceConfigFailed(e.to_string()))?;
+
+        let ctx = pollster::block_on(Self::init_with_instance(instance, options, Some(&surface)))?;
+        Ok((ctx, surface))
     }
 
     /// Configures a window surface with optimal sRGB format and dimensions.
