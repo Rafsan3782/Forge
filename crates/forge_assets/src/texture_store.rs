@@ -95,13 +95,26 @@ impl TextureStore {
             return texture.clone();
         }
 
-        // Search for file on disk
+        // Search for file on disk across base dir, direct path, and parent directories
         let mut candidate_paths = Vec::new();
-        let direct_path = PathBuf::from(asset_id);
-        candidate_paths.push(direct_path.clone());
 
         if let Some(base) = &self.base_dir {
             candidate_paths.push(base.join(asset_id));
+        }
+
+        let direct_path = PathBuf::from(asset_id);
+        candidate_paths.push(direct_path.clone());
+
+        // Check relative to current working directory parents (workspace root discovery)
+        if let Ok(cwd) = std::env::current_dir() {
+            let mut curr = Some(cwd);
+            while let Some(dir) = curr {
+                let candidate = dir.join(asset_id);
+                if !candidate_paths.contains(&candidate) {
+                    candidate_paths.push(candidate);
+                }
+                curr = dir.parent().map(|p| p.to_path_buf());
+            }
         }
 
         let mut resolved_path = None;
@@ -129,9 +142,8 @@ impl TextureStore {
             },
             None => {
                 tracing::warn!(
-                    "Asset '{}' not found at candidate paths: {:?}. Using visible magenta placeholder.",
-                    asset_id,
-                    candidate_paths
+                    "Asset '{}' not found on disk. Using visible magenta placeholder.",
+                    asset_id
                 );
                 self.textures
                     .insert(asset_id.to_string(), self.magenta_placeholder.clone());
