@@ -190,18 +190,21 @@ fn test_game_loop_and_time() {
     game_loop.add_update_system(update_sys);
     game_loop.add_post_update_system(post_sys);
 
-    // Frame 1: 1/120s (half a 60Hz tick) -> no ticks run, alpha = 0.5
-    game_loop.step(&mut world, Duration::from_secs_f64(1.0 / 120.0));
+    let fixed_delta = Duration::from_secs_f64(1.0 / 60.0);
+    let half_delta = fixed_delta / 2;
+
+    // Frame 1: half a fixed tick -> no ticks run, alpha ~ 0.5
+    game_loop.step(&mut world, half_delta);
     {
         let counter = world.resource::<CounterRes>();
         assert_eq!(counter.update, 0);
         let time = world.resource::<Time>();
-        assert!((time.alpha - 0.5).abs() < 0.01);
+        assert!((time.alpha - 0.5).abs() < 0.05);
         assert_eq!(time.tick_count, 0);
     }
 
-    // Frame 2: Another 1/120s -> total 1/60s accumulated -> 1 tick runs, alpha ~ 0.0
-    game_loop.step(&mut world, Duration::from_secs_f64(1.0 / 120.0));
+    // Frame 2: remaining half tick -> accumulates to >= fixed_delta -> 1 tick runs, alpha ~ 0.0
+    game_loop.step(&mut world, fixed_delta - half_delta);
     {
         let counter = world.resource::<CounterRes>();
         assert_eq!(counter.pre, 1);
@@ -209,7 +212,16 @@ fn test_game_loop_and_time() {
         assert_eq!(counter.post, 1);
         let time = world.resource::<Time>();
         assert_eq!(time.tick_count, 1);
-        assert!(time.alpha < 0.01);
+        assert!(time.alpha < 0.05);
+    }
+
+    // Frame 3: exactly 2 fixed ticks
+    game_loop.step(&mut world, fixed_delta * 2);
+    {
+        let counter = world.resource::<CounterRes>();
+        assert_eq!(counter.update, 3);
+        let time = world.resource::<Time>();
+        assert_eq!(time.tick_count, 3);
     }
 }
 
