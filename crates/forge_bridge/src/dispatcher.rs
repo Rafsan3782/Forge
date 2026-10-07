@@ -38,8 +38,7 @@ pub async fn dispatch_method(
                 .await
             {
                 Ok(val) => {
-                    let mcp_res =
-                        McpToolCallResult::success(&val).map_err(|e| BridgeError::Json(e))?;
+                    let mcp_res = McpToolCallResult::success(&val).map_err(BridgeError::Json)?;
                     Ok(serde_json::to_value(mcp_res)?)
                 }
                 Err(e) => {

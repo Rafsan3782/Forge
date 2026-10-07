@@ -1,5 +1,7 @@
 //! WebSocket JSON-RPC and MCP bridge server.
 
+#![allow(clippy::result_large_err)]
+
 use std::collections::hash_map::RandomState;
 use std::hash::{BuildHasher, Hasher};
 use std::io::Write;
@@ -126,7 +128,7 @@ impl BridgeServer {
                     }
                 });
             })
-            .map_err(|e| BridgeError::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+            .map_err(|e| BridgeError::Io(std::io::Error::other(e)))?;
 
         let (port, token, addr) = ready_rx.recv().map_err(|_| {
             BridgeError::Engine("Bridge startup thread exited prematurely".to_string())

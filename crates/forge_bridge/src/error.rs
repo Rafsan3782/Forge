@@ -16,7 +16,7 @@ pub enum BridgeError {
 
     /// WebSocket transport error.
     #[error("WebSocket error: {0}")]
-    Tungstenite(#[from] tokio_tungstenite::tungstenite::Error),
+    Tungstenite(Box<tokio_tungstenite::tungstenite::Error>),
 
     /// Authentication failed or token missing/invalid.
     #[error("Unauthorized: {0}")]
@@ -37,6 +37,12 @@ pub enum BridgeError {
     /// Communication channel between bridge and engine closed.
     #[error("Engine channel closed")]
     ChannelClosed,
+}
+
+impl From<tokio_tungstenite::tungstenite::Error> for BridgeError {
+    fn from(err: tokio_tungstenite::tungstenite::Error) -> Self {
+        BridgeError::Tungstenite(Box::new(err))
+    }
 }
 
 impl BridgeError {
