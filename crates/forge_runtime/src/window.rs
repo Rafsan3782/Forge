@@ -11,8 +11,10 @@ use winit::event::WindowEvent;
 use winit::event_loop::{ActiveEventLoop, EventLoop};
 use winit::window::{Window, WindowId};
 
+use crate::bridge_ops::process_bridge_commands;
 use crate::cli::CliArgs;
 use crate::render_scene::{render_world_scene, DEFAULT_CLEAR_COLOR};
+use forge_bridge::{create_bridge_channel, BridgeCommandReceiver, BridgeServer};
 
 struct WindowState {
     window: Arc<Window>,
@@ -30,6 +32,8 @@ pub struct WindowApp {
     game_loop: GameLoop,
     state: Option<WindowState>,
     last_frame_instant: Option<Instant>,
+    command_rx: Option<BridgeCommandReceiver>,
+    _bridge_server: Option<BridgeServer>,
 }
 
 impl WindowApp {
@@ -39,12 +43,22 @@ impl WindowApp {
         let mut world = World::new();
         scene.spawn_into_world(&mut world)?;
 
+        let (command_rx, _bridge_server) = if !args.no_bridge {
+            let (cmd_tx, cmd_rx) = create_bridge_channel();
+            let server = BridgeServer::start_background(args.bridge_token.clone(), cmd_tx)?;
+            (Some(cmd_rx), Some(server))
+        } else {
+            (None, None)
+        };
+
         Ok(Self {
             args,
             world,
             game_loop: GameLoop::new(),
             state: None,
             last_frame_instant: None,
+            command_rx,
+            _bridge_server,
         })
     }
 
@@ -135,6 +149,26 @@ impl ApplicationHandler for WindowApp {
                 }
             }
             WindowEvent::RedrawRequested => {
+                let mut shutdown_requested = false;
+                if let Some(ref mut rx) = self.command_rx {
+                    process_bridge_commands(
+                        rx,
+                        &mut self.world,
+                        &mut state.renderer,
+                        &mut state.texture_store,
+                        &state.context,
+                        state.surface_config.width,
+                        state.surface_config.height,
+                        &mut shutdown_requested,
+                    );
+                }
+
+                if shutdown_requested {
+                    tracing::info!("Shutdown requested via bridge project.stop. Exiting cleanly.");
+                    event_loop.exit();
+                    return;
+                }
+
                 let now = Instant::now();
                 let delta = match self.last_frame_instant {
                     Some(prev) => now.duration_since(prev),

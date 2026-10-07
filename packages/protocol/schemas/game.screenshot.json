@@ -13,15 +13,17 @@
           "default": "png"
         },
         "width": { "type": ["integer", "null"] },
-        "height": { "type": ["integer", "null"] }
+        "height": { "type": ["integer", "null"] },
+        "file_path": { "type": ["string", "null"] }
       },
       "additionalProperties": false
     },
     "GameScreenshotResult": {
       "type": "object",
-      "required": ["data_base64", "width", "height", "format"],
+      "required": ["width", "height", "format"],
       "properties": {
-        "data_base64": { "type": "string" },
+        "data_base64": { "type": ["string", "null"] },
+        "file_path": { "type": ["string", "null"] },
         "width": { "type": "integer" },
         "height": { "type": "integer" },
         "format": { "type": "string" }

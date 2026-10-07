@@ -8,6 +8,7 @@
 
 #![warn(missing_docs)]
 
+pub mod bridge_ops;
 pub mod cli;
 pub mod headless;
 pub mod procedural;

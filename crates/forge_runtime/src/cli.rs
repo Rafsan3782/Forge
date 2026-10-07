@@ -38,4 +38,16 @@ pub struct CliArgs {
     /// Viewport height in pixels
     #[arg(long, default_value_t = 600)]
     pub height: u32,
+
+    /// Optional explicit authentication token for the bridge WebSocket server
+    #[arg(long)]
+    pub bridge_token: Option<String>,
+
+    /// Disable starting the embedded bridge WebSocket server
+    #[arg(long, default_value_t = false)]
+    pub no_bridge: bool,
+
+    /// Keep headless mode running continuously until project.stop is received
+    #[arg(long, default_value_t = false)]
+    pub stay_open: bool,
 }

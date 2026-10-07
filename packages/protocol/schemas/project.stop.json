@@ -6,9 +6,8 @@
   "definitions": {
     "ProjectStopParams": {
       "type": "object",
-      "required": ["session_id"],
       "properties": {
-        "session_id": { "type": "string" }
+        "session_id": { "type": "string", "default": "" }
       },
       "additionalProperties": false
     },
