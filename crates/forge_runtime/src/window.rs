@@ -58,21 +58,15 @@ impl WindowApp {
 
         let window = Arc::new(event_loop.create_window(window_attrs)?);
 
-        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
-            backends: wgpu::Backends::all(),
-            ..Default::default()
-        });
-
-        let surface = instance
-            .create_surface(window.clone())
-            .map_err(|e| format!("Failed to create window surface: {}", e))?;
-
         let render_options = RenderOptions {
             force_fallback_adapter: args.force_fallback,
             backends: wgpu::Backends::all(),
         };
 
-        let context = Arc::new(RenderContext::new_with_surface(render_options, &surface)?);
+        // Create RenderContext and Window Surface from the exact same WGPU instance
+        let (context, surface) =
+            RenderContext::new_with_surface_target(render_options, window.clone())?;
+        let context = Arc::new(context);
 
         let size = window.inner_size();
         let surface_config = context.configure_surface(&surface, size.width, size.height);
