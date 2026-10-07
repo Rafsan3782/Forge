@@ -1,0 +1,52 @@
+{
+  "name": "Hello Forge",
+  "entities": [
+    {
+      "id": "camera_main",
+      "components": {
+        "Camera2D": {
+          "is_active": true,
+          "zoom": 1.0
+        },
+        "Name": "Main Camera",
+        "Transform2D": {
+          "position": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "rotation": 0.0,
+          "scale": {
+            "x": 1.0,
+            "y": 1.0
+          }
+        }
+      }
+    },
+    {
+      "id": "player_hero",
+      "components": {
+        "Name": "Hero",
+        "Sprite": {
+          "asset_id": "textures/hero.png",
+          "color_tint": [1.0, 1.0, 1.0, 1.0],
+          "size": {
+            "x": 64.0,
+            "y": 64.0
+          },
+          "z_order": 1
+        },
+        "Transform2D": {
+          "position": {
+            "x": 100.0,
+            "y": 50.0
+          },
+          "rotation": 0.0,
+          "scale": {
+            "x": 1.0,
+            "y": 1.0
+          }
+        }
+      }
+    }
+  ]
+}

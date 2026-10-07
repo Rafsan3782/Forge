@@ -1,6 +1,11 @@
-﻿[package]
+[package]
 name = "forge_core"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+bevy_ecs = { version = "0.15", default-features = false }
+forge_protocol = { path = "../forge_protocol" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0"
