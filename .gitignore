@@ -40,3 +40,8 @@ $RECYCLE.BIN/
 # Tool cache
 .xwin-cache/
 .tools/
+
+# Procedural templates & runtime screenshots
+templates/**/assets/*.png
+out.png
+hello_screenshot.png

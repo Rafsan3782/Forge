@@ -1,6 +1,12 @@
-﻿[package]
+[package]
 name = "forge_render"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+wgpu = "24"
+bytemuck = { version = "1.21", features = ["derive"] }
+pollster = "0.4"
+thiserror = "2.0"
+tracing = "0.1"
+forge_core = { path = "../forge_core" }

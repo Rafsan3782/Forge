@@ -1,6 +1,11 @@
-﻿[package]
+[package]
 name = "forge_assets"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+forge_core = { path = "../forge_core" }
+forge_render = { path = "../forge_render" }
+image = { version = "0.25", default-features = false, features = ["png"] }
+thiserror = "2.0"
+tracing = "0.1"

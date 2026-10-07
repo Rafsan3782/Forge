@@ -1,0 +1,93 @@
+//! Vertex layouts and quad geometry generation for 2D sprites.
+
+use bytemuck::{Pod, Zeroable};
+use forge_core::{Sprite, Transform2D};
+
+/// Vertex format used for rendering 2D textured sprite quads.
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Pod, Zeroable, PartialEq)]
+pub struct SpriteVertex {
+    /// 2D world position coordinates.
+    pub position: [f32; 2],
+    /// Texture coordinate UVs [0.0..1.0].
+    pub uv: [f32; 2],
+    /// Color tint multiplier [r, g, b, a].
+    pub color: [f32; 4],
+}
+
+impl SpriteVertex {
+    /// Creates a new sprite vertex.
+    pub const fn new(position: [f32; 2], uv: [f32; 2], color: [f32; 4]) -> Self {
+        Self {
+            position,
+            uv,
+            color,
+        }
+    }
+
+    /// Returns the vertex buffer layout for WGPU pipeline creation.
+    pub fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
+        const ATTRIBUTES: [wgpu::VertexAttribute; 3] = [
+            // position
+            wgpu::VertexAttribute {
+                offset: 0,
+                shader_location: 0,
+                format: wgpu::VertexFormat::Float32x2,
+            },
+            // uv
+            wgpu::VertexAttribute {
+                offset: std::mem::size_of::<[f32; 2]>() as wgpu::BufferAddress,
+                shader_location: 1,
+                format: wgpu::VertexFormat::Float32x2,
+            },
+            // color
+            wgpu::VertexAttribute {
+                offset: (std::mem::size_of::<[f32; 2]>() * 2) as wgpu::BufferAddress,
+                shader_location: 2,
+                format: wgpu::VertexFormat::Float32x4,
+            },
+        ];
+
+        wgpu::VertexBufferLayout {
+            array_stride: std::mem::size_of::<Self>() as wgpu::BufferAddress,
+            step_mode: wgpu::VertexStepMode::Vertex,
+            attributes: &ATTRIBUTES,
+        }
+    }
+}
+
+/// Generates 4 vertices for a sprite quad transformed by `Transform2D`.
+///
+/// Vertices order:
+/// 0: Bottom-Left
+/// 1: Bottom-Right
+/// 2: Top-Right
+/// 3: Top-Left
+pub fn generate_sprite_quad(transform: &Transform2D, sprite: &Sprite) -> [SpriteVertex; 4] {
+    let hw = (sprite.size.x * 0.5) * transform.scale.x;
+    let hh = (sprite.size.y * 0.5) * transform.scale.y;
+
+    let cos = transform.rotation.cos();
+    let sin = transform.rotation.sin();
+    let pos = transform.position;
+
+    let rotate_and_translate = |lx: f32, ly: f32| -> [f32; 2] {
+        let rx = lx * cos - ly * sin;
+        let ry = lx * sin + ly * cos;
+        [rx + pos.x, ry + pos.y]
+    };
+
+    let p0 = rotate_and_translate(-hw, -hh); // bottom-left
+    let p1 = rotate_and_translate(hw, -hh); // bottom-right
+    let p2 = rotate_and_translate(hw, hh); // top-right
+    let p3 = rotate_and_translate(-hw, hh); // top-left
+
+    let tint = sprite.color_tint;
+
+    [
+        SpriteVertex::new(p0, [0.0, 1.0], tint),
+        SpriteVertex::new(p1, [1.0, 1.0], tint),
+        SpriteVertex::new(p2, [1.0, 0.0], tint),
+        SpriteVertex::new(p3, [0.0, 0.0], tint),
+    ]
+}

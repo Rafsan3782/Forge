@@ -364,14 +364,14 @@ fn test_templates_hello_scene_loading() {
 
     let scene = Scene::load_from_file(&scene_path).expect("templates/hello/scene.json should load");
     assert_eq!(scene.name, "Hello Forge");
-    assert_eq!(scene.entities.len(), 2);
+    assert_eq!(scene.entities.len(), 6);
 
     let mut world = World::new();
     let map = scene
         .spawn_into_world(&mut world)
         .expect("spawn_into_world should succeed for templates scene");
 
-    assert_eq!(map.len(), 2);
+    assert_eq!(map.len(), 6);
     let camera_ent = map["camera_main"];
     let hero_ent = map["player_hero"];
 
@@ -379,6 +379,6 @@ fn test_templates_hello_scene_loading() {
     assert_eq!(world.get::<Name>(hero_ent).unwrap().as_str(), "Hero");
     assert_eq!(
         world.get::<Sprite>(hero_ent).unwrap().asset_id,
-        "textures/hero.png"
+        "templates/hello/assets/hero.png"
     );
 }
