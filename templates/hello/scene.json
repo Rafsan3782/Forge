@@ -27,18 +27,122 @@
       "components": {
         "Name": "Hero",
         "Sprite": {
-          "asset_id": "textures/hero.png",
+          "asset_id": "templates/hello/assets/hero.png",
           "color_tint": [1.0, 1.0, 1.0, 1.0],
           "size": {
             "x": 64.0,
             "y": 64.0
           },
+          "z_order": 2
+        },
+        "Transform2D": {
+          "position": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "rotation": 0.0,
+          "scale": {
+            "x": 1.0,
+            "y": 1.0
+          }
+        }
+      }
+    },
+    {
+      "id": "env_tree_left",
+      "components": {
+        "Name": "Left Tree",
+        "Sprite": {
+          "asset_id": "templates/hello/assets/tree.png",
+          "color_tint": [1.0, 1.0, 1.0, 1.0],
+          "size": {
+            "x": 64.0,
+            "y": 96.0
+          },
           "z_order": 1
         },
         "Transform2D": {
           "position": {
-            "x": 100.0,
-            "y": 50.0
+            "x": -150.0,
+            "y": 20.0
+          },
+          "rotation": 0.0,
+          "scale": {
+            "x": 1.0,
+            "y": 1.0
+          }
+        }
+      }
+    },
+    {
+      "id": "env_tree_right",
+      "components": {
+        "Name": "Right Tree",
+        "Sprite": {
+          "asset_id": "templates/hello/assets/tree.png",
+          "color_tint": [0.9, 1.0, 0.9, 1.0],
+          "size": {
+            "x": 80.0,
+            "y": 120.0
+          },
+          "z_order": 1
+        },
+        "Transform2D": {
+          "position": {
+            "x": 180.0,
+            "y": 40.0
+          },
+          "rotation": 0.0,
+          "scale": {
+            "x": 1.0,
+            "y": 1.0
+          }
+        }
+      }
+    },
+    {
+      "id": "item_gem",
+      "components": {
+        "Name": "Magic Gem",
+        "Sprite": {
+          "asset_id": "templates/hello/assets/gem.png",
+          "color_tint": [1.0, 1.0, 1.0, 1.0],
+          "size": {
+            "x": 48.0,
+            "y": 48.0
+          },
+          "z_order": 3
+        },
+        "Transform2D": {
+          "position": {
+            "x": 60.0,
+            "y": -80.0
+          },
+          "rotation": 0.0,
+          "scale": {
+            "x": 1.0,
+            "y": 1.0
+          }
+        }
+      }
+    },
+    {
+      "id": "env_rock",
+      "components": {
+        "Name": "Ancient Rock",
+        "Sprite": {
+          "asset_id": "templates/hello/assets/rock.png",
+          "color_tint": [1.0, 1.0, 1.0, 1.0],
+          "size": {
+            "x": 56.0,
+            "y": 40.0
+          },
+          "z_order": 1
+        },
+        "Transform2D": {
+          "position": {
+            "x": -70.0,
+            "y": -90.0
           },
           "rotation": 0.0,
           "scale": {

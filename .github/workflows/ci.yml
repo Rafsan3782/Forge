@@ -38,6 +38,17 @@ jobs:
       - name: Rust nextest
         run: cargo nextest run
 
+      - name: Generate headless screenshot
+        run: cargo run -p forge_runtime -- --headless --frames 5 --screenshot hello_screenshot.png --scene templates/hello/scene.json
+
+      - name: Upload headless screenshot artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hello-screenshot
+          path: hello_screenshot.png
+          if-no-files-found: warn
+
   typescript:
     name: TypeScript (Lint, Typecheck & Test)
     runs-on: windows-latest
