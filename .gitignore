@@ -45,3 +45,4 @@ $RECYCLE.BIN/
 templates/**/assets/*.png
 out.png
 hello_screenshot.png
+.forge/
