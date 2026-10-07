@@ -27,6 +27,7 @@ pub fn current_timestamp_ms() -> f64 {
 }
 
 /// Drains pending bridge commands from the queue without holding locks across frames.
+#[allow(clippy::too_many_arguments)]
 pub fn process_bridge_commands(
     command_rx: &mut BridgeCommandReceiver,
     world: &mut World,
@@ -96,6 +97,7 @@ pub fn process_bridge_commands(
 }
 
 /// Renders the world into an offscreen target and produces a PNG screenshot (base64 or file).
+#[allow(clippy::too_many_arguments)]
 pub fn capture_screenshot(
     world: &World,
     renderer: &mut Renderer2D,
