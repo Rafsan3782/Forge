@@ -100,7 +100,7 @@ impl WindowApp {
             use winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
             if let Ok(wh) = window.window_handle() {
                 if let RawWindowHandle::Win32(h) = wh.as_raw() {
-                    let child_hwnd = h.hwnd.get() as isize;
+                    let child_hwnd = h.hwnd.get();
                     println!("FORGE_WINDOW_READY {{\"hwnd\":{}}}", child_hwnd);
                     let _ = std::io::stdout().flush();
                 }
