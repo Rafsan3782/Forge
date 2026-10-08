@@ -20,7 +20,7 @@ $env:PNPM_HOME = Join-Path $toolsDir "pnpm-store"
 
 $rcExe = Join-Path $toolsDir "cargo\bin\rc.exe"
 $rcSrc = Join-Path $repoRoot "tools\rc-stub.rs"
-if ((-not (Test-Path $rcExe)) -and (Test-Path $rcSrc)) {
+if ((-not (Test-Path $rcExe)) -or ((Test-Path $rcSrc) -and (Test-Path $rcExe) -and ((Get-Item $rcSrc).LastWriteTime -gt (Get-Item $rcExe).LastWriteTime))) {
     $splatDir = Join-Path $repoRoot ".xwin-cache\splat"
     $rustcExe = Join-Path $toolsDir "cargo\bin\rustc.exe"
     if ((Test-Path $splatDir) -and (Test-Path $rustcExe)) {

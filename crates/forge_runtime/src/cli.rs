@@ -50,4 +50,8 @@ pub struct CliArgs {
     /// Keep headless mode running continuously until project.stop is received
     #[arg(long, default_value_t = false)]
     pub stay_open: bool,
+
+    /// Win32 parent window handle (HWND) to embed the runtime window as a child
+    #[arg(long)]
+    pub embed_parent: Option<String>,
 }

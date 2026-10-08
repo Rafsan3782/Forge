@@ -10,23 +10,26 @@ export const TitleBar: React.FC<TitleBarProps> = ({ projectName = "templates/hel
   const [isMaximized, setIsMaximized] = useState(false);
   const openCommandPalette = useCommandStore((s) => s.open);
 
-  const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
-
   useEffect(() => {
-    if (!isTauri) return;
-
     let unlisten: (() => void) | undefined;
     import("@tauri-apps/api/window")
       .then(({ getCurrentWindow }) => {
         const appWindow = getCurrentWindow();
-        appWindow.isMaximized().then(setIsMaximized);
+        appWindow
+          .isMaximized()
+          .then(setIsMaximized)
+          .catch(() => {});
         appWindow
           .onResized(() => {
-            appWindow.isMaximized().then(setIsMaximized);
+            appWindow
+              .isMaximized()
+              .then(setIsMaximized)
+              .catch(() => {});
           })
           .then((fn) => {
             unlisten = fn;
-          });
+          })
+          .catch(() => {});
       })
       .catch(() => {
         // Browser preview mode
@@ -35,37 +38,78 @@ export const TitleBar: React.FC<TitleBarProps> = ({ projectName = "templates/hel
     return () => {
       unlisten?.();
     };
-  }, [isTauri]);
+  }, []);
 
-  const handleMinimize = async () => {
-    if (isTauri) {
-      const { getCurrentWindow } = await import("@tauri-apps/api/window");
-      await getCurrentWindow().minimize();
+  const handleMouseDown = async (e: React.MouseEvent) => {
+    if (e.button === 0 && !(e.target as HTMLElement).closest("button, a, input")) {
+      try {
+        const { invoke } = await import("@tauri-apps/api/core");
+        await invoke("window_start_dragging");
+      } catch {
+        try {
+          const { getCurrentWindow } = await import("@tauri-apps/api/window");
+          await getCurrentWindow().startDragging();
+        } catch {
+          // Browser preview mode
+        }
+      }
     }
   };
 
-  const handleMaximize = async () => {
-    if (isTauri) {
-      const { getCurrentWindow } = await import("@tauri-apps/api/window");
-      await getCurrentWindow().toggleMaximize();
-      const max = await getCurrentWindow().isMaximized();
-      setIsMaximized(max);
-    } else {
-      setIsMaximized(!isMaximized);
+  const handleMinimize = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const { invoke } = await import("@tauri-apps/api/core");
+      await invoke("window_minimize");
+    } catch {
+      try {
+        const { getCurrentWindow } = await import("@tauri-apps/api/window");
+        await getCurrentWindow().minimize();
+      } catch {
+        // Browser preview mode
+      }
     }
   };
 
-  const handleClose = async () => {
-    if (isTauri) {
-      const { getCurrentWindow } = await import("@tauri-apps/api/window");
-      await getCurrentWindow().close();
+  const handleMaximize = async (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    try {
+      const { invoke } = await import("@tauri-apps/api/core");
+      const isMax = await invoke<boolean>("window_toggle_maximize");
+      setIsMaximized(isMax);
+    } catch {
+      try {
+        const { getCurrentWindow } = await import("@tauri-apps/api/window");
+        await getCurrentWindow().toggleMaximize();
+        const max = await getCurrentWindow().isMaximized();
+        setIsMaximized(max);
+      } catch {
+        setIsMaximized(!isMaximized);
+      }
+    }
+  };
+
+  const handleClose = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const { invoke } = await import("@tauri-apps/api/core");
+      await invoke("window_close");
+    } catch {
+      try {
+        const { getCurrentWindow } = await import("@tauri-apps/api/window");
+        await getCurrentWindow().close();
+      } catch {
+        // Browser preview mode
+      }
     }
   };
 
   return (
     <header
       data-tauri-drag-region
-      className="h-10 w-full bg-[#0A0B0D] border-b border-[#23262D] flex items-center justify-between px-3 select-none flex-shrink-0 z-50 text-[13px] font-sans"
+      onMouseDown={handleMouseDown}
+      onDoubleClick={() => handleMaximize()}
+      className="h-10 w-full bg-[#0A0B0D] border-b border-[#23262D] flex items-center justify-between px-3 select-none flex-shrink-0 z-50 text-[13px] font-sans cursor-default"
     >
       {/* Left: App Icon + Name */}
       <div className="flex items-center gap-2 pointer-events-none">
@@ -108,7 +152,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({ projectName = "templates/hel
         </button>
 
         <button
-          onClick={handleMaximize}
+          onClick={(e) => handleMaximize(e)}
           className="w-8 h-7 flex items-center justify-center rounded hover:bg-[#181B20] text-[#8B919C] hover:text-[#E8EAED] transition-colors duration-150 cursor-pointer"
           aria-label={isMaximized ? "Restore" : "Maximize"}
         >
