@@ -20,6 +20,10 @@ pub fn run() {
             focus_viewport,
             focus_studio,
             set_viewport_mode,
+            window_minimize,
+            window_toggle_maximize,
+            window_close,
+            window_start_dragging,
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Destroyed = event {

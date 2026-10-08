@@ -208,6 +208,25 @@ export const useRuntimeStore = create<RuntimeStoreState>((set, get) => ({
       }).then((fn) => {
         unlistenStatus = fn;
       });
+
+      // Hook up live engine stdout & stderr to logStore
+      import("./logStore").then(({ useLogStore }) => {
+        listen<string>("forge://runtime-stdout", (event) => {
+          useLogStore.getState().addLog({
+            level: "info",
+            source: "forge_runtime",
+            message: event.payload,
+          });
+        });
+
+        listen<string>("forge://runtime-stderr", (event) => {
+          useLogStore.getState().addLog({
+            level: "warn",
+            source: "forge_runtime",
+            message: event.payload,
+          });
+        });
+      });
     });
 
     return () => {

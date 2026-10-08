@@ -229,8 +229,10 @@ fn find_runtime_binary() -> Result<PathBuf, String> {
     let candidates = [
         cwd.join("target").join("debug").join("forge_runtime.exe"),
         cwd.join("..").join("..").join("target").join("debug").join("forge_runtime.exe"),
+        cwd.join("..").join("..").join("..").join("target").join("debug").join("forge_runtime.exe"),
         cwd.join("target").join("release").join("forge_runtime.exe"),
         cwd.join("..").join("..").join("target").join("release").join("forge_runtime.exe"),
+        cwd.join("..").join("..").join("..").join("target").join("release").join("forge_runtime.exe"),
     ];
 
     for cand in &candidates {
@@ -257,6 +259,31 @@ fn find_runtime_binary() -> Result<PathBuf, String> {
     ))
 }
 
+fn find_workspace_root() -> Result<PathBuf, String> {
+    if let Ok(runtime_path) = find_runtime_binary() {
+        if let Some(target_dir) = runtime_path.parent().and_then(|p| p.parent()) {
+            if let Some(root) = target_dir.parent() {
+                if root.join("Cargo.toml").exists() && root.join("templates").exists() {
+                    return Ok(root.to_path_buf());
+                }
+            }
+        }
+    }
+
+    let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    let mut cur = cwd.clone();
+    for _ in 0..6 {
+        if cur.join("Cargo.toml").exists() && cur.join("templates").exists() {
+            return Ok(cur.canonicalize().unwrap_or_else(|_| cur));
+        }
+        if !cur.pop() {
+            break;
+        }
+    }
+
+    Ok(cwd)
+}
+
 #[tauri::command]
 pub async fn launch_runtime(
     app: AppHandle,
@@ -280,10 +307,30 @@ pub async fn launch_runtime(
     #[cfg(not(windows))]
     let parent_hwnd: isize = 0;
 
+    let workspace_root = find_workspace_root().unwrap_or_else(|_| PathBuf::from("."));
+    let scene_path = {
+        let p = std::path::Path::new(&target_scene);
+        if p.is_absolute() {
+            p.to_path_buf()
+        } else {
+            workspace_root.join(p)
+        }
+    };
+
+    if !scene_path.exists() {
+        let err = format!(
+            "Scene file not found: {} (workspace root: {})",
+            scene_path.display(),
+            workspace_root.display()
+        );
+        eprintln!("[forge_runtime] ERROR: {}", err);
+        return Err(err);
+    }
+
     let runtime_path = find_runtime_binary()?;
 
     let mut cmd = Command::new(&runtime_path);
-    cmd.arg("--scene").arg(&target_scene);
+    cmd.arg("--scene").arg(scene_path.to_string_lossy().to_string());
 
     if target_mode == "stream" {
         cmd.arg("--headless").arg("--stay-open");
@@ -294,11 +341,14 @@ pub async fn launch_runtime(
 
     cmd.stdout(Stdio::piped());
     cmd.stderr(Stdio::piped());
+    cmd.current_dir(&workspace_root);
 
-    // Working directory set to repo root if possible
-    if let Ok(root) = std::env::current_dir() {
-        cmd.current_dir(root);
-    }
+    println!(
+        "[forge_runtime] Spawning: {} --scene {} (root: {})",
+        runtime_path.display(),
+        scene_path.display(),
+        workspace_root.display()
+    );
 
     let mut child = cmd
         .spawn()
@@ -306,6 +356,7 @@ pub async fn launch_runtime(
 
     let pid = child.id();
     let stdout = child.stdout.take().ok_or("Failed to capture stdout")?;
+    let stderr = child.stderr.take().ok_or("Failed to capture stderr")?;
 
     {
         let mut guard = manager.inner.lock().unwrap();
@@ -317,13 +368,44 @@ pub async fn launch_runtime(
         guard.mode = target_mode.clone();
     }
 
+    let recent_stderr = Arc::new(Mutex::new(Vec::<String>::new()));
+    let recent_stderr_writer = recent_stderr.clone();
+    let app_err = app.clone();
+
+    // Spawn stderr listener thread: prints to terminal and records crash diagnosis
+    std::thread::Builder::new()
+        .name("forge-runtime-stderr".to_string())
+        .spawn(move || {
+            let reader = BufReader::new(stderr);
+            for line_res in reader.lines() {
+                let line = match line_res {
+                    Ok(l) => l,
+                    Err(_) => break,
+                };
+
+                // Output directly to terminal for developer visibility
+                eprintln!("[forge_runtime] {}", line);
+
+                {
+                    let mut buf = recent_stderr_writer.lock().unwrap();
+                    if buf.len() >= 50 {
+                        buf.remove(0);
+                    }
+                    buf.push(line.clone());
+                }
+
+                let _ = app_err.emit("forge://runtime-stderr", line);
+            }
+        })
+        .map_err(|e| format!("Failed to spawn stderr monitor thread: {e}"))?;
+
     let manager_clone = manager.inner.clone();
     let app_clone = app.clone();
     let window_clone = window.clone();
 
     // Spawn background stdout listener thread to parse FORGE_BRIDGE_READY and FORGE_WINDOW_READY
     std::thread::Builder::new()
-        .name("forge-runtime-monitor".to_string())
+        .name("forge-runtime-stdout".to_string())
         .spawn(move || {
             let reader = BufReader::new(stdout);
             for line_res in reader.lines() {
@@ -333,6 +415,7 @@ pub async fn launch_runtime(
                 };
 
                 if line.starts_with("FORGE_BRIDGE_READY") {
+                    println!("[forge_runtime] {}", line);
                     if let Some(json_str) = line.strip_prefix("FORGE_BRIDGE_READY").map(str::trim) {
                         if let Ok(v) = serde_json::from_str::<serde_json::Value>(json_str) {
                             let port = v.get("port").and_then(|p| p.as_u64()).map(|p| p as u16);
@@ -356,6 +439,7 @@ pub async fn launch_runtime(
                         }
                     }
                 } else if line.starts_with("FORGE_WINDOW_READY") {
+                    println!("[forge_runtime] {}", line);
                     if let Some(json_str) = line.strip_prefix("FORGE_WINDOW_READY").map(str::trim) {
                         if let Ok(v) = serde_json::from_str::<serde_json::Value>(json_str) {
                             if let Some(h) = v.get("hwnd").and_then(|h| h.as_i64()) {
@@ -393,6 +477,9 @@ pub async fn launch_runtime(
                             }
                         }
                     }
+                } else {
+                    println!("[forge_runtime:stdout] {}", line);
+                    let _ = app_clone.emit("forge://runtime-stdout", line);
                 }
             }
 
@@ -419,9 +506,28 @@ pub async fn launch_runtime(
             }
 
             if !was_expected_stop {
+                // Short yield so stderr thread can catch trailing log lines
+                std::thread::sleep(std::time::Duration::from_millis(50));
+                let stderr_tail = {
+                    let buf = recent_stderr.lock().unwrap();
+                    buf.join("\n")
+                };
+
+                let reason = if !stderr_tail.trim().is_empty() {
+                    format!(
+                        "Engine process exited with code {:?}:\n{}",
+                        exit_code,
+                        stderr_tail.trim()
+                    )
+                } else {
+                    format!("Engine process exited unexpectedly with code {:?}", exit_code)
+                };
+
+                eprintln!("[forge_runtime] CRASH: {}", reason);
+
                 let _ = app_clone.emit("forge://runtime-crashed", RuntimeCrashedPayload {
                     exit_code,
-                    reason: format!("Engine process exited unexpectedly with code {:?}", exit_code),
+                    reason,
                 });
                 let _ = app_clone.emit("forge://runtime-status", "crashed");
             } else {
@@ -485,3 +591,31 @@ pub fn set_viewport_mode(
     manager.set_mode(mode);
     Ok(())
 }
+
+#[tauri::command]
+pub fn window_minimize(window: WebviewWindow) -> Result<(), String> {
+    window.minimize().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn window_toggle_maximize(window: WebviewWindow) -> Result<bool, String> {
+    let is_max = window.is_maximized().map_err(|e| e.to_string())?;
+    if is_max {
+        window.unmaximize().map_err(|e| e.to_string())?;
+        Ok(false)
+    } else {
+        window.maximize().map_err(|e| e.to_string())?;
+        Ok(true)
+    }
+}
+
+#[tauri::command]
+pub fn window_close(window: WebviewWindow) -> Result<(), String> {
+    window.close().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn window_start_dragging(window: WebviewWindow) -> Result<(), String> {
+    window.start_dragging().map_err(|e| e.to_string())
+}
+
