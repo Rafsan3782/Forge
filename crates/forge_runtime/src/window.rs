@@ -66,11 +66,46 @@ impl WindowApp {
         event_loop: &ActiveEventLoop,
         args: &CliArgs,
     ) -> Result<WindowState, Box<dyn std::error::Error>> {
-        let window_attrs = Window::default_attributes()
+        let mut window_attrs = Window::default_attributes()
             .with_title("Forge Engine")
             .with_inner_size(winit::dpi::LogicalSize::new(args.width, args.height));
 
+        #[cfg(windows)]
+        if let Some(parent_str) = &args.embed_parent {
+            let parent_hwnd: Result<isize, _> = if let Some(stripped) = parent_str
+                .strip_prefix("0x")
+                .or_else(|| parent_str.strip_prefix("0X"))
+            {
+                isize::from_str_radix(stripped, 16)
+            } else {
+                parent_str.parse::<isize>()
+            };
+
+            if let Ok(hwnd) = parent_hwnd {
+                if let Some(non_zero) = std::num::NonZeroIsize::new(hwnd) {
+                    use winit::raw_window_handle::{RawWindowHandle, Win32WindowHandle};
+                    let handle = Win32WindowHandle::new(non_zero);
+                    let rwh = RawWindowHandle::Win32(handle);
+                    window_attrs = unsafe { window_attrs.with_parent_window(Some(rwh)) };
+                    window_attrs = window_attrs.with_decorations(false);
+                }
+            }
+        }
+
         let window = Arc::new(event_loop.create_window(window_attrs)?);
+
+        #[cfg(windows)]
+        {
+            use std::io::Write;
+            use winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
+            if let Ok(wh) = window.window_handle() {
+                if let RawWindowHandle::Win32(h) = wh.as_raw() {
+                    let child_hwnd = h.hwnd.get() as isize;
+                    println!("FORGE_WINDOW_READY {{\"hwnd\":{}}}", child_hwnd);
+                    let _ = std::io::stdout().flush();
+                }
+            }
+        }
 
         let render_options = RenderOptions {
             force_fallback_adapter: args.force_fallback,

@@ -1,4 +1,4 @@
-import React, { useRef, useCallback } from "react";
+import React, { useRef, useCallback, useEffect } from "react";
 import {
   DockviewReact,
   type DockviewReadyEvent,
@@ -6,6 +6,7 @@ import {
   type IDockviewPanelProps,
 } from "dockview-react";
 import { TitleBar } from "./components/TitleBar";
+import { StatusBar } from "./components/StatusBar";
 import { CommandPalette } from "./components/CommandPalette";
 import { SceneTreePanel } from "./components/panels/SceneTreePanel";
 import { ViewportPanel } from "./components/panels/ViewportPanel";
@@ -16,6 +17,7 @@ import { ConsolePanel } from "./components/panels/ConsolePanel";
 import { TerminalPanel } from "./components/panels/TerminalPanel";
 import { PlaytestPanel } from "./components/panels/PlaytestPanel";
 import { useLayoutStore } from "./stores/layoutStore";
+import { useRuntimeStore } from "./stores/runtimeStore";
 
 // Dockview Component Wrapper Map
 const components = {
@@ -165,22 +167,30 @@ export const App: React.FC = () => {
       apiRef.current.addPanel({
         id: panelId,
         component: panelId,
-        title: panelId.replace("_", " ").toUpperCase(),
       });
     }
+  }, []);
+
+  useEffect(() => {
+    const unlisten = useRuntimeStore.getState().initListeners();
+    return () => {
+      unlisten();
+    };
   }, []);
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#0A0B0D] text-[#E8EAED]">
       <TitleBar projectName="templates/hello" />
 
-      <main className="flex-1 w-full h-[calc(100vh-2.5rem)] relative overflow-hidden">
+      <main className="flex-1 w-full h-[calc(100vh-4rem)] relative overflow-hidden">
         <DockviewReact
           components={components}
           onReady={onReady}
           className="dockview-theme-dark h-full w-full"
         />
       </main>
+
+      <StatusBar />
 
       <CommandPalette onTogglePanel={handleTogglePanel} onResetLayout={handleResetLayout} />
     </div>

@@ -12,9 +12,12 @@ import {
   Sparkles,
   Camera,
   Activity,
+  Play,
+  Square,
 } from "lucide-react";
 import { useCommandStore } from "../stores/commandStore";
 import { useLayoutStore } from "../stores/layoutStore";
+import { useRuntimeStore } from "../stores/runtimeStore";
 
 interface CommandPaletteProps {
   onTogglePanel?: (panelId: string) => void;
@@ -24,6 +27,7 @@ interface CommandPaletteProps {
 export const CommandPalette: React.FC<CommandPaletteProps> = ({ onTogglePanel, onResetLayout }) => {
   const { isOpen, close, toggle, search, setSearch } = useCommandStore();
   const resetStoreLayout = useLayoutStore((s) => s.resetLayout);
+  const { launchRuntime, restartRuntime, stopRuntime } = useRuntimeStore();
 
   // Keyboard shortcut listener for Ctrl+K / Cmd+K
   useEffect(() => {
@@ -83,8 +87,46 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ onTogglePanel, o
             </Command.Empty>
 
             <Command.Group
-              heading="Workspace & Layout"
+              heading="Engine & Runtime"
               className="text-xs text-[#8B919C] px-2 py-1.5"
+            >
+              <Command.Item
+                onSelect={() => handleAction(() => launchRuntime("templates/hello/scene.json"))}
+                className="flex items-center justify-between px-2.5 py-2 rounded-md hover:bg-[#1C1E24] data-[selected=true]:bg-[#20232B] data-[selected=true]:text-white cursor-pointer transition-colors duration-100"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Play className="w-4 h-4 text-[#FF6A2B] fill-[#FF6A2B]" />
+                  <span className="font-medium text-white">Launch hello scene</span>
+                </div>
+                <span className="text-[11px] text-[#FF6A2B] font-mono">F5</span>
+              </Command.Item>
+
+              <Command.Item
+                onSelect={() => handleAction(() => restartRuntime())}
+                className="flex items-center justify-between px-2.5 py-2 rounded-md hover:bg-[#1C1E24] data-[selected=true]:bg-[#20232B] data-[selected=true]:text-white cursor-pointer transition-colors duration-100"
+              >
+                <div className="flex items-center gap-2.5">
+                  <RotateCcw className="w-4 h-4 text-[#7C5CFF]" />
+                  <span>Restart Engine</span>
+                </div>
+                <span className="text-[11px] text-[#8B919C] font-mono">Ctrl+Shift+F5</span>
+              </Command.Item>
+
+              <Command.Item
+                onSelect={() => handleAction(() => stopRuntime())}
+                className="flex items-center justify-between px-2.5 py-2 rounded-md hover:bg-[#1C1E24] data-[selected=true]:bg-[#20232B] data-[selected=true]:text-white cursor-pointer transition-colors duration-100"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Square className="w-4 h-4 text-[#FF4D4F]" />
+                  <span>Stop Engine</span>
+                </div>
+                <span className="text-[11px] text-[#8B919C] font-mono">Shift+F5</span>
+              </Command.Item>
+            </Command.Group>
+
+            <Command.Group
+              heading="Workspace & Layout"
+              className="text-xs text-[#8B919C] px-2 py-1.5 mt-1"
             >
               <Command.Item
                 onSelect={() => handleAction(handleReset)}
