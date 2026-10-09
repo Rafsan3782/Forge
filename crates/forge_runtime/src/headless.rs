@@ -41,7 +41,35 @@ pub fn run_headless(args: &CliArgs) -> Result<(), Box<dyn std::error::Error>> {
     let mut world = World::new();
     scene.spawn_into_world(&mut world)?;
 
+    // Initialize ActionMap
+    let action_map = if let Some(ref map_path) = args.input_map {
+        forge_input::ActionMap::load_from_file(map_path)?
+    } else {
+        let scene_path = Path::new(&args.scene);
+        let candidate = scene_path
+            .parent()
+            .unwrap_or(Path::new(""))
+            .join("input_map.json");
+        if candidate.exists() {
+            forge_input::ActionMap::load_from_file(&candidate)?
+        } else {
+            forge_input::ActionMap::default()
+        }
+    };
+
+    // Insert input resources
+    world.insert_resource(forge_input::InputState::default());
+    world.insert_resource(action_map);
+    world.insert_resource(forge_input::FixedInput::default());
+    world.insert_resource(forge_input::InputRingBuffer::new(2048));
+
     let mut game_loop = GameLoop::new();
+    game_loop.add_pre_update_system(forge_input::fixed_input_tick_system);
+
+    if args.demo_input {
+        game_loop.add_update_system(crate::demo_input::demo_hero_movement_system);
+    }
+
     let frame_delta = Duration::from_secs_f64(1.0 / 60.0);
 
     // Initialize the WebSocket bridge server if enabled
@@ -60,7 +88,14 @@ pub fn run_headless(args: &CliArgs) -> Result<(), Box<dyn std::error::Error>> {
         let mut shutdown_requested = false;
 
         while !shutdown_requested {
+            // Sync InputState + ActionMap -> FixedInput
+            forge_input::sync_world_frame_input(&mut world);
+
             game_loop.step(&mut world, frame_delta);
+
+            if let Some(mut input_state) = world.get_resource_mut::<forge_input::InputState>() {
+                input_state.start_new_frame();
+            }
 
             if let Some(ref mut rx) = command_rx {
                 process_bridge_commands(
@@ -99,7 +134,14 @@ pub fn run_headless(args: &CliArgs) -> Result<(), Box<dyn std::error::Error>> {
         let mut shutdown_requested = false;
 
         for frame_idx in 0..frame_count {
+            // Sync InputState + ActionMap -> FixedInput
+            forge_input::sync_world_frame_input(&mut world);
+
             game_loop.step(&mut world, frame_delta);
+
+            if let Some(mut input_state) = world.get_resource_mut::<forge_input::InputState>() {
+                input_state.start_new_frame();
+            }
 
             if let Some(ref mut rx) = command_rx {
                 process_bridge_commands(

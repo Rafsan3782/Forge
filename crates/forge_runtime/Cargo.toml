@@ -9,6 +9,7 @@ clap = { version = "4.5", features = ["derive"] }
 forge_assets = { path = "../forge_assets" }
 forge_bridge = { path = "../forge_bridge" }
 forge_core = { path = "../forge_core" }
+forge_input = { path = "../forge_input" }
 forge_protocol = { path = "../forge_protocol" }
 forge_render = { path = "../forge_render" }
 image = { version = "0.25", default-features = false, features = ["png"] }

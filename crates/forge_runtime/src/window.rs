@@ -2,6 +2,10 @@
 
 use forge_assets::TextureStore;
 use forge_core::{GameLoop, Scene, World};
+use forge_input::{
+    fixed_input_tick_system, pump_winit_event, ActionMap, FixedInput, GilrsAdapter,
+    InputRingBuffer, InputState,
+};
 use forge_render::{RenderContext, RenderOptions, Renderer2D};
 use std::path::Path;
 use std::sync::Arc;
@@ -13,6 +17,7 @@ use winit::window::{Window, WindowId};
 
 use crate::bridge_ops::process_bridge_commands;
 use crate::cli::CliArgs;
+use crate::demo_input::demo_hero_movement_system;
 use crate::render_scene::{render_world_scene, DEFAULT_CLEAR_COLOR};
 use forge_bridge::{create_bridge_channel, BridgeCommandReceiver, BridgeServer};
 
@@ -34,6 +39,7 @@ pub struct WindowApp {
     last_frame_instant: Option<Instant>,
     command_rx: Option<BridgeCommandReceiver>,
     _bridge_server: Option<BridgeServer>,
+    gilrs: GilrsAdapter,
 }
 
 impl WindowApp {
@@ -42,6 +48,35 @@ impl WindowApp {
         let scene = Scene::load_from_file(&args.scene)?;
         let mut world = World::new();
         scene.spawn_into_world(&mut world)?;
+
+        // Initialize ActionMap
+        let action_map = if let Some(ref map_path) = args.input_map {
+            ActionMap::load_from_file(map_path)?
+        } else {
+            let scene_path = Path::new(&args.scene);
+            let candidate = scene_path
+                .parent()
+                .unwrap_or(Path::new(""))
+                .join("input_map.json");
+            if candidate.exists() {
+                ActionMap::load_from_file(&candidate)?
+            } else {
+                ActionMap::default()
+            }
+        };
+
+        // Insert input resources
+        world.insert_resource(InputState::default());
+        world.insert_resource(action_map);
+        world.insert_resource(FixedInput::default());
+        world.insert_resource(InputRingBuffer::new(2048));
+
+        let mut game_loop = GameLoop::new();
+        game_loop.add_pre_update_system(fixed_input_tick_system);
+
+        if args.demo_input {
+            game_loop.add_update_system(demo_hero_movement_system);
+        }
 
         let (command_rx, _bridge_server) = if !args.no_bridge {
             let (cmd_tx, cmd_rx) = create_bridge_channel();
@@ -54,11 +89,12 @@ impl WindowApp {
         Ok(Self {
             args,
             world,
-            game_loop: GameLoop::new(),
+            game_loop,
             state: None,
             last_frame_instant: None,
             command_rx,
             _bridge_server,
+            gilrs: GilrsAdapter::new(),
         })
     }
 
@@ -152,6 +188,11 @@ impl ApplicationHandler for WindowApp {
     }
 
     fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
+        // Forward window event to input system
+        if let Some(mut input_state) = self.world.get_resource_mut::<InputState>() {
+            pump_winit_event(&event, &mut input_state, None);
+        }
+
         let state = match self.state.as_mut() {
             Some(s) => s,
             None => return,
@@ -204,6 +245,14 @@ impl ApplicationHandler for WindowApp {
                     return;
                 }
 
+                // Poll gamepad events into InputState
+                if let Some(mut input_state) = self.world.get_resource_mut::<InputState>() {
+                    self.gilrs.poll_events(&mut input_state, None);
+                }
+
+                // Sync InputState + ActionMap -> FixedInput
+                forge_input::sync_world_frame_input(&mut self.world);
+
                 let now = Instant::now();
                 let delta = match self.last_frame_instant {
                     Some(prev) => now.duration_since(prev),
@@ -213,6 +262,11 @@ impl ApplicationHandler for WindowApp {
 
                 // Step simulation through fixed timestep loop
                 self.game_loop.step(&mut self.world, delta);
+
+                // Advance frame in InputState (clears just_pressed / just_released, counts down holds)
+                if let Some(mut input_state) = self.world.get_resource_mut::<InputState>() {
+                    input_state.start_new_frame();
+                }
 
                 let output_frame = match state.surface.get_current_texture() {
                     Ok(frame) => frame,

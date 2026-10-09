@@ -1,0 +1,80 @@
+{
+  "actions": {
+    "move_x": {
+      "description": "Horizontal movement (-1.0 left to +1.0 right)",
+      "bindings": [
+        {
+          "type": "dual_keys",
+          "negative": "ArrowLeft",
+          "positive": "ArrowRight"
+        },
+        {
+          "type": "dual_keys",
+          "negative": "KeyA",
+          "positive": "KeyD"
+        },
+        {
+          "type": "gamepad_axis",
+          "axis": "LeftStickX",
+          "scale": 1.0
+        },
+        {
+          "type": "dual_keys",
+          "negative": "DPadLeft",
+          "positive": "DPadRight"
+        }
+      ]
+    },
+    "move_y": {
+      "description": "Vertical movement (-1.0 down to +1.0 up)",
+      "bindings": [
+        {
+          "type": "dual_keys",
+          "negative": "ArrowDown",
+          "positive": "ArrowUp"
+        },
+        {
+          "type": "dual_keys",
+          "negative": "KeyS",
+          "positive": "KeyW"
+        },
+        {
+          "type": "gamepad_axis",
+          "axis": "LeftStickY",
+          "scale": 1.0
+        },
+        {
+          "type": "dual_keys",
+          "negative": "DPadDown",
+          "positive": "DPadUp"
+        }
+      ]
+    },
+    "jump": {
+      "description": "Jump action",
+      "bindings": [
+        {
+          "type": "key",
+          "code": "Space"
+        },
+        {
+          "type": "gamepad_button",
+          "button": "South"
+        }
+      ]
+    },
+    "interact": {
+      "description": "Interact with world objects",
+      "bindings": [
+        {
+          "type": "key",
+          "code": "KeyE"
+        },
+        {
+          "type": "gamepad_button",
+          "button": "West"
+        }
+      ]
+    }
+  }
+}

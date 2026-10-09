@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/game.simulate_input.json",
+  "title": "GameSimulateInput",
+  "description": "Simulate input events (key press/release, action trigger, axis movement) for agent testing and automation",
+  "definitions": {
+    "SimulateInputEvent": {
+      "type": "object",
+      "required": ["input_type"],
+      "properties": {
+        "input_type": {
+          "type": "string",
+          "enum": ["key_down", "key_up", "action_down", "action_up", "action_axis", "mouse_move", "mouse_down", "mouse_up"]
+        },
+        "key": {
+          "type": "string",
+          "description": "Keyboard key name (e.g. ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Space, KeyW, etc.)"
+        },
+        "action": {
+          "type": "string",
+          "description": "Action name defined in input_map.json (e.g. move_x, move_y, jump)"
+        },
+        "value": {
+          "type": "number",
+          "description": "Axis value (-1.0 to 1.0) or mouse position"
+        },
+        "duration_frames": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1,
+          "description": "Number of frames to maintain this simulated input state"
+        }
+      },
+      "additionalProperties": false
+    },
+    "GameSimulateInputParams": {
+      "type": "object",
+      "required": ["events"],
+      "properties": {
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SimulateInputEvent"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "GameSimulateInputResult": {
+      "type": "object",
+      "required": ["success", "applied_count"],
+      "properties": {
+        "success": { "type": "boolean" },
+        "applied_count": { "type": "integer" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
