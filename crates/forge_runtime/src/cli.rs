@@ -54,4 +54,12 @@ pub struct CliArgs {
     /// Win32 parent window handle (HWND) to embed the runtime window as a child
     #[arg(long)]
     pub embed_parent: Option<String>,
+
+    /// Run demo input controller for the hello scene (arrow keys move hero sprite)
+    #[arg(long, default_value_t = false)]
+    pub demo_input: bool,
+
+    /// Optional path to input_map.json (defaults to input_map.json next to scene or default)
+    #[arg(long)]
+    pub input_map: Option<String>,
 }

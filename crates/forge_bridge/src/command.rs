@@ -2,9 +2,10 @@
 
 use forge_protocol::{
     EnginePingParams, EnginePingResult, GameScreenshotParams, GameScreenshotResult,
-    ProjectStopParams, ProjectStopResult, SceneCreateEntityParams, SceneCreateEntityResult,
-    SceneDeleteEntityParams, SceneDeleteEntityResult, SceneGetTreeParams, SceneGetTreeResult,
-    SceneSetComponentParams, SceneSetComponentResult,
+    GameSimulateInputParams, GameSimulateInputResult, ProjectStopParams, ProjectStopResult,
+    SceneCreateEntityParams, SceneCreateEntityResult, SceneDeleteEntityParams,
+    SceneDeleteEntityResult, SceneGetTreeParams, SceneGetTreeResult, SceneSetComponentParams,
+    SceneSetComponentResult,
 };
 use tokio::sync::{mpsc, oneshot};
 
@@ -52,6 +53,13 @@ pub enum BridgeCommand {
         params: GameScreenshotParams,
         /// Channel to return the screenshot result (base64 or saved file path).
         responder: oneshot::Sender<Result<GameScreenshotResult, String>>,
+    },
+    /// Simulate input events on the engine thread.
+    GameSimulateInput {
+        /// Input simulation parameters.
+        params: GameSimulateInputParams,
+        /// Channel to return operation result.
+        responder: oneshot::Sender<Result<GameSimulateInputResult, String>>,
     },
     /// Gracefully stop the game runtime session.
     ProjectStop {

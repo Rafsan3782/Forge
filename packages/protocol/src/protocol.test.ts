@@ -24,6 +24,8 @@ import {
   ProjectStopResultSchema,
   GameScreenshotParamsSchema,
   GameScreenshotResultSchema,
+  GameSimulateInputParamsSchema,
+  GameSimulateInputResultSchema,
   PlaytestReportSchema,
 } from "./generated/index.ts";
 
@@ -178,6 +180,23 @@ test("game.screenshot serialize and deserialize against fixtures", () => {
     parsedResult,
   );
 });
+
+test("game.simulate_input serialize and deserialize against fixtures", () => {
+  const params = loadFixture("game_simulate_input_params.json");
+  const parsedParams = GameSimulateInputParamsSchema.parse(params);
+  assert.deepStrictEqual(
+    GameSimulateInputParamsSchema.parse(JSON.parse(JSON.stringify(parsedParams))),
+    parsedParams,
+  );
+
+  const result = loadFixture("game_simulate_input_result.json");
+  const parsedResult = GameSimulateInputResultSchema.parse(result);
+  assert.deepStrictEqual(
+    GameSimulateInputResultSchema.parse(JSON.parse(JSON.stringify(parsedResult))),
+    parsedResult,
+  );
+});
+
 
 test("playtest.report serialize and deserialize against fixtures", () => {
   const reportData = loadFixture("playtest_report.json");

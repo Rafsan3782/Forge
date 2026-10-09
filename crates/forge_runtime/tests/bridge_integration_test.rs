@@ -150,6 +150,12 @@ async fn test_bridge_full_lifecycle_and_security() {
                             let _ = responder
                                 .send(Err("No GPU adapter available for screenshot".to_string()));
                         }
+                        forge_bridge::BridgeCommand::GameSimulateInput { params, responder } => {
+                            let res = forge_runtime::bridge_ops::apply_simulated_input(
+                                &mut world, &params,
+                            );
+                            let _ = responder.send(Ok(res));
+                        }
                         forge_bridge::BridgeCommand::ProjectStop {
                             params: _,
                             responder,

@@ -199,6 +199,38 @@ pub struct GameScreenshotResult {
 }
 
 // -----------------------------------------------------------------------------
+// game.simulate_input
+// -----------------------------------------------------------------------------
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SimulateInputEvent {
+    pub input_type: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub key: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub action: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub value: Option<f64>,
+    #[serde(default = "default_duration_frames")]
+    pub duration_frames: u32,
+}
+
+fn default_duration_frames() -> u32 {
+    1
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct GameSimulateInputParams {
+    pub events: Vec<SimulateInputEvent>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct GameSimulateInputResult {
+    pub success: bool,
+    pub applied_count: u32,
+}
+
+// -----------------------------------------------------------------------------
 // playtest.report
 // -----------------------------------------------------------------------------
 

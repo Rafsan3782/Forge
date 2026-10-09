@@ -1,0 +1,15 @@
+{
+  "events": [
+    {
+      "input_type": "key_down",
+      "key": "ArrowRight",
+      "duration_frames": 5
+    },
+    {
+      "input_type": "action_axis",
+      "action": "move_x",
+      "value": 1.0,
+      "duration_frames": 5
+    }
+  ]
+}

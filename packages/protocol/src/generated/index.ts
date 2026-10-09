@@ -187,6 +187,42 @@ export const GameScreenshotResultSchema = z.object({
 export type GameScreenshotResult = z.infer<typeof GameScreenshotResultSchema>;
 
 // -----------------------------------------------------------------------------
+// game.simulate_input
+// -----------------------------------------------------------------------------
+
+export const SimulateInputTypeSchema = z.enum([
+  "key_down",
+  "key_up",
+  "action_down",
+  "action_up",
+  "action_axis",
+  "mouse_move",
+  "mouse_down",
+  "mouse_up",
+]);
+export type SimulateInputType = z.infer<typeof SimulateInputTypeSchema>;
+
+export const SimulateInputEventSchema = z.object({
+  input_type: SimulateInputTypeSchema,
+  key: z.string().optional(),
+  action: z.string().optional(),
+  value: z.number().optional(),
+  duration_frames: z.number().int().optional().default(1),
+});
+export type SimulateInputEvent = z.infer<typeof SimulateInputEventSchema>;
+
+export const GameSimulateInputParamsSchema = z.object({
+  events: z.array(SimulateInputEventSchema),
+});
+export type GameSimulateInputParams = z.infer<typeof GameSimulateInputParamsSchema>;
+
+export const GameSimulateInputResultSchema = z.object({
+  success: z.boolean(),
+  applied_count: z.number().int(),
+});
+export type GameSimulateInputResult = z.infer<typeof GameSimulateInputResultSchema>;
+
+// -----------------------------------------------------------------------------
 // playtest.report
 // -----------------------------------------------------------------------------
 

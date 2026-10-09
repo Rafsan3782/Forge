@@ -191,6 +191,33 @@ pub fn get_mcp_tools() -> Vec<McpTool> {
             }),
         },
         McpTool {
+            name: "game.simulate_input".to_string(),
+            description: "Simulate input events (key press/release, action, axis, mouse) on the engine thread".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "required": ["events"],
+                "properties": {
+                    "events": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "required": ["input_type"],
+                            "properties": {
+                                "input_type": {
+                                    "type": "string",
+                                    "enum": ["key_down", "key_up", "action_down", "action_up", "action_axis", "mouse_move", "mouse_down", "mouse_up"]
+                                },
+                                "key": { "type": "string" },
+                                "action": { "type": "string" },
+                                "value": { "type": "number" },
+                                "duration_frames": { "type": "integer", "default": 1 }
+                            }
+                        }
+                    }
+                }
+            }),
+        },
+        McpTool {
             name: "project.stop".to_string(),
             description: "Stop and terminate the running Forge game runtime session".to_string(),
             input_schema: json!({

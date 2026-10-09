@@ -193,6 +193,27 @@ pub async fn dispatch_direct_tool(
             Ok(serde_json::to_value(result)?)
         }
 
+        "game.simulate_input" => {
+            let sim_params: forge_protocol::GameSimulateInputParams =
+                serde_json::from_value(params)
+                    .map_err(|e| BridgeError::InvalidParams(e.to_string()))?;
+
+            let (tx, rx) = oneshot::channel();
+            command_sender
+                .send(BridgeCommand::GameSimulateInput {
+                    params: sim_params,
+                    responder: tx,
+                })
+                .map_err(|_| BridgeError::ChannelClosed)?;
+
+            let result = rx
+                .await
+                .map_err(|_| BridgeError::ChannelClosed)?
+                .map_err(BridgeError::Engine)?;
+
+            Ok(serde_json::to_value(result)?)
+        }
+
         "project.stop" => {
             let stop_params: ProjectStopParams = if params.is_null() {
                 ProjectStopParams::default()

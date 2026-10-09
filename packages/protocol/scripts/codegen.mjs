@@ -221,6 +221,42 @@ export const GameScreenshotResultSchema = z.object({
 export type GameScreenshotResult = z.infer<typeof GameScreenshotResultSchema>;
 
 // -----------------------------------------------------------------------------
+// game.simulate_input
+// -----------------------------------------------------------------------------
+
+export const SimulateInputTypeSchema = z.enum([
+  "key_down",
+  "key_up",
+  "action_down",
+  "action_up",
+  "action_axis",
+  "mouse_move",
+  "mouse_down",
+  "mouse_up",
+]);
+export type SimulateInputType = z.infer<typeof SimulateInputTypeSchema>;
+
+export const SimulateInputEventSchema = z.object({
+  input_type: SimulateInputTypeSchema,
+  key: z.string().optional(),
+  action: z.string().optional(),
+  value: z.number().optional(),
+  duration_frames: z.number().int().optional().default(1),
+});
+export type SimulateInputEvent = z.infer<typeof SimulateInputEventSchema>;
+
+export const GameSimulateInputParamsSchema = z.object({
+  events: z.array(SimulateInputEventSchema),
+});
+export type GameSimulateInputParams = z.infer<typeof GameSimulateInputParamsSchema>;
+
+export const GameSimulateInputResultSchema = z.object({
+  success: z.boolean(),
+  applied_count: z.number().int(),
+});
+export type GameSimulateInputResult = z.infer<typeof GameSimulateInputResultSchema>;
+
+// -----------------------------------------------------------------------------
 // playtest.report
 // -----------------------------------------------------------------------------
 
@@ -477,6 +513,38 @@ pub struct GameScreenshotResult {
     pub width: u32,
     pub height: u32,
     pub format: String,
+}
+
+// -----------------------------------------------------------------------------
+// game.simulate_input
+// -----------------------------------------------------------------------------
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SimulateInputEvent {
+    pub input_type: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub key: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub action: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub value: Option<f64>,
+    #[serde(default = "default_duration_frames")]
+    pub duration_frames: u32,
+}
+
+fn default_duration_frames() -> u32 {
+    1
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct GameSimulateInputParams {
+    pub events: Vec<SimulateInputEvent>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct GameSimulateInputResult {
+    pub success: bool,
+    pub applied_count: u32,
 }
 
 // -----------------------------------------------------------------------------

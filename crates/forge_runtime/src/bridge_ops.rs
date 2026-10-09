@@ -85,6 +85,11 @@ pub fn process_bridge_commands(
                 let _ = responder.send(res);
             }
 
+            BridgeCommand::GameSimulateInput { params, responder } => {
+                let res = apply_simulated_input(world, &params);
+                let _ = responder.send(Ok(res));
+            }
+
             BridgeCommand::ProjectStop {
                 params: _,
                 responder,
@@ -164,4 +169,94 @@ pub fn capture_screenshot(
         height,
         format: "png".to_string(),
     })
+}
+
+/// Applies simulated input events to the World's InputState and records into InputRingBuffer.
+pub fn apply_simulated_input(
+    world: &mut World,
+    params: &forge_protocol::GameSimulateInputParams,
+) -> forge_protocol::GameSimulateInputResult {
+    use forge_input::{InputRingBuffer, InputState, KeyCode, MouseButton};
+
+    let mut applied_count = 0;
+
+    if let Some(mut state) = world.get_resource_mut::<InputState>() {
+        let frame = state.current_frame();
+        for ev in &params.events {
+            applied_count += 1;
+            match ev.input_type.as_str() {
+                "key_down" => {
+                    if let Some(ref k_str) = ev.key {
+                        if let Some(k) = KeyCode::from_name(k_str) {
+                            state.simulate_key(k, true, ev.duration_frames);
+                        }
+                    }
+                }
+                "key_up" => {
+                    if let Some(ref k_str) = ev.key {
+                        if let Some(k) = KeyCode::from_name(k_str) {
+                            state.simulate_key(k, false, 1);
+                        }
+                    }
+                }
+                "action_down" => {
+                    if let Some(ref act) = ev.action {
+                        state.simulate_action(act, true, ev.duration_frames);
+                    }
+                }
+                "action_up" => {
+                    if let Some(ref act) = ev.action {
+                        state.simulate_action(act, false, 1);
+                    }
+                }
+                "action_axis" => {
+                    if let Some(ref act) = ev.action {
+                        let val = ev.value.unwrap_or(0.0) as f32;
+                        state.simulate_axis(act, val, ev.duration_frames);
+                    }
+                }
+                "mouse_move" => {
+                    let val = ev.value.unwrap_or(0.0) as f32;
+                    state.feed_mouse_move(forge_core::Vec2::new(val, val), None);
+                }
+                "mouse_down" => {
+                    let btn = ev
+                        .key
+                        .as_deref()
+                        .and_then(MouseButton::from_name)
+                        .unwrap_or(MouseButton::Left);
+                    state.feed_mouse_button_press(btn, None);
+                }
+                "mouse_up" => {
+                    let btn = ev
+                        .key
+                        .as_deref()
+                        .and_then(MouseButton::from_name)
+                        .unwrap_or(MouseButton::Left);
+                    state.feed_mouse_button_release(btn, None);
+                }
+                _ => {}
+            }
+        }
+
+        // Also record to ring buffer if present
+        if let Some(mut buf) = world.get_resource_mut::<InputRingBuffer>() {
+            for ev in &params.events {
+                buf.record(
+                    frame,
+                    ev.input_type.clone(),
+                    ev.action
+                        .clone()
+                        .or_else(|| ev.key.clone())
+                        .unwrap_or_default(),
+                    ev.value.unwrap_or(1.0) as f32,
+                );
+            }
+        }
+    }
+
+    forge_protocol::GameSimulateInputResult {
+        success: true,
+        applied_count,
+    }
 }
