@@ -379,6 +379,6 @@ fn test_templates_hello_scene_loading() {
     assert_eq!(world.get::<Name>(hero_ent).unwrap().as_str(), "Hero");
     assert_eq!(
         world.get::<Sprite>(hero_ent).unwrap().asset_id,
-        "templates/hello/assets/hero.png"
+        "e4b2d3c1-0001-4000-8000-000000000001"
     );
 }

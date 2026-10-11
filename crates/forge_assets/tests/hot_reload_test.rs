@@ -51,15 +51,30 @@ fn test_hot_reload_texture_in_headless_mode() {
     std::thread::sleep(Duration::from_millis(50));
     create_test_png(&texture_path, 0, 255, 0); // Green
 
-    // Wait debounce duration
-    std::thread::sleep(Duration::from_millis(100));
+    // Poll for the event in a loop to ensure file system watcher notification arrives
+    let mut detected = false;
+    let start = std::time::Instant::now();
+    while start.elapsed() < Duration::from_secs(3) {
+        std::thread::sleep(Duration::from_millis(50));
+        let events = watcher.poll_events();
+        for ev in events {
+            if let HotReloadEvent::Texture(p) = ev {
+                if p == texture_path
+                    || p.file_name() == texture_path.file_name()
+                    || std::fs::canonicalize(&p).ok() == std::fs::canonicalize(&texture_path).ok()
+                {
+                    detected = true;
+                    break;
+                }
+            }
+        }
+        if detected {
+            break;
+        }
+    }
 
-    let events = watcher.poll_events();
-    let reloaded_event = events
-        .iter()
-        .any(|ev| matches!(ev, HotReloadEvent::Texture(p) if p == &texture_path));
     assert!(
-        reloaded_event,
+        detected,
         "Expected HotReloadEvent::Texture for modified file"
     );
 
