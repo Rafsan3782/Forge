@@ -10,21 +10,16 @@ use crate::error::AssetError;
 use serde::{Deserialize, Serialize};
 
 /// Playback looping mode for an animation clip.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum LoopMode {
     /// Repeats indefinitely from the start when reaching the end.
+    #[default]
     Loop,
     /// Plays once and freezes on the final frame.
     Once,
     /// Alternates direction between forward and backward.
     PingPong,
-}
-
-impl Default for LoopMode {
-    fn default() -> Self {
-        Self::Loop
-    }
 }
 
 /// An event triggered when an animation playback reaches a specific frame index.

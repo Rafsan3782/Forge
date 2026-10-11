@@ -85,12 +85,12 @@ impl HotReloadWatcher {
             },
             Config::default(),
         )
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+        .map_err(|e| std::io::Error::other(e.to_string()))?;
 
         if watch_path.as_ref().exists() {
             watcher
                 .watch(watch_path.as_ref(), RecursiveMode::Recursive)
-                .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+                .map_err(|e| std::io::Error::other(e.to_string()))?;
         }
 
         Ok(Self {

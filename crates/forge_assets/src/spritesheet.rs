@@ -32,7 +32,7 @@ impl PixelRect {
     }
 
     /// Computes normalized UV coordinates `[u_min, v_min, u_max, v_max]` given the total texture dimensions.
-    pub fn to_uv(&self, texture_width: u32, texture_height: u32) -> [f32; 4] {
+    pub fn to_uv(self, texture_width: u32, texture_height: u32) -> [f32; 4] {
         if texture_width == 0 || texture_height == 0 {
             return [0.0, 0.0, 1.0, 1.0];
         }
