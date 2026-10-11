@@ -231,6 +231,61 @@ pub struct GameSimulateInputResult {
 }
 
 // -----------------------------------------------------------------------------
+// asset.list, asset.get_info, asset.import
+// -----------------------------------------------------------------------------
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AssetInfo {
+    pub id: String,
+    pub path: String,
+    pub asset_type: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct AssetListParams {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub asset_type: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AssetListResult {
+    pub assets: Vec<AssetInfo>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AssetGetInfoParams {
+    pub id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AssetGetInfoResult {
+    pub id: String,
+    pub path: String,
+    pub asset_type: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AssetImportParams {
+    pub source_path: String,
+    pub target_path: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub asset_type: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AssetImportResult {
+    pub id: String,
+    pub path: String,
+    pub asset_type: String,
+}
+
+// -----------------------------------------------------------------------------
 // playtest.report
 // -----------------------------------------------------------------------------
 

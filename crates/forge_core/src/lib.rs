@@ -19,7 +19,9 @@ pub mod time;
 pub use ecs::{Bundle, Commands, Component, Entity, Query, Res, ResMut, Resource, Schedule, World};
 
 // Re-export built-in components and math primitives
-pub use components::{Camera2D, Children, EntityId, Name, Parent, Sprite, Transform2D, Vec2};
+pub use components::{
+    Animator, Camera2D, Children, EntityId, Name, Parent, Sprite, Transform2D, Vec2,
+};
 
 // Re-export error types
 pub use error::{CoreError, SceneError};

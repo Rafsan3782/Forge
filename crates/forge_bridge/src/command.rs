@@ -68,6 +68,27 @@ pub enum BridgeCommand {
         /// Channel to return shutdown confirmation.
         responder: oneshot::Sender<Result<ProjectStopResult, String>>,
     },
+    /// List assets known to the asset database.
+    AssetList {
+        /// Asset list filter parameters.
+        params: forge_protocol::AssetListParams,
+        /// Channel to return list of assets.
+        responder: oneshot::Sender<Result<forge_protocol::AssetListResult, String>>,
+    },
+    /// Get metadata and details for a specific asset ID.
+    AssetGetInfo {
+        /// Asset get info parameters.
+        params: forge_protocol::AssetGetInfoParams,
+        /// Channel to return asset info.
+        responder: oneshot::Sender<Result<forge_protocol::AssetGetInfoResult, String>>,
+    },
+    /// Import an asset file into the project.
+    AssetImport {
+        /// Asset import parameters.
+        params: forge_protocol::AssetImportParams,
+        /// Channel to return import result.
+        responder: oneshot::Sender<Result<forge_protocol::AssetImportResult, String>>,
+    },
 }
 
 /// Sender side held by the bridge server to dispatch commands to the engine loop.

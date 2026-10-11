@@ -327,8 +327,41 @@ fn apply_component_from_hashmap(
                     sprite.z_order = z;
                 }
             }
+            if let Some(frame_str) = data.get("frame") {
+                if let Ok(f) = frame_str.parse::<u32>() {
+                    sprite.frame = Some(f);
+                }
+            }
+            if let Some(uv_str) = data.get("uv_rect") {
+                if let Ok(uv) = serde_json::from_str::<[f32; 4]>(uv_str) {
+                    sprite.uv_rect = Some(uv);
+                }
+            }
 
             world.entity_mut(entity).insert(sprite);
+            Ok(())
+        }
+        "Animator" => {
+            let mut animator = world
+                .get::<crate::components::Animator>(entity)
+                .cloned()
+                .unwrap_or_default();
+
+            if let Some(clip_id) = data.get("clip_asset_id").or_else(|| data.get("clip")) {
+                animator.clip_asset_id = clip_id.clone();
+            }
+            if let Some(playing_str) = data.get("playing") {
+                if let Ok(p) = playing_str.parse::<bool>() {
+                    animator.playing = p;
+                }
+            }
+            if let Some(speed_str) = data.get("speed") {
+                if let Ok(s) = speed_str.parse::<f32>() {
+                    animator.speed = s;
+                }
+            }
+
+            world.entity_mut(entity).insert(animator);
             Ok(())
         }
         "Camera" | "Camera2D" => {

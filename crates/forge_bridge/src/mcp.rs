@@ -230,5 +230,58 @@ pub fn get_mcp_tools() -> Vec<McpTool> {
                 }
             }),
         },
+        McpTool {
+            name: "asset.list".to_string(),
+            description: "List all tracked assets in the project asset database, optionally filtered by asset type".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "asset_type": {
+                        "type": ["string", "null"],
+                        "description": "Optional asset type filter (e.g. texture, spritesheet, animation, scene)"
+                    }
+                }
+            }),
+        },
+        McpTool {
+            name: "asset.get_info".to_string(),
+            description: "Retrieve metadata, path, and type information for an asset by its unique UUID".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "required": ["id"],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Stable UUID of the asset"
+                    }
+                }
+            }),
+        },
+        McpTool {
+            name: "asset.import".to_string(),
+            description: "Copy an external file into the project assets folder and generate a stable sidecar metadata file".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "required": ["source_path", "target_path"],
+                "properties": {
+                    "source_path": {
+                        "type": "string",
+                        "description": "Path to the source file to import"
+                    },
+                    "target_path": {
+                        "type": "string",
+                        "description": "Relative target path inside the project assets directory"
+                    },
+                    "asset_type": {
+                        "type": ["string", "null"],
+                        "description": "Optional explicit asset type"
+                    },
+                    "metadata": {
+                        "type": ["object", "null"],
+                        "description": "Optional initial metadata or import settings"
+                    }
+                }
+            }),
+        },
     ]
 }

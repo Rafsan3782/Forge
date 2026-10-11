@@ -164,6 +164,18 @@ async fn test_bridge_full_lifecycle_and_security() {
                             let _ = responder
                                 .send(Ok(forge_protocol::ProjectStopResult { stopped: true }));
                         }
+                        forge_bridge::BridgeCommand::AssetList { responder, .. } => {
+                            let _ = responder
+                                .send(Err("Assets not initialized in dummy fallback".to_string()));
+                        }
+                        forge_bridge::BridgeCommand::AssetGetInfo { responder, .. } => {
+                            let _ = responder
+                                .send(Err("Assets not initialized in dummy fallback".to_string()));
+                        }
+                        forge_bridge::BridgeCommand::AssetImport { responder, .. } => {
+                            let _ = responder
+                                .send(Err("Assets not initialized in dummy fallback".to_string()));
+                        }
                     }
                 }
             }

@@ -1,0 +1,12 @@
+{
+  "assets": [
+    {
+      "id": "e3f1a0e1-7c9e-4a6f-8a0b-1d2e3f4a5b6c",
+      "path": "assets/hero.png",
+      "asset_type": "texture",
+      "metadata": {
+        "filter": "linear"
+      }
+    }
+  ]
+}

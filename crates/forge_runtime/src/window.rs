@@ -40,24 +40,42 @@ pub struct WindowApp {
     command_rx: Option<BridgeCommandReceiver>,
     _bridge_server: Option<BridgeServer>,
     gilrs: GilrsAdapter,
+    watcher: Option<forge_assets::HotReloadWatcher>,
 }
 
 impl WindowApp {
     /// Initializes a new WindowApp from CLI arguments, loading the initial scene into the ECS world.
     pub fn new(args: CliArgs) -> Result<Self, Box<dyn std::error::Error>> {
+        let scene_path = Path::new(&args.scene);
+        let scene_dir = scene_path.parent().unwrap_or(Path::new("."));
+        let assets_dir = scene_dir.join("assets");
+
+        // Initialize and scan AssetDatabase
+        let mut asset_db = forge_assets::AssetDatabase::new(&assets_dir);
+        if let Err(e) = asset_db.scan_and_index() {
+            tracing::warn!("Failed to scan asset database at {:?}: {}", assets_dir, e);
+        }
+
+        let mut animation_store = forge_assets::AnimationStore::new();
+        animation_store.set_base_dir(&assets_dir);
+        let mut sheet_store = forge_assets::SpriteSheetStore::new();
+        sheet_store.set_base_dir(&assets_dir);
+
         let scene = Scene::load_from_file(&args.scene)?;
         let mut world = World::new();
         scene.spawn_into_world(&mut world)?;
+
+        // Insert asset resources
+        world.insert_resource(asset_db);
+        world.insert_resource(animation_store);
+        world.insert_resource(sheet_store);
+        world.insert_resource(forge_core::EventBus::new());
 
         // Initialize ActionMap
         let action_map = if let Some(ref map_path) = args.input_map {
             ActionMap::load_from_file(map_path)?
         } else {
-            let scene_path = Path::new(&args.scene);
-            let candidate = scene_path
-                .parent()
-                .unwrap_or(Path::new(""))
-                .join("input_map.json");
+            let candidate = scene_dir.join("input_map.json");
             if candidate.exists() {
                 ActionMap::load_from_file(&candidate)?
             } else {
@@ -73,10 +91,17 @@ impl WindowApp {
 
         let mut game_loop = GameLoop::new();
         game_loop.add_pre_update_system(fixed_input_tick_system);
+        game_loop.add_update_system(forge_assets::animator_update_system);
 
         if args.demo_input {
             game_loop.add_update_system(demo_hero_movement_system);
         }
+
+        let watcher = if assets_dir.exists() {
+            forge_assets::HotReloadWatcher::new(&assets_dir).ok()
+        } else {
+            None
+        };
 
         let (command_rx, _bridge_server) = if !args.no_bridge {
             let (cmd_tx, cmd_rx) = create_bridge_channel();
@@ -95,6 +120,7 @@ impl WindowApp {
             command_rx,
             _bridge_server,
             gilrs: GilrsAdapter::new(),
+            watcher,
         })
     }
 
@@ -176,7 +202,10 @@ impl ApplicationHandler for WindowApp {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if self.state.is_none() {
             match Self::init_window_state(event_loop, &self.args) {
-                Ok(state) => {
+                Ok(mut state) => {
+                    if let Some(db) = self.world.get_resource::<forge_assets::AssetDatabase>() {
+                        state.texture_store.set_database(db.clone());
+                    }
                     self.state = Some(state);
                 }
                 Err(e) => {
@@ -243,6 +272,63 @@ impl ApplicationHandler for WindowApp {
                     tracing::info!("Shutdown requested via bridge project.stop. Exiting cleanly.");
                     event_loop.exit();
                     return;
+                }
+
+                // Poll hot reload events
+                if let Some(ref mut w) = self.watcher {
+                    for event in w.poll_events() {
+                        match event {
+                            forge_assets::HotReloadEvent::Texture(p) => {
+                                let path_str = p.to_string_lossy();
+                                let asset_id = if let Some(db) =
+                                    self.world.get_resource::<forge_assets::AssetDatabase>()
+                                {
+                                    db.get_id_by_path(&p).unwrap_or(&path_str).to_string()
+                                } else {
+                                    path_str.to_string()
+                                };
+                                let _ = state.texture_store.reload(&asset_id, &state.context);
+                                tracing::info!("Hot reloaded texture: {:?}", p);
+                            }
+                            forge_assets::HotReloadEvent::SpriteSheet(p) => {
+                                if let Some(mut sheets) = self
+                                    .world
+                                    .get_resource_mut::<forge_assets::SpriteSheetStore>()
+                                {
+                                    let path_str = p.to_string_lossy();
+                                    let _ = sheets.reload(&path_str, &p);
+                                    tracing::info!("Hot reloaded spritesheet: {:?}", p);
+                                }
+                            }
+                            forge_assets::HotReloadEvent::Animation(p) => {
+                                if let Some(mut anims) = self
+                                    .world
+                                    .get_resource_mut::<forge_assets::AnimationStore>()
+                                {
+                                    let path_str = p.to_string_lossy();
+                                    let _ = anims.reload(&path_str, &p);
+                                    tracing::info!("Hot reloaded animation: {:?}", p);
+                                }
+                            }
+                            forge_assets::HotReloadEvent::Scene(p) => {
+                                if let Ok(new_scene) = Scene::load_from_file(&p) {
+                                    self.world.clear_entities();
+                                    let _ = new_scene.spawn_into_world(&mut self.world);
+                                    tracing::info!("Hot reloaded scene from {:?}", p);
+                                }
+                            }
+                            forge_assets::HotReloadEvent::Meta(p) => {
+                                if let Some(mut db) =
+                                    self.world.get_resource_mut::<forge_assets::AssetDatabase>()
+                                {
+                                    let _ = db.scan_and_index();
+                                    state.texture_store.set_database(db.clone());
+                                    tracing::info!("Hot reloaded asset database metadata: {:?}", p);
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
                 }
 
                 // Poll gamepad events into InputState

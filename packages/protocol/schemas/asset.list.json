@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/asset.list.json",
+  "title": "AssetList",
+  "description": "Lists all registered assets in the project asset database",
+  "definitions": {
+    "AssetInfo": {
+      "type": "object",
+      "required": ["id", "path", "asset_type"],
+      "properties": {
+        "id": { "type": "string", "description": "Stable UUID of the asset" },
+        "path": { "type": "string", "description": "Project-relative path to the asset file" },
+        "asset_type": {
+          "type": "string",
+          "description": "Type of asset (e.g. texture, spritesheet, animation, scene, audio)"
+        },
+        "metadata": { "type": "object", "description": "Asset import settings and metadata" }
+      },
+      "additionalProperties": false
+    },
+    "AssetListParams": {
+      "type": "object",
+      "properties": {
+        "asset_type": { "type": "string", "description": "Optional filter by asset type" }
+      },
+      "additionalProperties": false
+    },
+    "AssetListResult": {
+      "type": "object",
+      "required": ["assets"],
+      "properties": {
+        "assets": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/AssetInfo" }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

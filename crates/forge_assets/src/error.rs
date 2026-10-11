@@ -14,6 +14,10 @@ pub enum AssetError {
     #[error("Image decoding error: {0}")]
     Image(#[from] image::ImageError),
 
+    /// JSON serialization/deserialization error.
+    #[error("Asset JSON error: {0}")]
+    Json(#[from] serde_json::Error),
+
     /// GPU texture creation failure.
     #[error("Render GPU error: {0}")]
     Render(#[from] RenderError),

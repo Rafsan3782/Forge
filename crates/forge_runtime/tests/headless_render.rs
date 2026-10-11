@@ -58,7 +58,14 @@ fn test_headless_hello_scene_render_and_reference_comparison() {
     let offscreen = OffscreenTarget::new(&context.device, WIDTH, HEIGHT)
         .expect("Failed to create offscreen render target");
 
+    let mut asset_db = forge_assets::AssetDatabase::new(&assets_dir);
+    asset_db
+        .scan_and_index()
+        .expect("Failed to scan asset database");
+    world.insert_resource(asset_db.clone());
+
     let mut texture_store = TextureStore::new(&context).expect("Failed to create texture store");
+    texture_store.set_database(asset_db);
     texture_store.set_base_dir(&workspace_root);
 
     let mut renderer = Renderer2D::new(context.clone());

@@ -84,10 +84,12 @@ pub fn generate_sprite_quad(transform: &Transform2D, sprite: &Sprite) -> [Sprite
 
     let tint = sprite.color_tint;
 
+    let [u0, v0, u1, v1] = sprite.uv_rect.unwrap_or([0.0, 0.0, 1.0, 1.0]);
+
     [
-        SpriteVertex::new(p0, [0.0, 1.0], tint),
-        SpriteVertex::new(p1, [1.0, 1.0], tint),
-        SpriteVertex::new(p2, [1.0, 0.0], tint),
-        SpriteVertex::new(p3, [0.0, 0.0], tint),
+        SpriteVertex::new(p0, [u0, v1], tint),
+        SpriteVertex::new(p1, [u1, v1], tint),
+        SpriteVertex::new(p2, [u1, v0], tint),
+        SpriteVertex::new(p3, [u0, v0], tint),
     ]
 }

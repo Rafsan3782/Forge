@@ -10,6 +10,7 @@ pub struct TextureStore {
     textures: HashMap<String, GpuTexture>,
     magenta_placeholder: GpuTexture,
     base_dir: Option<PathBuf>,
+    database: Option<crate::database::AssetDatabase>,
 }
 
 impl TextureStore {
@@ -26,7 +27,13 @@ impl TextureStore {
             textures: HashMap::new(),
             magenta_placeholder,
             base_dir: None,
+            database: None,
         })
+    }
+
+    /// Associates an asset database with this texture store to resolve UUIDs.
+    pub fn set_database(&mut self, database: crate::database::AssetDatabase) {
+        self.database = Some(database);
     }
 
     /// Sets the base directory for resolving relative asset paths.
@@ -95,8 +102,14 @@ impl TextureStore {
             return texture.clone();
         }
 
-        // Search for file on disk across base dir, direct path, and parent directories
+        // Search for file on disk across base dir, database resolution, direct path, and parent directories
         let mut candidate_paths = Vec::new();
+
+        if let Some(db) = &self.database {
+            if let Some(resolved) = db.resolve_path(asset_id) {
+                candidate_paths.push(resolved);
+            }
+        }
 
         if let Some(base) = &self.base_dir {
             candidate_paths.push(base.join(asset_id));
@@ -142,7 +155,7 @@ impl TextureStore {
             },
             None => {
                 tracing::warn!(
-                    "Asset '{}' not found on disk. Using visible magenta placeholder.",
+                    "Asset '{}' not found in candidate paths. Using magenta placeholder.",
                     asset_id
                 );
                 self.textures
@@ -150,5 +163,21 @@ impl TextureStore {
                 self.magenta_placeholder.clone()
             }
         }
+    }
+
+    /// Reloads a texture from disk, updating the GPU texture and cache.
+    pub fn reload(
+        &mut self,
+        asset_id: &str,
+        render_context: &RenderContext,
+    ) -> Result<GpuTexture, AssetError> {
+        self.textures.remove(asset_id);
+        let tex = self.get_or_load(asset_id, render_context);
+        Ok(tex)
+    }
+
+    /// Removes a texture from cache.
+    pub fn remove(&mut self, asset_id: &str) {
+        self.textures.remove(asset_id);
     }
 }

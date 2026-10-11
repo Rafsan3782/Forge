@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/asset.get_info.json",
+  "title": "AssetGetInfo",
+  "description": "Retrieves metadata and import settings for an asset by its id or path",
+  "definitions": {
+    "AssetGetInfoParams": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "description": "Asset UUID" }
+      },
+      "additionalProperties": false
+    },
+    "AssetGetInfoResult": {
+      "type": "object",
+      "required": ["id", "path", "asset_type"],
+      "properties": {
+        "id": { "type": "string", "description": "Stable UUID of the asset" },
+        "path": { "type": "string", "description": "Project-relative path to the asset file" },
+        "asset_type": { "type": "string", "description": "Type of asset" },
+        "metadata": { "type": "object", "description": "Asset import settings and metadata" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
