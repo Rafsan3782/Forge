@@ -37,19 +37,37 @@ pub fn run_headless(args: &CliArgs) -> Result<(), Box<dyn std::error::Error>> {
     let mut renderer = Renderer2D::new(context.clone());
     let offscreen = OffscreenTarget::new(&context.device, args.width, args.height)?;
 
+    let scene_path = Path::new(&args.scene);
+    let scene_dir = scene_path.parent().unwrap_or(Path::new("."));
+    let assets_dir = scene_dir.join("assets");
+
+    // Initialize and scan AssetDatabase
+    let mut asset_db = forge_assets::AssetDatabase::new(&assets_dir);
+    if let Err(e) = asset_db.scan_and_index() {
+        tracing::warn!("Failed to scan asset database at {:?}: {}", assets_dir, e);
+    }
+    texture_store.set_database(asset_db.clone());
+
+    let mut animation_store = forge_assets::AnimationStore::new();
+    animation_store.set_base_dir(&assets_dir);
+    let mut sheet_store = forge_assets::SpriteSheetStore::new();
+    sheet_store.set_base_dir(&assets_dir);
+
     let scene = Scene::load_from_file(&args.scene)?;
     let mut world = World::new();
     scene.spawn_into_world(&mut world)?;
+
+    // Insert asset resources
+    world.insert_resource(asset_db);
+    world.insert_resource(animation_store);
+    world.insert_resource(sheet_store);
+    world.insert_resource(forge_core::EventBus::new());
 
     // Initialize ActionMap
     let action_map = if let Some(ref map_path) = args.input_map {
         forge_input::ActionMap::load_from_file(map_path)?
     } else {
-        let scene_path = Path::new(&args.scene);
-        let candidate = scene_path
-            .parent()
-            .unwrap_or(Path::new(""))
-            .join("input_map.json");
+        let candidate = scene_dir.join("input_map.json");
         if candidate.exists() {
             forge_input::ActionMap::load_from_file(&candidate)?
         } else {
@@ -65,10 +83,18 @@ pub fn run_headless(args: &CliArgs) -> Result<(), Box<dyn std::error::Error>> {
 
     let mut game_loop = GameLoop::new();
     game_loop.add_pre_update_system(forge_input::fixed_input_tick_system);
+    game_loop.add_update_system(forge_assets::animator_update_system);
 
     if args.demo_input {
         game_loop.add_update_system(crate::demo_input::demo_hero_movement_system);
     }
+
+    // Start hot reload watcher if directory exists
+    let mut watcher = if assets_dir.exists() {
+        forge_assets::HotReloadWatcher::new(&assets_dir).ok()
+    } else {
+        None
+    };
 
     let frame_delta = Duration::from_secs_f64(1.0 / 60.0);
 
@@ -108,6 +134,62 @@ pub fn run_headless(args: &CliArgs) -> Result<(), Box<dyn std::error::Error>> {
                     args.height,
                     &mut shutdown_requested,
                 );
+            }
+
+            // Poll hot reload events
+            if let Some(ref mut w) = watcher {
+                for event in w.poll_events() {
+                    match event {
+                        forge_assets::HotReloadEvent::Texture(p) => {
+                            let path_str = p.to_string_lossy();
+                            let asset_id = if let Some(db) =
+                                world.get_resource::<forge_assets::AssetDatabase>()
+                            {
+                                db.get_id_by_path(&p).unwrap_or(&path_str).to_string()
+                            } else {
+                                path_str.to_string()
+                            };
+                            let _ = texture_store.reload(&asset_id, &context);
+                            tracing::info!("Hot reloaded texture: {:?}", p);
+                        }
+                        forge_assets::HotReloadEvent::SpriteSheet(p) => {
+                            if let Some(mut sheets) =
+                                world.get_resource_mut::<forge_assets::SpriteSheetStore>()
+                            {
+                                let path_str = p.to_string_lossy();
+                                let _ = sheets.reload(&path_str, &p);
+                                tracing::info!("Hot reloaded spritesheet: {:?}", p);
+                            }
+                        }
+                        forge_assets::HotReloadEvent::Animation(p) => {
+                            if let Some(mut anims) =
+                                world.get_resource_mut::<forge_assets::AnimationStore>()
+                            {
+                                let path_str = p.to_string_lossy();
+                                let _ = anims.reload(&path_str, &p);
+                                tracing::info!("Hot reloaded animation: {:?}", p);
+                            }
+                        }
+                        forge_assets::HotReloadEvent::Scene(p) => {
+                            if let Ok(new_scene) = Scene::load_from_file(&p) {
+                                // Clear world and re-spawn
+                                world.clear_entities();
+                                let _ = new_scene.spawn_into_world(&mut world);
+                                tracing::info!("Hot reloaded scene from {:?}", p);
+                            }
+                        }
+                        forge_assets::HotReloadEvent::Meta(p) => {
+                            if let Some(mut db) =
+                                world.get_resource_mut::<forge_assets::AssetDatabase>()
+                            {
+                                let _ = db.scan_and_index();
+                                texture_store.set_database(db.clone());
+                                tracing::info!("Hot reloaded asset database metadata: {:?}", p);
+                            }
+                        }
+                        _ => {}
+                    }
+                }
             }
 
             if shutdown_requested {

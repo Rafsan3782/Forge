@@ -46,12 +46,37 @@ pub fn render_world_scene(
     );
 
     // 2. Queue all textured sprites
+    let sheet_store = world.get_resource::<forge_assets::SpriteSheetStore>();
+
     for entity_ref in world.iter_entities() {
         if let (Some(tf), Some(sprite)) =
             (entity_ref.get::<Transform2D>(), entity_ref.get::<Sprite>())
         {
+            let mut resolved_sprite = sprite.clone();
+
+            // If sprite references a frame and uv_rect is not explicitly fixed, check if there's a SpriteSheet
+            if let Some(frame) = sprite.frame {
+                if resolved_sprite.uv_rect.is_none() {
+                    if let Some(sheets) = sheet_store {
+                        if let Some(sheet) = sheets.get(&sprite.asset_id) {
+                            let gpu_tex =
+                                texture_store.get_or_load(&sheet.texture_asset_id, render_context);
+                            if let Some(uv) =
+                                sheet
+                                    .layout
+                                    .get_frame_uv(frame, gpu_tex.width, gpu_tex.height)
+                            {
+                                resolved_sprite.uv_rect = Some(uv);
+                            }
+                            renderer.draw_sprite(*tf, resolved_sprite, gpu_tex.bind_group);
+                            continue;
+                        }
+                    }
+                }
+            }
+
             let gpu_texture = texture_store.get_or_load(&sprite.asset_id, render_context);
-            renderer.draw_sprite(*tf, sprite.clone(), gpu_texture.bind_group);
+            renderer.draw_sprite(*tf, resolved_sprite, gpu_texture.bind_group);
         }
     }
 

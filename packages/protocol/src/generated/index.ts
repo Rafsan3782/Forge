@@ -223,6 +223,56 @@ export const GameSimulateInputResultSchema = z.object({
 export type GameSimulateInputResult = z.infer<typeof GameSimulateInputResultSchema>;
 
 // -----------------------------------------------------------------------------
+// asset.list, asset.get_info, asset.import
+// -----------------------------------------------------------------------------
+
+export const AssetInfoSchema = z.object({
+  id: z.string(),
+  path: z.string(),
+  asset_type: z.string(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+export type AssetInfo = z.infer<typeof AssetInfoSchema>;
+
+export const AssetListParamsSchema = z.object({
+  asset_type: z.string().optional(),
+});
+export type AssetListParams = z.infer<typeof AssetListParamsSchema>;
+
+export const AssetListResultSchema = z.object({
+  assets: z.array(AssetInfoSchema),
+});
+export type AssetListResult = z.infer<typeof AssetListResultSchema>;
+
+export const AssetGetInfoParamsSchema = z.object({
+  id: z.string(),
+});
+export type AssetGetInfoParams = z.infer<typeof AssetGetInfoParamsSchema>;
+
+export const AssetGetInfoResultSchema = z.object({
+  id: z.string(),
+  path: z.string(),
+  asset_type: z.string(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+export type AssetGetInfoResult = z.infer<typeof AssetGetInfoResultSchema>;
+
+export const AssetImportParamsSchema = z.object({
+  source_path: z.string(),
+  target_path: z.string(),
+  asset_type: z.string().optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+export type AssetImportParams = z.infer<typeof AssetImportParamsSchema>;
+
+export const AssetImportResultSchema = z.object({
+  id: z.string(),
+  path: z.string(),
+  asset_type: z.string(),
+});
+export type AssetImportResult = z.infer<typeof AssetImportResultSchema>;
+
+// -----------------------------------------------------------------------------
 // playtest.report
 // -----------------------------------------------------------------------------
 

@@ -185,10 +185,10 @@ impl Children {
     }
 }
 
-/// 2D Sprite component defining rendered visual asset, size, color tint, and z-ordering.
+/// 2D Sprite component defining rendered visual asset, size, color tint, frame index, UV bounds, and z-ordering.
 #[derive(Component, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Sprite {
-    /// Identifier or path for the sprite texture asset.
+    /// Identifier for the sprite texture or spritesheet asset.
     pub asset_id: String,
     /// Dimensions of the sprite in world units.
     pub size: Vec2,
@@ -196,6 +196,13 @@ pub struct Sprite {
     pub color_tint: [f32; 4],
     /// Depth ordering index (higher values rendered on top).
     pub z_order: i32,
+    /// Optional frame index within a sprite sheet or atlas (0-indexed).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub frame: Option<u32>,
+    /// Optional explicit UV bounding box `[u_min, v_min, u_max, v_max]`.
+    /// When None, defaults to full texture `[0.0, 0.0, 1.0, 1.0]`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub uv_rect: Option<[f32; 4]>,
 }
 
 impl Sprite {
@@ -206,6 +213,8 @@ impl Sprite {
             size,
             color_tint: [1.0, 1.0, 1.0, 1.0],
             z_order: 0,
+            frame: None,
+            uv_rect: None,
         }
     }
 
@@ -220,6 +229,18 @@ impl Sprite {
         self.z_order = z_order;
         self
     }
+
+    /// Sets the frame index.
+    pub fn with_frame(mut self, frame: u32) -> Self {
+        self.frame = Some(frame);
+        self
+    }
+
+    /// Sets the UV rectangle bounds `[u_min, v_min, u_max, v_max]`.
+    pub fn with_uv_rect(mut self, uv_rect: [f32; 4]) -> Self {
+        self.uv_rect = Some(uv_rect);
+        self
+    }
 }
 
 impl Default for Sprite {
@@ -229,6 +250,67 @@ impl Default for Sprite {
             size: Vec2::new(100.0, 100.0),
             color_tint: [1.0, 1.0, 1.0, 1.0],
             z_order: 0,
+            frame: None,
+            uv_rect: None,
+        }
+    }
+}
+
+/// Playback state and timing for animated entities.
+#[derive(Component, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Animator {
+    /// Asset ID of the `AnimationClip` to play.
+    pub clip_asset_id: String,
+    /// Whether the animation is currently advancing.
+    pub playing: bool,
+    /// Playback speed multiplier (1.0 = normal speed, -1.0 = reverse).
+    pub speed: f32,
+    /// Current normalized/accumulated playback time in seconds.
+    #[serde(default)]
+    pub elapsed_seconds: f32,
+    /// Current active frame index within the animation clip.
+    #[serde(default)]
+    pub current_frame_index: usize,
+}
+
+impl Animator {
+    /// Creates a new Animator playing the given animation clip at normal speed.
+    pub fn new(clip_asset_id: impl Into<String>) -> Self {
+        Self {
+            clip_asset_id: clip_asset_id.into(),
+            playing: true,
+            speed: 1.0,
+            elapsed_seconds: 0.0,
+            current_frame_index: 0,
+        }
+    }
+
+    /// Creates an animator in a paused state.
+    pub fn paused(clip_asset_id: impl Into<String>) -> Self {
+        Self {
+            clip_asset_id: clip_asset_id.into(),
+            playing: false,
+            speed: 1.0,
+            elapsed_seconds: 0.0,
+            current_frame_index: 0,
+        }
+    }
+
+    /// Sets playback speed.
+    pub fn with_speed(mut self, speed: f32) -> Self {
+        self.speed = speed;
+        self
+    }
+}
+
+impl Default for Animator {
+    fn default() -> Self {
+        Self {
+            clip_asset_id: String::new(),
+            playing: true,
+            speed: 1.0,
+            elapsed_seconds: 0.0,
+            current_frame_index: 0,
         }
     }
 }

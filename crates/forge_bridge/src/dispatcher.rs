@@ -237,6 +237,71 @@ pub async fn dispatch_direct_tool(
             Ok(serde_json::to_value(result)?)
         }
 
+        "asset.list" => {
+            let list_params: forge_protocol::AssetListParams = if params.is_null() {
+                forge_protocol::AssetListParams::default()
+            } else {
+                serde_json::from_value(params)
+                    .map_err(|e| BridgeError::InvalidParams(e.to_string()))?
+            };
+
+            let (tx, rx) = oneshot::channel();
+            command_sender
+                .send(BridgeCommand::AssetList {
+                    params: list_params,
+                    responder: tx,
+                })
+                .map_err(|_| BridgeError::ChannelClosed)?;
+
+            let result = rx
+                .await
+                .map_err(|_| BridgeError::ChannelClosed)?
+                .map_err(BridgeError::Engine)?;
+
+            Ok(serde_json::to_value(result)?)
+        }
+
+        "asset.get_info" => {
+            let info_params: forge_protocol::AssetGetInfoParams = serde_json::from_value(params)
+                .map_err(|e| BridgeError::InvalidParams(e.to_string()))?;
+
+            let (tx, rx) = oneshot::channel();
+            command_sender
+                .send(BridgeCommand::AssetGetInfo {
+                    params: info_params,
+                    responder: tx,
+                })
+                .map_err(|_| BridgeError::ChannelClosed)?;
+
+            let result = rx
+                .await
+                .map_err(|_| BridgeError::ChannelClosed)?
+                .map_err(BridgeError::Engine)?;
+
+            Ok(serde_json::to_value(result)?)
+        }
+
+        "asset.import" => {
+            let import_params: forge_protocol::AssetImportParams =
+                serde_json::from_value(params)
+                    .map_err(|e| BridgeError::InvalidParams(e.to_string()))?;
+
+            let (tx, rx) = oneshot::channel();
+            command_sender
+                .send(BridgeCommand::AssetImport {
+                    params: import_params,
+                    responder: tx,
+                })
+                .map_err(|_| BridgeError::ChannelClosed)?;
+
+            let result = rx
+                .await
+                .map_err(|_| BridgeError::ChannelClosed)?
+                .map_err(BridgeError::Engine)?;
+
+            Ok(serde_json::to_value(result)?)
+        }
+
         unknown => Err(BridgeError::MethodNotFound(unknown.to_string())),
     }
 }

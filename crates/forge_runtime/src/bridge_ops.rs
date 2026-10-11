@@ -97,8 +97,138 @@ pub fn process_bridge_commands(
                 *shutdown_requested = true;
                 let _ = responder.send(Ok(ProjectStopResult { stopped: true }));
             }
+
+            BridgeCommand::AssetList { params, responder } => {
+                let res = handle_asset_list(world, &params);
+                let _ = responder.send(res);
+            }
+
+            BridgeCommand::AssetGetInfo { params, responder } => {
+                let res = handle_asset_get_info(world, &params);
+                let _ = responder.send(res);
+            }
+
+            BridgeCommand::AssetImport { params, responder } => {
+                let res = handle_asset_import(world, &params);
+                let _ = responder.send(res);
+            }
         }
     }
+}
+
+fn handle_asset_list(
+    world: &World,
+    params: &forge_protocol::AssetListParams,
+) -> Result<forge_protocol::AssetListResult, String> {
+    let db = world
+        .get_resource::<forge_assets::AssetDatabase>()
+        .ok_or_else(|| "AssetDatabase resource not initialized in world".to_string())?;
+
+    let filter_type = params.asset_type.as_deref();
+    let mut assets = Vec::new();
+
+    for entry in db.all_entries() {
+        let type_str = match &entry.meta.asset_type {
+            forge_assets::AssetType::Texture => "texture".to_string(),
+            forge_assets::AssetType::SpriteSheet => "spritesheet".to_string(),
+            forge_assets::AssetType::Animation => "animation".to_string(),
+            forge_assets::AssetType::Scene => "scene".to_string(),
+            forge_assets::AssetType::Audio => "audio".to_string(),
+            forge_assets::AssetType::Other(s) => s.clone(),
+        };
+
+        if let Some(ft) = filter_type {
+            if !ft.is_empty() && !type_str.eq_ignore_ascii_case(ft) {
+                continue;
+            }
+        }
+
+        assets.push(forge_protocol::AssetInfo {
+            id: entry.id.clone(),
+            path: entry.file_path.to_string_lossy().to_string(),
+            asset_type: type_str,
+            metadata: entry.meta.import_settings.clone(),
+        });
+    }
+
+    Ok(forge_protocol::AssetListResult { assets })
+}
+
+fn handle_asset_get_info(
+    world: &World,
+    params: &forge_protocol::AssetGetInfoParams,
+) -> Result<forge_protocol::AssetGetInfoResult, String> {
+    let db = world
+        .get_resource::<forge_assets::AssetDatabase>()
+        .ok_or_else(|| "AssetDatabase resource not initialized in world".to_string())?;
+
+    let entry = db
+        .get(&params.id)
+        .ok_or_else(|| format!("Asset with id '{}' not found", params.id))?;
+
+    let type_str = match &entry.meta.asset_type {
+        forge_assets::AssetType::Texture => "texture".to_string(),
+        forge_assets::AssetType::SpriteSheet => "spritesheet".to_string(),
+        forge_assets::AssetType::Animation => "animation".to_string(),
+        forge_assets::AssetType::Scene => "scene".to_string(),
+        forge_assets::AssetType::Audio => "audio".to_string(),
+        forge_assets::AssetType::Other(s) => s.clone(),
+    };
+
+    Ok(forge_protocol::AssetGetInfoResult {
+        id: entry.id.clone(),
+        path: entry.file_path.to_string_lossy().to_string(),
+        asset_type: type_str,
+        metadata: entry.meta.import_settings.clone(),
+    })
+}
+
+fn handle_asset_import(
+    world: &mut World,
+    params: &forge_protocol::AssetImportParams,
+) -> Result<forge_protocol::AssetImportResult, String> {
+    let mut db = world
+        .get_resource_mut::<forge_assets::AssetDatabase>()
+        .ok_or_else(|| "AssetDatabase resource not initialized in world".to_string())?;
+
+    let source_path = std::path::Path::new(&params.source_path);
+    let target_path = std::path::Path::new(&params.target_path);
+
+    let explicit_type = params
+        .asset_type
+        .as_deref()
+        .map(|t| match t.to_lowercase().as_str() {
+            "texture" => forge_assets::AssetType::Texture,
+            "spritesheet" => forge_assets::AssetType::SpriteSheet,
+            "animation" => forge_assets::AssetType::Animation,
+            "scene" => forge_assets::AssetType::Scene,
+            "audio" => forge_assets::AssetType::Audio,
+            other => forge_assets::AssetType::Other(other.to_string()),
+        });
+
+    let entry = db
+        .import_file(
+            source_path,
+            target_path,
+            explicit_type,
+            params.metadata.clone(),
+        )
+        .map_err(|e| format!("Failed to import asset: {}", e))?;
+
+    let type_str = match &entry.meta.asset_type {
+        forge_assets::AssetType::Texture => "texture".to_string(),
+        forge_assets::AssetType::SpriteSheet => "spritesheet".to_string(),
+        forge_assets::AssetType::Animation => "animation".to_string(),
+        forge_assets::AssetType::Scene => "scene".to_string(),
+        forge_assets::AssetType::Audio => "audio".to_string(),
+        forge_assets::AssetType::Other(s) => s.clone(),
+    };
+
+    Ok(forge_protocol::AssetImportResult {
+        id: entry.id,
+        path: entry.file_path.to_string_lossy().to_string(),
+        asset_type: type_str,
+    })
 }
 
 /// Renders the world into an offscreen target and produces a PNG screenshot (base64 or file).

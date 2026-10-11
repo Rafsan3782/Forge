@@ -26,6 +26,12 @@ import {
   GameScreenshotResultSchema,
   GameSimulateInputParamsSchema,
   GameSimulateInputResultSchema,
+  AssetListParamsSchema,
+  AssetListResultSchema,
+  AssetGetInfoParamsSchema,
+  AssetGetInfoResultSchema,
+  AssetImportParamsSchema,
+  AssetImportResultSchema,
   PlaytestReportSchema,
 } from "./generated/index.ts";
 
@@ -197,6 +203,52 @@ test("game.simulate_input serialize and deserialize against fixtures", () => {
   );
 });
 
+test("asset operations serialize and deserialize against fixtures", () => {
+  // asset.list
+  const listParams = loadFixture("asset_list_params.json");
+  const parsedListParams = AssetListParamsSchema.parse(listParams);
+  assert.deepStrictEqual(
+    AssetListParamsSchema.parse(JSON.parse(JSON.stringify(parsedListParams))),
+    parsedListParams,
+  );
+
+  const listResult = loadFixture("asset_list_result.json");
+  const parsedListResult = AssetListResultSchema.parse(listResult);
+  assert.deepStrictEqual(
+    AssetListResultSchema.parse(JSON.parse(JSON.stringify(parsedListResult))),
+    parsedListResult,
+  );
+
+  // asset.get_info
+  const getInfoParams = loadFixture("asset_get_info_params.json");
+  const parsedGetInfoParams = AssetGetInfoParamsSchema.parse(getInfoParams);
+  assert.deepStrictEqual(
+    AssetGetInfoParamsSchema.parse(JSON.parse(JSON.stringify(parsedGetInfoParams))),
+    parsedGetInfoParams,
+  );
+
+  const getInfoResult = loadFixture("asset_get_info_result.json");
+  const parsedGetInfoResult = AssetGetInfoResultSchema.parse(getInfoResult);
+  assert.deepStrictEqual(
+    AssetGetInfoResultSchema.parse(JSON.parse(JSON.stringify(parsedGetInfoResult))),
+    parsedGetInfoResult,
+  );
+
+  // asset.import
+  const importParams = loadFixture("asset_import_params.json");
+  const parsedImportParams = AssetImportParamsSchema.parse(importParams);
+  assert.deepStrictEqual(
+    AssetImportParamsSchema.parse(JSON.parse(JSON.stringify(parsedImportParams))),
+    parsedImportParams,
+  );
+
+  const importResult = loadFixture("asset_import_result.json");
+  const parsedImportResult = AssetImportResultSchema.parse(importResult);
+  assert.deepStrictEqual(
+    AssetImportResultSchema.parse(JSON.parse(JSON.stringify(parsedImportResult))),
+    parsedImportResult,
+  );
+});
 
 test("playtest.report serialize and deserialize against fixtures", () => {
   const reportData = loadFixture("playtest_report.json");

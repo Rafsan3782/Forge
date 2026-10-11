@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/asset.import.json",
+  "title": "AssetImport",
+  "description": "Imports a file into the project asset directory and generates its sidecar metadata",
+  "definitions": {
+    "AssetImportParams": {
+      "type": "object",
+      "required": ["source_path", "target_path"],
+      "properties": {
+        "source_path": {
+          "type": "string",
+          "description": "Absolute or relative path to the external source file"
+        },
+        "target_path": {
+          "type": "string",
+          "description": "Project-relative path inside assets/ where the file should be copied"
+        },
+        "asset_type": { "type": "string", "description": "Optional asset type override" },
+        "metadata": { "type": "object", "description": "Optional initial import settings/metadata" }
+      },
+      "additionalProperties": false
+    },
+    "AssetImportResult": {
+      "type": "object",
+      "required": ["id", "path", "asset_type"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Generated or existing UUID for the imported asset"
+        },
+        "path": {
+          "type": "string",
+          "description": "Project-relative path of the imported asset file"
+        },
+        "asset_type": { "type": "string", "description": "Asset type assigned" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

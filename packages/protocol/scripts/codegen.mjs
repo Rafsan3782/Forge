@@ -257,6 +257,56 @@ export const GameSimulateInputResultSchema = z.object({
 export type GameSimulateInputResult = z.infer<typeof GameSimulateInputResultSchema>;
 
 // -----------------------------------------------------------------------------
+// asset.list, asset.get_info, asset.import
+// -----------------------------------------------------------------------------
+
+export const AssetInfoSchema = z.object({
+  id: z.string(),
+  path: z.string(),
+  asset_type: z.string(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+export type AssetInfo = z.infer<typeof AssetInfoSchema>;
+
+export const AssetListParamsSchema = z.object({
+  asset_type: z.string().optional(),
+});
+export type AssetListParams = z.infer<typeof AssetListParamsSchema>;
+
+export const AssetListResultSchema = z.object({
+  assets: z.array(AssetInfoSchema),
+});
+export type AssetListResult = z.infer<typeof AssetListResultSchema>;
+
+export const AssetGetInfoParamsSchema = z.object({
+  id: z.string(),
+});
+export type AssetGetInfoParams = z.infer<typeof AssetGetInfoParamsSchema>;
+
+export const AssetGetInfoResultSchema = z.object({
+  id: z.string(),
+  path: z.string(),
+  asset_type: z.string(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+export type AssetGetInfoResult = z.infer<typeof AssetGetInfoResultSchema>;
+
+export const AssetImportParamsSchema = z.object({
+  source_path: z.string(),
+  target_path: z.string(),
+  asset_type: z.string().optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+export type AssetImportParams = z.infer<typeof AssetImportParamsSchema>;
+
+export const AssetImportResultSchema = z.object({
+  id: z.string(),
+  path: z.string(),
+  asset_type: z.string(),
+});
+export type AssetImportResult = z.infer<typeof AssetImportResultSchema>;
+
+// -----------------------------------------------------------------------------
 // playtest.report
 // -----------------------------------------------------------------------------
 
@@ -545,6 +595,61 @@ pub struct GameSimulateInputParams {
 pub struct GameSimulateInputResult {
     pub success: bool,
     pub applied_count: u32,
+}
+
+// -----------------------------------------------------------------------------
+// asset.list, asset.get_info, asset.import
+// -----------------------------------------------------------------------------
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AssetInfo {
+    pub id: String,
+    pub path: String,
+    pub asset_type: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct AssetListParams {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub asset_type: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AssetListResult {
+    pub assets: Vec<AssetInfo>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AssetGetInfoParams {
+    pub id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AssetGetInfoResult {
+    pub id: String,
+    pub path: String,
+    pub asset_type: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AssetImportParams {
+    pub source_path: String,
+    pub target_path: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub asset_type: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AssetImportResult {
+    pub id: String,
+    pub path: String,
+    pub asset_type: String,
 }
 
 // -----------------------------------------------------------------------------
