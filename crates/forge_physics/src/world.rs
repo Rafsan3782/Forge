@@ -60,8 +60,10 @@ impl Default for PhysicsWorld2D {
 impl PhysicsWorld2D {
     /// Creates a new physics simulation world with the given gravity vector.
     pub fn new(gravity: Vec2) -> Self {
-        let mut integration_parameters = rapier::IntegrationParameters::default();
-        integration_parameters.dt = 1.0 / 60.0;
+        let integration_parameters = rapier::IntegrationParameters {
+            dt: 1.0 / 60.0,
+            ..Default::default()
+        };
 
         Self {
             gravity,
