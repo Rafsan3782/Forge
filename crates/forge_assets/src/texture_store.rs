@@ -112,6 +112,10 @@ impl TextureStore {
     /// If the asset cannot be found or decoded, a warning is logged with `tracing`
     /// and the magenta placeholder is returned and cached for subsequent requests.
     pub fn get_or_load(&mut self, asset_id: &str, render_context: &RenderContext) -> GpuTexture {
+        if asset_id == "white_pixel" || asset_id == "white" {
+            return self.white_pixel.clone();
+        }
+
         if let Some(texture) = self.textures.get(asset_id) {
             return texture.clone();
         }

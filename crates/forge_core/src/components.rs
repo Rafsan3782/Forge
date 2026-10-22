@@ -421,10 +421,13 @@ impl Default for Camera2D {
 pub enum BodyType2D {
     /// Dynamic body simulated by physics forces and impulses.
     #[default]
+    #[serde(alias = "Dynamic", alias = "DYNAMIC")]
     Dynamic,
     /// Kinematic body positioned manually via velocity or transform.
+    #[serde(alias = "Kinematic", alias = "KINEMATIC")]
     Kinematic,
     /// Static immovable body with infinite mass.
+    #[serde(alias = "Static", alias = "STATIC")]
     Static,
 }
 
@@ -535,19 +538,21 @@ impl Default for RigidBody2D {
 
 /// Geometric shape representation for 2D colliders.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "snake_case")]
 pub enum ColliderShape2D {
     /// Box / cuboid specified by half-extents `(half_width, half_height)`.
+    #[serde(alias = "box", alias = "BOX")]
     Box {
         /// Half extents `(hx, hy)`.
         half_extents: Vec2,
     },
     /// Circle specified by radius.
+    #[serde(alias = "circle", alias = "CIRCLE")]
     Circle {
         /// Circle radius.
         radius: f32,
     },
     /// Capsule specified by half-height along Y and radius.
+    #[serde(alias = "capsule", alias = "CAPSULE")]
     Capsule {
         /// Radius of end caps.
         radius: f32,
