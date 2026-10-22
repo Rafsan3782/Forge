@@ -20,7 +20,8 @@ pub use ecs::{Bundle, Commands, Component, Entity, Query, Res, ResMut, Resource,
 
 // Re-export built-in components and math primitives
 pub use components::{
-    Animator, Camera2D, Children, EntityId, Name, Parent, Sprite, Transform2D, Vec2,
+    Animator, BodyType2D, Camera2D, Children, Collider2D, ColliderShape2D, EntityId, Name, Parent,
+    PreviousTransform2D, RigidBody2D, Sprite, Transform2D, Vec2,
 };
 
 // Re-export error types

@@ -81,9 +81,18 @@ pub fn run_headless(args: &CliArgs) -> Result<(), Box<dyn std::error::Error>> {
     world.insert_resource(forge_input::FixedInput::default());
     world.insert_resource(forge_input::InputRingBuffer::new(2048));
 
+    // Insert physics resources
+    world.insert_resource(forge_physics::PhysicsWorld2D::default());
+    world.insert_resource(crate::render_scene::PhysicsDebugDraw::default());
+
     let mut game_loop = GameLoop::new();
     game_loop.add_pre_update_system(forge_input::fixed_input_tick_system);
+    game_loop.add_pre_update_system(forge_physics::physics_before_step_system);
+    game_loop.add_update_system(forge_physics::physics_step_system);
+    game_loop.add_post_update_system(forge_physics::physics_after_step_system);
     game_loop.add_update_system(forge_assets::animator_update_system);
+
+    game_loop.add_update_system(crate::demo_input::demo_character_controller_system);
 
     if args.demo_input {
         game_loop.add_update_system(crate::demo_input::demo_hero_movement_system);

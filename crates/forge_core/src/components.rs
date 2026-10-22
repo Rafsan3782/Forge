@@ -22,11 +22,54 @@ impl Vec2 {
     pub const fn new(x: f32, y: f32) -> Self {
         Self { x, y }
     }
+
+    /// Length / magnitude of the vector.
+    pub fn length(&self) -> f32 {
+        (self.x * self.x + self.y * self.y).sqrt()
+    }
+
+    /// Normalized direction vector (or ZERO if zero length).
+    pub fn normalize_or_zero(&self) -> Self {
+        let len = self.length();
+        if len > 1e-6 {
+            Self::new(self.x / len, self.y / len)
+        } else {
+            Self::ZERO
+        }
+    }
 }
 
 impl Default for Vec2 {
     fn default() -> Self {
         Self::ZERO
+    }
+}
+
+impl std::ops::Add for Vec2 {
+    type Output = Self;
+    fn add(self, rhs: Self) -> Self::Output {
+        Self::new(self.x + rhs.x, self.y + rhs.y)
+    }
+}
+
+impl std::ops::Sub for Vec2 {
+    type Output = Self;
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self::new(self.x - rhs.x, self.y - rhs.y)
+    }
+}
+
+impl std::ops::Mul<f32> for Vec2 {
+    type Output = Self;
+    fn mul(self, rhs: f32) -> Self::Output {
+        Self::new(self.x * rhs, self.y * rhs)
+    }
+}
+
+impl std::ops::Div<f32> for Vec2 {
+    type Output = Self;
+    fn div(self, rhs: f32) -> Self::Output {
+        Self::new(self.x / rhs, self.y / rhs)
     }
 }
 
@@ -133,11 +176,37 @@ impl Transform2D {
     pub fn from_xy(x: f32, y: f32) -> Self {
         Self::from_position(Vec2::new(x, y))
     }
+
+    /// Linearly interpolates between `self` and `next` with factor `alpha` in `[0.0, 1.0]`.
+    pub fn lerp(&self, next: &Self, alpha: f32) -> Self {
+        let t = alpha.clamp(0.0, 1.0);
+        let pos = Vec2::new(
+            self.position.x + (next.position.x - self.position.x) * t,
+            self.position.y + (next.position.y - self.position.y) * t,
+        );
+        let rot = self.rotation + (next.rotation - self.rotation) * t;
+        let scale = Vec2::new(
+            self.scale.x + (next.scale.x - self.scale.x) * t,
+            self.scale.y + (next.scale.y - self.scale.y) * t,
+        );
+        Self::new(pos, rot, scale)
+    }
 }
 
 impl Default for Transform2D {
     fn default() -> Self {
         Self::IDENTITY
+    }
+}
+
+/// Stores the previous tick's transform for smooth sub-frame render interpolation.
+#[derive(Component, Debug, Clone, Copy, PartialEq, Default, Serialize, Deserialize)]
+pub struct PreviousTransform2D(pub Transform2D);
+
+impl PreviousTransform2D {
+    /// Creates a new PreviousTransform2D wrapper.
+    pub fn new(transform: Transform2D) -> Self {
+        Self(transform)
     }
 }
 
@@ -343,5 +412,280 @@ impl Camera2D {
 impl Default for Camera2D {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+/// Simulation body type for a 2D rigid body.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum BodyType2D {
+    /// Dynamic body simulated by physics forces and impulses.
+    #[default]
+    Dynamic,
+    /// Kinematic body positioned manually via velocity or transform.
+    Kinematic,
+    /// Static immovable body with infinite mass.
+    Static,
+}
+
+/// 2D Rigid body component controlling physics simulation characteristics.
+#[derive(Component, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RigidBody2D {
+    /// Type of rigid body (dynamic, kinematic, static).
+    #[serde(default)]
+    pub body_type: BodyType2D,
+    /// Multiplier applied to world gravity (1.0 = normal gravity).
+    #[serde(default = "default_gravity_scale")]
+    pub gravity_scale: f32,
+    /// Whether rotation around the Z-axis is locked.
+    #[serde(default)]
+    pub lock_rotation: bool,
+    /// Linear damping coefficient dissipating linear velocity.
+    #[serde(default)]
+    pub linear_damping: f32,
+    /// Angular damping coefficient dissipating rotational velocity.
+    #[serde(default)]
+    pub angular_damping: f32,
+    /// Linear velocity `[vx, vy]`.
+    #[serde(default)]
+    pub linear_velocity: Vec2,
+    /// Angular velocity in radians per second.
+    #[serde(default)]
+    pub angular_velocity: f32,
+    /// Whether the body can sleep when at rest.
+    #[serde(default = "default_can_sleep")]
+    pub can_sleep: bool,
+}
+
+fn default_gravity_scale() -> f32 {
+    1.0
+}
+
+fn default_can_sleep() -> bool {
+    true
+}
+
+impl RigidBody2D {
+    /// Creates a dynamic rigid body with default gravity and no damping.
+    pub fn dynamic() -> Self {
+        Self {
+            body_type: BodyType2D::Dynamic,
+            gravity_scale: 1.0,
+            lock_rotation: false,
+            linear_damping: 0.0,
+            angular_damping: 0.0,
+            linear_velocity: Vec2::ZERO,
+            angular_velocity: 0.0,
+            can_sleep: true,
+        }
+    }
+
+    /// Creates a static immovable body.
+    pub fn static_body() -> Self {
+        Self {
+            body_type: BodyType2D::Static,
+            gravity_scale: 0.0,
+            lock_rotation: true,
+            linear_damping: 0.0,
+            angular_damping: 0.0,
+            linear_velocity: Vec2::ZERO,
+            angular_velocity: 0.0,
+            can_sleep: true,
+        }
+    }
+
+    /// Creates a kinematic body.
+    pub fn kinematic() -> Self {
+        Self {
+            body_type: BodyType2D::Kinematic,
+            gravity_scale: 0.0,
+            lock_rotation: false,
+            linear_damping: 0.0,
+            angular_damping: 0.0,
+            linear_velocity: Vec2::ZERO,
+            angular_velocity: 0.0,
+            can_sleep: true,
+        }
+    }
+
+    /// Sets the gravity scale.
+    pub fn with_gravity_scale(mut self, scale: f32) -> Self {
+        self.gravity_scale = scale;
+        self
+    }
+
+    /// Locks or unlocks rotation.
+    pub fn with_lock_rotation(mut self, lock: bool) -> Self {
+        self.lock_rotation = lock;
+        self
+    }
+
+    /// Sets linear damping.
+    pub fn with_linear_damping(mut self, damping: f32) -> Self {
+        self.linear_damping = damping;
+        self
+    }
+}
+
+impl Default for RigidBody2D {
+    fn default() -> Self {
+        Self::dynamic()
+    }
+}
+
+/// Geometric shape representation for 2D colliders.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum ColliderShape2D {
+    /// Box / cuboid specified by half-extents `(half_width, half_height)`.
+    Box {
+        /// Half extents `(hx, hy)`.
+        half_extents: Vec2,
+    },
+    /// Circle specified by radius.
+    Circle {
+        /// Circle radius.
+        radius: f32,
+    },
+    /// Capsule specified by half-height along Y and radius.
+    Capsule {
+        /// Radius of end caps.
+        radius: f32,
+        /// Half height of cylinder segment.
+        half_height: f32,
+    },
+}
+
+impl Default for ColliderShape2D {
+    fn default() -> Self {
+        Self::Box {
+            half_extents: Vec2::new(16.0, 16.0),
+        }
+    }
+}
+
+/// 2D Collider component attached to an entity with or without a `RigidBody2D`.
+#[derive(Component, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Collider2D {
+    /// Shape geometry.
+    pub shape: ColliderShape2D,
+    /// Center offset relative to entity position.
+    #[serde(default)]
+    pub offset: Vec2,
+    /// Whether this collider is a sensor (detects overlap without physical reaction).
+    #[serde(default)]
+    pub is_sensor: bool,
+    /// Bitmask for collision membership layers.
+    #[serde(default = "default_collision_groups")]
+    pub collision_groups: u32,
+    /// Bitmask for collision interaction mask.
+    #[serde(default = "default_collision_groups")]
+    pub collision_mask: u32,
+    /// Surface friction coefficient (0.0 = frictionless, 1.0 = rough).
+    #[serde(default = "default_friction")]
+    pub friction: f32,
+    /// Restitution / bounciness coefficient in `[0.0, 1.0]`.
+    #[serde(default)]
+    pub restitution: f32,
+    /// Material density (used to calculate body mass if not set).
+    #[serde(default = "default_density")]
+    pub density: f32,
+}
+
+fn default_collision_groups() -> u32 {
+    0xFFFF_FFFF
+}
+
+fn default_friction() -> f32 {
+    0.5
+}
+
+fn default_density() -> f32 {
+    1.0
+}
+
+impl Collider2D {
+    /// Creates a box collider with given half-extents.
+    pub fn box_shape(half_width: f32, half_height: f32) -> Self {
+        Self {
+            shape: ColliderShape2D::Box {
+                half_extents: Vec2::new(half_width, half_height),
+            },
+            offset: Vec2::ZERO,
+            is_sensor: false,
+            collision_groups: 0xFFFF_FFFF,
+            collision_mask: 0xFFFF_FFFF,
+            friction: 0.5,
+            restitution: 0.0,
+            density: 1.0,
+        }
+    }
+
+    /// Creates a circle collider with given radius.
+    pub fn circle(radius: f32) -> Self {
+        Self {
+            shape: ColliderShape2D::Circle { radius },
+            offset: Vec2::ZERO,
+            is_sensor: false,
+            collision_groups: 0xFFFF_FFFF,
+            collision_mask: 0xFFFF_FFFF,
+            friction: 0.5,
+            restitution: 0.0,
+            density: 1.0,
+        }
+    }
+
+    /// Creates a capsule collider with given radius and half-height.
+    pub fn capsule(radius: f32, half_height: f32) -> Self {
+        Self {
+            shape: ColliderShape2D::Capsule {
+                radius,
+                half_height,
+            },
+            offset: Vec2::ZERO,
+            is_sensor: false,
+            collision_groups: 0xFFFF_FFFF,
+            collision_mask: 0xFFFF_FFFF,
+            friction: 0.5,
+            restitution: 0.0,
+            density: 1.0,
+        }
+    }
+
+    /// Sets sensor flag.
+    pub fn with_sensor(mut self, sensor: bool) -> Self {
+        self.is_sensor = sensor;
+        self
+    }
+
+    /// Sets offset.
+    pub fn with_offset(mut self, offset: Vec2) -> Self {
+        self.offset = offset;
+        self
+    }
+
+    /// Sets friction.
+    pub fn with_friction(mut self, friction: f32) -> Self {
+        self.friction = friction;
+        self
+    }
+
+    /// Sets restitution.
+    pub fn with_restitution(mut self, restitution: f32) -> Self {
+        self.restitution = restitution;
+        self
+    }
+
+    /// Sets collision layer and mask.
+    pub fn with_layers(mut self, groups: u32, mask: u32) -> Self {
+        self.collision_groups = groups;
+        self.collision_mask = mask;
+        self
+    }
+}
+
+impl Default for Collider2D {
+    fn default() -> Self {
+        Self::box_shape(16.0, 16.0)
     }
 }

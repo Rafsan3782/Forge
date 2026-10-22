@@ -89,6 +89,13 @@ pub enum BridgeCommand {
         /// Channel to return import result.
         responder: oneshot::Sender<Result<forge_protocol::AssetImportResult, String>>,
     },
+    /// Perform a physics raycast query in the active simulation world.
+    PhysicsRaycast {
+        /// Raycast parameters.
+        params: forge_protocol::PhysicsRaycastParams,
+        /// Channel to return raycast hit result.
+        responder: oneshot::Sender<Result<forge_protocol::PhysicsRaycastResult, String>>,
+    },
 }
 
 /// Sender side held by the bridge server to dispatch commands to the engine loop.

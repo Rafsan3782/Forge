@@ -360,6 +360,33 @@ export const PlaytestReportSchema = z.object({
   severity: PlaytestSeveritySchema,
 });
 export type PlaytestReport = z.infer<typeof PlaytestReportSchema>;
+
+// -----------------------------------------------------------------------------
+// physics.raycast
+// -----------------------------------------------------------------------------
+
+export const PhysicsRaycastParamsSchema = z.object({
+  origin: z.tuple([z.number(), z.number()]),
+  direction: z.tuple([z.number(), z.number()]),
+  max_distance: z.number(),
+  layer_mask: z.number().int().optional(),
+  solid: z.boolean().optional().default(true),
+});
+export type PhysicsRaycastParams = z.infer<typeof PhysicsRaycastParamsSchema>;
+
+export const RaycastHitSchema = z.object({
+  entity_id: z.string(),
+  point: z.tuple([z.number(), z.number()]),
+  normal: z.tuple([z.number(), z.number()]),
+  fraction: z.number(),
+});
+export type RaycastHit = z.infer<typeof RaycastHitSchema>;
+
+export const PhysicsRaycastResultSchema = z.object({
+  hit: z.boolean(),
+  data: RaycastHitSchema.optional(),
+});
+export type PhysicsRaycastResult = z.infer<typeof PhysicsRaycastResultSchema>;
 `;
 
 // Generate Rust Serde Types
@@ -715,6 +742,40 @@ pub struct PlaytestReport {
     pub perf_stats: PlaytestPerfStats,
     pub user_notes: Vec<PlaytestUserNote>,
     pub severity: PlaytestSeverity,
+}
+
+// -----------------------------------------------------------------------------
+// physics.raycast
+// -----------------------------------------------------------------------------
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PhysicsRaycastParams {
+    pub origin: [f64; 2],
+    pub direction: [f64; 2],
+    pub max_distance: f64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub layer_mask: Option<u32>,
+    #[serde(default = "default_raycast_solid")]
+    pub solid: bool,
+}
+
+fn default_raycast_solid() -> bool {
+    true
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RaycastHit {
+    pub entity_id: String,
+    pub point: [f64; 2],
+    pub normal: [f64; 2],
+    pub fraction: f64,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PhysicsRaycastResult {
+    pub hit: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub data: Option<RaycastHit>,
 }
 `;
 

@@ -112,6 +112,11 @@ pub fn process_bridge_commands(
                 let res = handle_asset_import(world, &params);
                 let _ = responder.send(res);
             }
+
+            BridgeCommand::PhysicsRaycast { params, responder } => {
+                let res = handle_physics_raycast(world, &params);
+                let _ = responder.send(res);
+            }
         }
     }
 }
@@ -388,5 +393,47 @@ pub fn apply_simulated_input(
     forge_protocol::GameSimulateInputResult {
         success: true,
         applied_count,
+    }
+}
+
+fn handle_physics_raycast(
+    world: &World,
+    params: &forge_protocol::PhysicsRaycastParams,
+) -> Result<forge_protocol::PhysicsRaycastResult, String> {
+    let physics = world
+        .get_resource::<forge_physics::PhysicsWorld2D>()
+        .ok_or_else(|| "PhysicsWorld2D resource not initialized in world".to_string())?;
+
+    let origin = forge_core::Vec2::new(params.origin[0] as f32, params.origin[1] as f32);
+    let direction = forge_core::Vec2::new(params.direction[0] as f32, params.direction[1] as f32);
+    let max_dist = params.max_distance as f32;
+
+    let mut filter = forge_physics::QueryFilter::new();
+    if let Some(mask) = params.layer_mask {
+        filter = filter.with_mask(mask);
+    }
+    // Solid flag determines whether non-sensors are queried
+    filter = filter.with_sensors(!params.solid);
+
+    if let Some(hit) = physics.cast_ray(origin, direction, max_dist, filter) {
+        let entity_id_str = world
+            .get::<forge_core::EntityId>(hit.entity)
+            .map(|id| id.as_str().to_string())
+            .unwrap_or_else(|| format!("entity_{:?}", hit.entity));
+
+        Ok(forge_protocol::PhysicsRaycastResult {
+            hit: true,
+            data: Some(forge_protocol::RaycastHit {
+                entity_id: entity_id_str,
+                point: [hit.point.x as f64, hit.point.y as f64],
+                normal: [hit.normal.x as f64, hit.normal.y as f64],
+                fraction: hit.fraction as f64,
+            }),
+        })
+    } else {
+        Ok(forge_protocol::PhysicsRaycastResult {
+            hit: false,
+            data: None,
+        })
     }
 }

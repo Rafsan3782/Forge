@@ -13,6 +13,8 @@ pub struct QueuedSprite {
     pub sprite: Sprite,
     /// GPU texture bind group to sample from.
     pub texture_bind_group: Arc<wgpu::BindGroup>,
+    /// Explicit quad vertices if provided.
+    pub explicit_quad: Option<[SpriteVertex; 4]>,
 }
 
 /// A batched draw call sharing a single texture bind group.
@@ -56,6 +58,24 @@ impl SpriteBatcher {
             transform,
             sprite,
             texture_bind_group,
+            explicit_quad: None,
+        });
+    }
+
+    /// Pushes an explicit vertex quad (e.g. For debug lines).
+    pub fn push_quad(
+        &mut self,
+        vertices: [SpriteVertex; 4],
+        z_order: i32,
+        texture_bind_group: Arc<wgpu::BindGroup>,
+    ) {
+        let mut sprite = Sprite::default();
+        sprite.z_order = z_order;
+        self.sprites.push(QueuedSprite {
+            transform: Transform2D::default(),
+            sprite,
+            texture_bind_group,
+            explicit_quad: Some(vertices),
         });
     }
 
@@ -78,7 +98,10 @@ impl SpriteBatcher {
 
         for sprite_item in &self.sprites {
             let base_vertex = vertices.len() as u32;
-            let quad = generate_sprite_quad(&sprite_item.transform, &sprite_item.sprite);
+            let quad = match sprite_item.explicit_quad {
+                Some(q) => q,
+                None => generate_sprite_quad(&sprite_item.transform, &sprite_item.sprite),
+            };
 
             vertices.extend_from_slice(&quad);
             indices.extend_from_slice(&[

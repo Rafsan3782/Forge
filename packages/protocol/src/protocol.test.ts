@@ -32,6 +32,8 @@ import {
   AssetGetInfoResultSchema,
   AssetImportParamsSchema,
   AssetImportResultSchema,
+  PhysicsRaycastParamsSchema,
+  PhysicsRaycastResultSchema,
   PlaytestReportSchema,
 } from "./generated/index.ts";
 
@@ -248,6 +250,24 @@ test("asset operations serialize and deserialize against fixtures", () => {
     AssetImportResultSchema.parse(JSON.parse(JSON.stringify(parsedImportResult))),
     parsedImportResult,
   );
+});
+
+test("physics.raycast serialize and deserialize against fixtures", () => {
+  const raycastParams = loadFixture("physics_raycast_params.json");
+  const parsedRaycastParams = PhysicsRaycastParamsSchema.parse(raycastParams);
+  assert.deepStrictEqual(
+    PhysicsRaycastParamsSchema.parse(JSON.parse(JSON.stringify(parsedRaycastParams))),
+    parsedRaycastParams,
+  );
+
+  const raycastResult = loadFixture("physics_raycast_result.json");
+  const parsedRaycastResult = PhysicsRaycastResultSchema.parse(raycastResult);
+  assert.deepStrictEqual(
+    PhysicsRaycastResultSchema.parse(JSON.parse(JSON.stringify(parsedRaycastResult))),
+    parsedRaycastResult,
+  );
+  assert.strictEqual(parsedRaycastResult.hit, true);
+  assert.strictEqual(parsedRaycastResult.data?.entity_id, "floor_entity");
 });
 
 test("playtest.report serialize and deserialize against fixtures", () => {

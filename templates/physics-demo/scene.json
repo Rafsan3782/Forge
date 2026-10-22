@@ -1,0 +1,351 @@
+{
+  "name": "Physics Demo",
+  "entities": [
+    {
+      "id": "camera_main",
+      "components": {
+        "Camera2D": {
+          "is_active": true,
+          "zoom": 1.0
+        },
+        "Name": "Main Camera",
+        "Transform2D": {
+          "position": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "rotation": 0.0,
+          "scale": {
+            "x": 1.0,
+            "y": 1.0
+          }
+        }
+      }
+    },
+    {
+      "id": "floor_main",
+      "components": {
+        "Name": "Floor",
+        "Transform2D": {
+          "position": {
+            "x": 0.0,
+            "y": -220.0
+          },
+          "rotation": 0.0,
+          "scale": {
+            "x": 1.0,
+            "y": 1.0
+          }
+        },
+        "Sprite": {
+          "asset_id": "white_pixel",
+          "color_tint": [0.2, 0.4, 0.3, 1.0],
+          "size": {
+            "x": 800.0,
+            "y": 40.0
+          },
+          "z_order": 0
+        },
+        "RigidBody2D": {
+          "body_type": "Static"
+        },
+        "Collider2D": {
+          "shape": {
+            "Box": {
+              "half_extents": {
+                "x": 400.0,
+                "y": 20.0
+              }
+            }
+          },
+          "friction": 0.5,
+          "restitution": 0.0
+        }
+      }
+    },
+    {
+      "id": "slope_ramp",
+      "components": {
+        "Name": "Slope Ramp",
+        "Transform2D": {
+          "position": {
+            "x": 220.0,
+            "y": -160.0
+          },
+          "rotation": 0.35,
+          "scale": {
+            "x": 1.0,
+            "y": 1.0
+          }
+        },
+        "Sprite": {
+          "asset_id": "white_pixel",
+          "color_tint": [0.35, 0.35, 0.45, 1.0],
+          "size": {
+            "x": 260.0,
+            "y": 24.0
+          },
+          "z_order": 0
+        },
+        "RigidBody2D": {
+          "body_type": "Static"
+        },
+        "Collider2D": {
+          "shape": {
+            "Box": {
+              "half_extents": {
+                "x": 130.0,
+                "y": 12.0
+              }
+            }
+          },
+          "friction": 0.4,
+          "restitution": 0.0
+        }
+      }
+    },
+    {
+      "id": "trigger_zone",
+      "components": {
+        "Name": "Goal Trigger Zone",
+        "Transform2D": {
+          "position": {
+            "x": -260.0,
+            "y": -150.0
+          },
+          "rotation": 0.0,
+          "scale": {
+            "x": 1.0,
+            "y": 1.0
+          }
+        },
+        "Sprite": {
+          "asset_id": "white_pixel",
+          "color_tint": [1.0, 0.8, 0.1, 0.25],
+          "size": {
+            "x": 100.0,
+            "y": 100.0
+          },
+          "z_order": 1
+        },
+        "Collider2D": {
+          "shape": {
+            "Box": {
+              "half_extents": {
+                "x": 50.0,
+                "y": 50.0
+              }
+            }
+          },
+          "is_sensor": true
+        }
+      }
+    },
+    {
+      "id": "falling_box_1",
+      "components": {
+        "Name": "Falling Box 1",
+        "Transform2D": {
+          "position": {
+            "x": -80.0,
+            "y": 120.0
+          },
+          "rotation": 0.1,
+          "scale": {
+            "x": 1.0,
+            "y": 1.0
+          }
+        },
+        "Sprite": {
+          "asset_id": "white_pixel",
+          "color_tint": [0.8, 0.3, 0.3, 1.0],
+          "size": {
+            "x": 40.0,
+            "y": 40.0
+          },
+          "z_order": 2
+        },
+        "RigidBody2D": {
+          "body_type": "Dynamic",
+          "gravity_scale": 1.0,
+          "linear_damping": 0.1
+        },
+        "Collider2D": {
+          "shape": {
+            "Box": {
+              "half_extents": {
+                "x": 20.0,
+                "y": 20.0
+              }
+            }
+          },
+          "friction": 0.6,
+          "restitution": 0.3
+        }
+      }
+    },
+    {
+      "id": "falling_box_2",
+      "components": {
+        "Name": "Falling Box 2",
+        "Transform2D": {
+          "position": {
+            "x": -75.0,
+            "y": 200.0
+          },
+          "rotation": 0.0,
+          "scale": {
+            "x": 1.0,
+            "y": 1.0
+          }
+        },
+        "Sprite": {
+          "asset_id": "white_pixel",
+          "color_tint": [0.9, 0.5, 0.2, 1.0],
+          "size": {
+            "x": 36.0,
+            "y": 36.0
+          },
+          "z_order": 2
+        },
+        "RigidBody2D": {
+          "body_type": "Dynamic",
+          "gravity_scale": 1.0,
+          "linear_damping": 0.1
+        },
+        "Collider2D": {
+          "shape": {
+            "Box": {
+              "half_extents": {
+                "x": 18.0,
+                "y": 18.0
+              }
+            }
+          },
+          "friction": 0.6,
+          "restitution": 0.2
+        }
+      }
+    },
+    {
+      "id": "falling_circle_1",
+      "components": {
+        "Name": "Bouncy Ball 1",
+        "Transform2D": {
+          "position": {
+            "x": 20.0,
+            "y": 160.0
+          },
+          "rotation": 0.0,
+          "scale": {
+            "x": 1.0,
+            "y": 1.0
+          }
+        },
+        "Sprite": {
+          "asset_id": "white_pixel",
+          "color_tint": [0.2, 0.7, 0.9, 1.0],
+          "size": {
+            "x": 36.0,
+            "y": 36.0
+          },
+          "z_order": 2
+        },
+        "RigidBody2D": {
+          "body_type": "Dynamic",
+          "gravity_scale": 1.0
+        },
+        "Collider2D": {
+          "shape": {
+            "Circle": {
+              "radius": 18.0
+            }
+          },
+          "friction": 0.2,
+          "restitution": 0.7
+        }
+      }
+    },
+    {
+      "id": "falling_circle_2",
+      "components": {
+        "Name": "Bouncy Ball 2",
+        "Transform2D": {
+          "position": {
+            "x": 45.0,
+            "y": 240.0
+          },
+          "rotation": 0.0,
+          "scale": {
+            "x": 1.0,
+            "y": 1.0
+          }
+        },
+        "Sprite": {
+          "asset_id": "white_pixel",
+          "color_tint": [0.6, 0.4, 0.9, 1.0],
+          "size": {
+            "x": 30.0,
+            "y": 30.0
+          },
+          "z_order": 2
+        },
+        "RigidBody2D": {
+          "body_type": "Dynamic",
+          "gravity_scale": 1.0
+        },
+        "Collider2D": {
+          "shape": {
+            "Circle": {
+              "radius": 15.0
+            }
+          },
+          "friction": 0.2,
+          "restitution": 0.6
+        }
+      }
+    },
+    {
+      "id": "character_hero",
+      "components": {
+        "Name": "Hero",
+        "Transform2D": {
+          "position": {
+            "x": -150.0,
+            "y": -160.0
+          },
+          "rotation": 0.0,
+          "scale": {
+            "x": 1.0,
+            "y": 1.0
+          }
+        },
+        "Sprite": {
+          "asset_id": "white_pixel",
+          "color_tint": [0.1, 0.9, 0.4, 1.0],
+          "size": {
+            "x": 32.0,
+            "y": 48.0
+          },
+          "z_order": 3
+        },
+        "CharacterController2D": {
+          "offset": 0.02,
+          "slide_enabled": true,
+          "autostep_max_height": 10.0,
+          "autostep_min_width": 2.0
+        },
+        "Collider2D": {
+          "shape": {
+            "Capsule": {
+              "radius": 14.0,
+              "half_height": 10.0
+            }
+          },
+          "friction": 0.1,
+          "restitution": 0.0
+        }
+      }
+    }
+  ]
+}

@@ -115,6 +115,26 @@ impl GpuTexture {
             Some("magenta_placeholder_texture"),
         )
     }
+
+    /// Creates a 1x1 solid white (RGBA: 255, 255, 255, 255) texture for solid color rendering.
+    pub fn create_white_pixel(
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        layout: &wgpu::BindGroupLayout,
+        sampler: &wgpu::Sampler,
+    ) -> Result<Self, RenderError> {
+        let white = [255, 255, 255, 255];
+        Self::from_rgba8(
+            device,
+            queue,
+            layout,
+            sampler,
+            &white,
+            1,
+            1,
+            Some("white_pixel_texture"),
+        )
+    }
 }
 
 /// Creates the standard texture bind group layout (texture view at binding 0, sampler at binding 1).

@@ -326,3 +326,30 @@ export const PlaytestReportSchema = z.object({
   severity: PlaytestSeveritySchema,
 });
 export type PlaytestReport = z.infer<typeof PlaytestReportSchema>;
+
+// -----------------------------------------------------------------------------
+// physics.raycast
+// -----------------------------------------------------------------------------
+
+export const PhysicsRaycastParamsSchema = z.object({
+  origin: z.tuple([z.number(), z.number()]),
+  direction: z.tuple([z.number(), z.number()]),
+  max_distance: z.number(),
+  layer_mask: z.number().int().optional(),
+  solid: z.boolean().optional().default(true),
+});
+export type PhysicsRaycastParams = z.infer<typeof PhysicsRaycastParamsSchema>;
+
+export const RaycastHitSchema = z.object({
+  entity_id: z.string(),
+  point: z.tuple([z.number(), z.number()]),
+  normal: z.tuple([z.number(), z.number()]),
+  fraction: z.number(),
+});
+export type RaycastHit = z.infer<typeof RaycastHitSchema>;
+
+export const PhysicsRaycastResultSchema = z.object({
+  hit: z.boolean(),
+  data: RaycastHitSchema.optional(),
+});
+export type PhysicsRaycastResult = z.infer<typeof PhysicsRaycastResultSchema>;

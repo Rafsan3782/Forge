@@ -1,0 +1,6 @@
+{
+  "origin": [0.0, 10.0],
+  "direction": [0.0, -1.0],
+  "max_distance": 20.0,
+  "solid": true
+}

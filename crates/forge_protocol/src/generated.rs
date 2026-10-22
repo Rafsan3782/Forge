@@ -349,3 +349,37 @@ pub struct PlaytestReport {
     pub user_notes: Vec<PlaytestUserNote>,
     pub severity: PlaytestSeverity,
 }
+
+// -----------------------------------------------------------------------------
+// physics.raycast
+// -----------------------------------------------------------------------------
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PhysicsRaycastParams {
+    pub origin: [f64; 2],
+    pub direction: [f64; 2],
+    pub max_distance: f64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub layer_mask: Option<u32>,
+    #[serde(default = "default_raycast_solid")]
+    pub solid: bool,
+}
+
+fn default_raycast_solid() -> bool {
+    true
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RaycastHit {
+    pub entity_id: String,
+    pub point: [f64; 2],
+    pub normal: [f64; 2],
+    pub fraction: f64,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PhysicsRaycastResult {
+    pub hit: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub data: Option<RaycastHit>,
+}

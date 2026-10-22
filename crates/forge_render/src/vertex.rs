@@ -93,3 +93,33 @@ pub fn generate_sprite_quad(transform: &Transform2D, sprite: &Sprite) -> [Sprite
         SpriteVertex::new(p3, [u0, v0], tint),
     ]
 }
+
+/// Generates 4 vertices for a solid color line segment quad.
+pub fn generate_line_quad(
+    start: [f32; 2],
+    end: [f32; 2],
+    thickness: f32,
+    color: [f32; 4],
+) -> [SpriteVertex; 4] {
+    let dx = end[0] - start[0];
+    let dy = end[1] - start[1];
+    let len = (dx * dx + dy * dy).sqrt();
+
+    let (nx, ny) = if len > 1e-6 {
+        (-dy / len * thickness * 0.5, dx / len * thickness * 0.5)
+    } else {
+        (0.0, thickness * 0.5)
+    };
+
+    let p0 = [start[0] + nx, start[1] + ny];
+    let p1 = [end[0] + nx, end[1] + ny];
+    let p2 = [end[0] - nx, end[1] - ny];
+    let p3 = [start[0] - nx, start[1] - ny];
+
+    [
+        SpriteVertex::new(p0, [0.0, 1.0], color),
+        SpriteVertex::new(p1, [1.0, 1.0], color),
+        SpriteVertex::new(p2, [1.0, 0.0], color),
+        SpriteVertex::new(p3, [0.0, 0.0], color),
+    ]
+}

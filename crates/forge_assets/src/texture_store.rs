@@ -9,6 +9,7 @@ use std::path::{Path, PathBuf};
 pub struct TextureStore {
     textures: HashMap<String, GpuTexture>,
     magenta_placeholder: GpuTexture,
+    white_pixel: GpuTexture,
     base_dir: Option<PathBuf>,
     database: Option<crate::database::AssetDatabase>,
 }
@@ -23,9 +24,17 @@ impl TextureStore {
             &render_context.default_sampler,
         )?;
 
+        let white_pixel = GpuTexture::create_white_pixel(
+            &render_context.device,
+            &render_context.queue,
+            &render_context.texture_bind_group_layout,
+            &render_context.default_sampler,
+        )?;
+
         Ok(Self {
             textures: HashMap::new(),
             magenta_placeholder,
+            white_pixel,
             base_dir: None,
             database: None,
         })
@@ -49,6 +58,11 @@ impl TextureStore {
     /// Returns the magenta placeholder texture used when assets are missing.
     pub fn magenta_placeholder(&self) -> &GpuTexture {
         &self.magenta_placeholder
+    }
+
+    /// Returns the white 1x1 texture used for drawing solid colored geometry and debug lines.
+    pub fn white_pixel(&self) -> &GpuTexture {
+        &self.white_pixel
     }
 
     /// Explicitly registers a loaded GPU texture under an asset ID.
