@@ -17,8 +17,8 @@ pub mod render_scene;
 pub mod window;
 
 pub use cli::CliArgs;
-pub use demo_input::demo_hero_movement_system;
+pub use demo_input::{demo_character_controller_system, demo_hero_movement_system};
 pub use headless::run_headless;
 pub use procedural::generate_hello_assets;
-pub use render_scene::{render_world_scene, DEFAULT_CLEAR_COLOR};
+pub use render_scene::{render_world_scene, PhysicsDebugDraw, DEFAULT_CLEAR_COLOR};
 pub use window::{run_window, WindowApp};

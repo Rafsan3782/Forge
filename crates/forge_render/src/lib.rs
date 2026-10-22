@@ -25,4 +25,4 @@ pub use error::RenderError;
 pub use renderer::Renderer2D;
 pub use target::OffscreenTarget;
 pub use texture::{create_default_sampler, create_texture_bind_group_layout, GpuTexture};
-pub use vertex::{generate_sprite_quad, SpriteVertex};
+pub use vertex::{generate_line_quad, generate_sprite_quad, SpriteVertex};

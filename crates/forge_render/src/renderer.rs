@@ -88,6 +88,20 @@ impl Renderer2D {
         self.batcher.push(transform, sprite, texture_bind_group);
     }
 
+    /// Queues a solid color line segment to be drawn (e.g. For debug visualization).
+    pub fn draw_line(
+        &mut self,
+        start: [f32; 2],
+        end: [f32; 2],
+        thickness: f32,
+        color: [f32; 4],
+        z_order: i32,
+        texture_bind_group: Arc<wgpu::BindGroup>,
+    ) {
+        let quad = crate::vertex::generate_line_quad(start, end, thickness, color);
+        self.batcher.push_quad(quad, z_order, texture_bind_group);
+    }
+
     /// Clears any pending queued sprites without drawing.
     pub fn clear_queue(&mut self) {
         self.batcher.clear();

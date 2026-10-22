@@ -68,3 +68,52 @@ pub fn demo_hero_movement_system(
         }
     }
 }
+
+/// System that drives any entity with `CharacterController2D` using arrow keys and jump (Space).
+pub fn demo_character_controller_system(
+    input: Res<FixedInput>,
+    mut query: Query<(
+        &mut forge_physics::CharacterController2D,
+        &mut forge_core::Transform2D,
+    )>,
+) {
+    let mut move_x = input.action_axis("move_x");
+    if move_x.abs() < 0.001 {
+        if input
+            .pressed_keys
+            .contains(&forge_input::KeyCode::ArrowRight)
+        {
+            move_x += 1.0;
+        }
+        if input
+            .pressed_keys
+            .contains(&forge_input::KeyCode::ArrowLeft)
+        {
+            move_x -= 1.0;
+        }
+    }
+
+    let jump_pressed = input.action_just_pressed("jump")
+        || input
+            .just_pressed_keys
+            .contains(&forge_input::KeyCode::Space);
+
+    let speed = 250.0;
+    let dt = 1.0 / 60.0;
+
+    for (mut controller, _) in query.iter_mut() {
+        let trans_x = move_x * speed * dt;
+        let trans_y = if controller.is_grounded {
+            if jump_pressed {
+                350.0 * dt // Initial jump impulse
+            } else {
+                -9.8 * dt // Ground snap force
+            }
+        } else {
+            // In air: fall with gravity
+            -300.0 * dt
+        };
+
+        controller.translation = forge_core::Vec2::new(trans_x, trans_y);
+    }
+}

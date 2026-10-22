@@ -1,6 +1,8 @@
 //! Scene data model, stable serialization, and world loading/saving.
 
-use crate::components::{Camera2D, Children, EntityId, Name, Parent, Sprite, Transform2D};
+use crate::components::{
+    Camera2D, Children, Collider2D, EntityId, Name, Parent, RigidBody2D, Sprite, Transform2D,
+};
 use crate::ecs::{Entity, World};
 use crate::error::SceneError;
 use serde::{Deserialize, Serialize};
@@ -130,6 +132,26 @@ impl Scene {
                 entity_builder.insert(camera);
             }
 
+            if let Some(val) = se.components.get("RigidBody2D") {
+                let rb: RigidBody2D = serde_json::from_value(val.clone()).map_err(|e| {
+                    SceneError::ComponentParseError {
+                        component_name: "RigidBody2D".to_string(),
+                        message: e.to_string(),
+                    }
+                })?;
+                entity_builder.insert(rb);
+            }
+
+            if let Some(val) = se.components.get("Collider2D") {
+                let col: Collider2D = serde_json::from_value(val.clone()).map_err(|e| {
+                    SceneError::ComponentParseError {
+                        component_name: "Collider2D".to_string(),
+                        message: e.to_string(),
+                    }
+                })?;
+                entity_builder.insert(col);
+            }
+
             let entity = entity_builder.id();
             id_to_entity.insert(se.id.clone(), entity);
         }
@@ -182,6 +204,12 @@ impl Scene {
                 }
                 if let Some(camera) = entity_ref.get::<Camera2D>() {
                     components.insert("Camera2D".to_string(), serde_json::to_value(camera)?);
+                }
+                if let Some(rb) = entity_ref.get::<RigidBody2D>() {
+                    components.insert("RigidBody2D".to_string(), serde_json::to_value(rb)?);
+                }
+                if let Some(col) = entity_ref.get::<Collider2D>() {
+                    components.insert("Collider2D".to_string(), serde_json::to_value(col)?);
                 }
 
                 // Resolve parent stable id

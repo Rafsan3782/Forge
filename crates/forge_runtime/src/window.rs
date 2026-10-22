@@ -17,7 +17,7 @@ use winit::window::{Window, WindowId};
 
 use crate::bridge_ops::process_bridge_commands;
 use crate::cli::CliArgs;
-use crate::demo_input::demo_hero_movement_system;
+use crate::demo_input::{demo_character_controller_system, demo_hero_movement_system};
 use crate::render_scene::{render_world_scene, DEFAULT_CLEAR_COLOR};
 use forge_bridge::{create_bridge_channel, BridgeCommandReceiver, BridgeServer};
 
@@ -89,9 +89,18 @@ impl WindowApp {
         world.insert_resource(FixedInput::default());
         world.insert_resource(InputRingBuffer::new(2048));
 
+        // Insert physics resources
+        world.insert_resource(forge_physics::PhysicsWorld2D::default());
+        world.insert_resource(crate::render_scene::PhysicsDebugDraw::default());
+
         let mut game_loop = GameLoop::new();
         game_loop.add_pre_update_system(fixed_input_tick_system);
+        game_loop.add_pre_update_system(forge_physics::physics_before_step_system);
+        game_loop.add_update_system(forge_physics::physics_step_system);
+        game_loop.add_post_update_system(forge_physics::physics_after_step_system);
         game_loop.add_update_system(forge_assets::animator_update_system);
+
+        game_loop.add_update_system(demo_character_controller_system);
 
         if args.demo_input {
             game_loop.add_update_system(demo_hero_movement_system);
@@ -228,6 +237,25 @@ impl ApplicationHandler for WindowApp {
         };
 
         match event {
+            WindowEvent::KeyboardInput {
+                event:
+                    winit::event::KeyEvent {
+                        physical_key:
+                            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::F1),
+                        state: winit::event::ElementState::Pressed,
+                        repeat: false,
+                        ..
+                    },
+                ..
+            } => {
+                if let Some(mut pdd) = self
+                    .world
+                    .get_resource_mut::<crate::render_scene::PhysicsDebugDraw>()
+                {
+                    pdd.toggle();
+                    tracing::info!("Toggled physics debug draw: {}", pdd.enabled);
+                }
+            }
             WindowEvent::CloseRequested => {
                 tracing::info!("Window close requested. Exiting cleanly.");
                 event_loop.exit();
@@ -348,6 +376,38 @@ impl ApplicationHandler for WindowApp {
 
                 // Step simulation through fixed timestep loop
                 self.game_loop.step(&mut self.world, delta);
+
+                // Drain and log physics trigger and collision events
+                if let Some(mut event_bus) = self
+                    .world
+                    .get_resource_mut::<forge_core::events::EventBus>()
+                {
+                    for event in event_bus.read::<forge_physics::TriggerEvent>() {
+                        match event {
+                            forge_physics::TriggerEvent::Enter {
+                                trigger_entity,
+                                other_entity,
+                            } => {
+                                tracing::info!(
+                                    "Trigger Enter: trigger entity {:?} entered by entity {:?}",
+                                    trigger_entity,
+                                    other_entity
+                                );
+                            }
+                            forge_physics::TriggerEvent::Exit {
+                                trigger_entity,
+                                other_entity,
+                            } => {
+                                tracing::info!(
+                                    "Trigger Exit: trigger entity {:?} exited by entity {:?}",
+                                    trigger_entity,
+                                    other_entity
+                                );
+                            }
+                        }
+                    }
+                    event_bus.clear::<forge_physics::TriggerEvent>();
+                }
 
                 // Advance frame in InputState (clears just_pressed / just_released, counts down holds)
                 if let Some(mut input_state) = self.world.get_resource_mut::<InputState>() {

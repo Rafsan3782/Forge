@@ -302,6 +302,27 @@ pub async fn dispatch_direct_tool(
             Ok(serde_json::to_value(result)?)
         }
 
+        "physics.raycast" => {
+            let ray_params: forge_protocol::PhysicsRaycastParams =
+                serde_json::from_value(params)
+                    .map_err(|e| BridgeError::InvalidParams(e.to_string()))?;
+
+            let (tx, rx) = oneshot::channel();
+            command_sender
+                .send(BridgeCommand::PhysicsRaycast {
+                    params: ray_params,
+                    responder: tx,
+                })
+                .map_err(|_| BridgeError::ChannelClosed)?;
+
+            let result = rx
+                .await
+                .map_err(|_| BridgeError::ChannelClosed)?
+                .map_err(BridgeError::Engine)?;
+
+            Ok(serde_json::to_value(result)?)
+        }
+
         unknown => Err(BridgeError::MethodNotFound(unknown.to_string())),
     }
 }

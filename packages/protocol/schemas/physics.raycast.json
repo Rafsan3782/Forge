@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/physics.raycast.json",
+  "title": "PhysicsRaycast",
+  "description": "Perform a 2D raycast query against the physics world",
+  "definitions": {
+    "PhysicsRaycastParams": {
+      "type": "object",
+      "required": ["origin", "direction", "max_distance"],
+      "properties": {
+        "origin": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Ray origin [x, y]"
+        },
+        "direction": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Ray direction [x, y]"
+        },
+        "max_distance": {
+          "type": "number",
+          "description": "Maximum ray length"
+        },
+        "layer_mask": {
+          "type": "integer",
+          "description": "Optional collision group layer mask filter"
+        },
+        "solid": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether colinear or interior hits should be reported"
+        }
+      },
+      "additionalProperties": false
+    },
+    "RaycastHit": {
+      "type": "object",
+      "required": ["entity_id", "point", "normal", "fraction"],
+      "properties": {
+        "entity_id": {
+          "type": "string",
+          "description": "Entity ID of the collider struck"
+        },
+        "point": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Impact point [x, y]"
+        },
+        "normal": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Surface normal [x, y]"
+        },
+        "fraction": {
+          "type": "number",
+          "description": "Hit distance along the ray normalized by max_distance"
+        }
+      },
+      "additionalProperties": false
+    },
+    "PhysicsRaycastResult": {
+      "type": "object",
+      "required": ["hit"],
+      "properties": {
+        "hit": {
+          "type": "boolean",
+          "description": "Whether an obstacle was hit"
+        },
+        "data": {
+          "$ref": "#/definitions/RaycastHit"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

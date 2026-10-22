@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/component.physics.json",
+  "title": "PhysicsComponents",
+  "description": "2D Physics component schemas for RigidBody2D and Collider2D",
+  "definitions": {
+    "RigidBody2D": {
+      "type": "object",
+      "properties": {
+        "body_type": {
+          "type": "string",
+          "enum": ["dynamic", "kinematic", "static"],
+          "default": "dynamic"
+        },
+        "gravity_scale": {
+          "type": "number",
+          "default": 1.0
+        },
+        "lock_rotation": {
+          "type": "boolean",
+          "default": false
+        },
+        "linear_damping": {
+          "type": "number",
+          "default": 0.0
+        },
+        "angular_damping": {
+          "type": "number",
+          "default": 0.0
+        },
+        "can_sleep": {
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "Collider2D": {
+      "type": "object",
+      "required": ["shape"],
+      "properties": {
+        "shape": {
+          "type": "string",
+          "enum": ["box", "circle", "capsule"]
+        },
+        "size": {
+          "type": "array",
+          "items": { "type": "number" },
+          "description": "Half-extents [hx, hy] for box, [radius, 0] for circle, or [radius, half_height] for capsule"
+        },
+        "offset": {
+          "type": "array",
+          "items": { "type": "number" },
+          "description": "Center offset relative to body [x, y]"
+        },
+        "is_sensor": {
+          "type": "boolean",
+          "default": false
+        },
+        "collision_groups": {
+          "type": "integer",
+          "description": "Membership layers"
+        },
+        "collision_mask": {
+          "type": "integer",
+          "description": "Interaction filter mask"
+        },
+        "friction": {
+          "type": "number",
+          "default": 0.5
+        },
+        "restitution": {
+          "type": "number",
+          "default": 0.0
+        },
+        "density": {
+          "type": "number",
+          "default": 1.0
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

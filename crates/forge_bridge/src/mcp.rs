@@ -283,5 +283,41 @@ pub fn get_mcp_tools() -> Vec<McpTool> {
                 }
             }),
         },
+        McpTool {
+            name: "physics.raycast".to_string(),
+            description: "Cast a ray through the physics simulation world and retrieve the first intersecting collider".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "required": ["origin", "direction"],
+                "properties": {
+                    "origin": {
+                        "type": "array",
+                        "items": { "type": "number" },
+                        "minItems": 2,
+                        "maxItems": 2,
+                        "description": "Ray origin in world coordinates [x, y]"
+                    },
+                    "direction": {
+                        "type": "array",
+                        "items": { "type": "number" },
+                        "minItems": 2,
+                        "maxItems": 2,
+                        "description": "Ray direction vector [dx, dy]"
+                    },
+                    "max_distance": {
+                        "type": ["number", "null"],
+                        "description": "Optional maximum ray length (default 1000.0)"
+                    },
+                    "collision_mask": {
+                        "type": ["integer", "null"],
+                        "description": "Optional bitmask to filter collider layers"
+                    },
+                    "query_sensors": {
+                        "type": ["boolean", "null"],
+                        "description": "Whether to hit trigger/sensor colliders (default false)"
+                    }
+                }
+            }),
+        },
     ]
 }

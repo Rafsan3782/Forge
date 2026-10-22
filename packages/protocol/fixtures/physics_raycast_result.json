@@ -1,0 +1,9 @@
+{
+  "hit": true,
+  "data": {
+    "entity_id": "floor_entity",
+    "point": [0.0, 0.0],
+    "normal": [0.0, 1.0],
+    "fraction": 0.5
+  }
+}

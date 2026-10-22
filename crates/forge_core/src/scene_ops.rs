@@ -381,6 +381,84 @@ fn apply_component_from_hashmap(
             world.entity_mut(entity).insert(camera);
             Ok(())
         }
+        "RigidBody" | "RigidBody2D" => {
+            let mut rb = world
+                .get::<crate::components::RigidBody2D>(entity)
+                .cloned()
+                .unwrap_or_default();
+
+            if let Some(body_type_str) = data.get("body_type") {
+                if let Ok(bt) = serde_json::from_str::<crate::components::BodyType2D>(body_type_str)
+                {
+                    rb.body_type = bt;
+                } else if body_type_str.eq_ignore_ascii_case("dynamic") {
+                    rb.body_type = crate::components::BodyType2D::Dynamic;
+                } else if body_type_str.eq_ignore_ascii_case("kinematic") {
+                    rb.body_type = crate::components::BodyType2D::Kinematic;
+                } else if body_type_str.eq_ignore_ascii_case("static") {
+                    rb.body_type = crate::components::BodyType2D::Static;
+                }
+            }
+            if let Some(grav_str) = data.get("gravity_scale") {
+                if let Ok(g) = grav_str.parse::<f32>() {
+                    rb.gravity_scale = g;
+                }
+            }
+            if let Some(lock_rot_str) = data.get("lock_rotation") {
+                if let Ok(lr) = lock_rot_str.parse::<bool>() {
+                    rb.lock_rotation = lr;
+                }
+            }
+            if let Some(damping_str) = data.get("linear_damping") {
+                if let Ok(ld) = damping_str.parse::<f32>() {
+                    rb.linear_damping = ld;
+                }
+            }
+            if let Some(ang_damping_str) = data.get("angular_damping") {
+                if let Ok(ad) = ang_damping_str.parse::<f32>() {
+                    rb.angular_damping = ad;
+                }
+            }
+
+            world.entity_mut(entity).insert(rb);
+            Ok(())
+        }
+        "Collider" | "Collider2D" => {
+            let mut col = world
+                .get::<crate::components::Collider2D>(entity)
+                .cloned()
+                .unwrap_or_default();
+
+            if let Some(shape_str) = data.get("shape") {
+                if let Ok(s) = serde_json::from_str::<crate::components::ColliderShape2D>(shape_str)
+                {
+                    col.shape = s;
+                }
+            }
+            if let Some(sensor_str) = data.get("is_sensor") {
+                if let Ok(s) = sensor_str.parse::<bool>() {
+                    col.is_sensor = s;
+                }
+            }
+            if let Some(fric_str) = data.get("friction") {
+                if let Ok(f) = fric_str.parse::<f32>() {
+                    col.friction = f;
+                }
+            }
+            if let Some(rest_str) = data.get("restitution") {
+                if let Ok(r) = rest_str.parse::<f32>() {
+                    col.restitution = r;
+                }
+            }
+            if let Some(density_str) = data.get("density") {
+                if let Ok(d) = density_str.parse::<f32>() {
+                    col.density = d;
+                }
+            }
+
+            world.entity_mut(entity).insert(col);
+            Ok(())
+        }
         other => Err(SceneError::UnknownComponent(other.to_string())),
     }
 }
