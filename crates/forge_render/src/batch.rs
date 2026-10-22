@@ -69,8 +69,10 @@ impl SpriteBatcher {
         z_order: i32,
         texture_bind_group: Arc<wgpu::BindGroup>,
     ) {
-        let mut sprite = Sprite::default();
-        sprite.z_order = z_order;
+        let sprite = Sprite {
+            z_order,
+            ..Default::default()
+        };
         self.sprites.push(QueuedSprite {
             transform: Transform2D::default(),
             sprite,
