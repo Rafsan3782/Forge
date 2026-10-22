@@ -44,12 +44,15 @@ pub fn physics_before_step_system(world: &mut World) {
     };
 
     // 2. Remove despawned entities from Rapier
-    let current_body_entities: std::collections::HashSet<Entity> =
-        ecs_bodies.iter().map(|(e, _, _)| *e).collect();
+    let current_entities_with_physics: std::collections::HashSet<Entity> = ecs_bodies
+        .iter()
+        .map(|(e, _, _)| *e)
+        .chain(ecs_colliders.iter().map(|(e, _, _)| *e))
+        .collect();
     let to_remove_bodies: Vec<(Entity, rapier::RigidBodyHandle)> = physics
         .entity_to_body
         .iter()
-        .filter(|(e, _)| !current_body_entities.contains(e))
+        .filter(|(e, _)| !current_entities_with_physics.contains(e))
         .map(|(&e, &h)| (e, h))
         .collect();
 
@@ -84,24 +87,42 @@ pub fn physics_before_step_system(world: &mut World) {
 
         if let Some(&handle) = physics.entity_to_body.get(&entity) {
             if let Some(body) = physics.bodies.get_mut(handle) {
-                body.set_body_type(rapier_body_type, true);
-                body.set_gravity_scale(rb.gravity_scale, true);
-                body.set_linear_damping(rb.linear_damping);
-                body.set_angular_damping(rb.angular_damping);
+                if body.body_type() != rapier_body_type {
+                    body.set_body_type(rapier_body_type, false);
+                }
+                if (body.gravity_scale() - rb.gravity_scale).abs() > 1e-5 {
+                    body.set_gravity_scale(rb.gravity_scale, false);
+                }
+                if (body.linear_damping() - rb.linear_damping).abs() > 1e-5 {
+                    body.set_linear_damping(rb.linear_damping);
+                }
+                if (body.angular_damping() - rb.angular_damping).abs() > 1e-5 {
+                    body.set_angular_damping(rb.angular_damping);
+                }
 
                 let mut locked_axes = rapier::LockedAxes::empty();
                 if rb.lock_rotation {
                     locked_axes |= rapier::LockedAxes::ROTATION_LOCKED;
                 }
-                body.set_locked_axes(locked_axes, true);
-
-                if rb.body_type != BodyType2D::Dynamic {
-                    // Update position for kinematic/static bodies if transform moved
-                    let pos = rapier::Isometry::new(
-                        rapier::vector![tf.position.x, tf.position.y],
-                        tf.rotation,
-                    );
-                    body.set_position(pos, true);
+                if body.locked_axes() != locked_axes {
+                    body.set_locked_axes(locked_axes, false);
+                }
+                match rb.body_type {
+                    BodyType2D::Kinematic => {
+                        let pos = rapier::Isometry::new(
+                            rapier::vector![tf.position.x, tf.position.y],
+                            tf.rotation,
+                        );
+                        body.set_next_kinematic_position(pos);
+                    }
+                    BodyType2D::Static => {
+                        let pos = rapier::Isometry::new(
+                            rapier::vector![tf.position.x, tf.position.y],
+                            tf.rotation,
+                        );
+                        body.set_position(pos, true);
+                    }
+                    BodyType2D::Dynamic => {}
                 }
             }
         } else {
@@ -156,13 +177,27 @@ pub fn physics_before_step_system(world: &mut World) {
 
         if let Some(&col_handle) = physics.entity_to_collider.get(&entity) {
             if let Some(rapier_col) = physics.colliders.get_mut(col_handle) {
-                rapier_col.set_sensor(col.is_sensor);
-                rapier_col.set_friction(col.friction);
-                rapier_col.set_restitution(col.restitution);
-                rapier_col.set_collision_groups(rapier::InteractionGroups::new(
+                if rapier_col.is_sensor() != col.is_sensor {
+                    rapier_col.set_sensor(col.is_sensor);
+                }
+                if (rapier_col.friction() - col.friction).abs() > 1e-5 {
+                    rapier_col.set_friction(col.friction);
+                }
+                if (rapier_col.restitution() - col.restitution).abs() > 1e-5 {
+                    rapier_col.set_restitution(col.restitution);
+                }
+                let target_groups = rapier::InteractionGroups::new(
                     rapier::Group::from_bits_truncate(col.collision_groups),
                     rapier::Group::from_bits_truncate(col.collision_mask),
-                ));
+                );
+                if rapier_col.collision_groups() != target_groups {
+                    rapier_col.set_collision_groups(target_groups);
+                }
+
+                if rapier_col.active_events() != rapier::ActiveEvents::COLLISION_EVENTS {
+                    rapier_col.set_active_events(rapier::ActiveEvents::COLLISION_EVENTS);
+                }
+                rapier_col.set_active_collision_types(rapier::ActiveCollisionTypes::all());
 
                 if parent_body_handle.is_none() {
                     // Update transform for standalone colliders
@@ -172,15 +207,32 @@ pub fn physics_before_step_system(world: &mut World) {
                     );
                     rapier_col.set_position(pos);
                 } else {
-                    rapier_col.set_translation(rapier::vector![col.offset.x, col.offset.y]);
+                    let cur_pos = rapier_col
+                        .position_wrt_parent()
+                        .map(|p| p.translation.vector);
+                    let target_pos = rapier::vector![col.offset.x, col.offset.y];
+                    let needs_update = match cur_pos {
+                        Some(p) => {
+                            (p.x - target_pos.x).abs() > 1e-5 || (p.y - target_pos.y).abs() > 1e-5
+                        }
+                        None => true,
+                    };
+                    if needs_update {
+                        rapier_col.set_position_wrt_parent(rapier::Isometry::translation(
+                            target_pos.x,
+                            target_pos.y,
+                        ));
+                    }
                 }
             }
         } else {
-            let mut builder = rapier::ColliderBuilder::new(shape)
+            let builder = rapier::ColliderBuilder::new(shape)
                 .sensor(col.is_sensor)
                 .friction(col.friction)
                 .restitution(col.restitution)
                 .density(col.density)
+                .active_events(rapier::ActiveEvents::COLLISION_EVENTS)
+                .active_collision_types(rapier::ActiveCollisionTypes::all())
                 .collision_groups(rapier::InteractionGroups::new(
                     rapier::Group::from_bits_truncate(col.collision_groups),
                     rapier::Group::from_bits_truncate(col.collision_mask),
@@ -190,12 +242,15 @@ pub fn physics_before_step_system(world: &mut World) {
             let col_handle = if let Some(body_handle) = parent_body_handle {
                 physics.insert_collider_with_parent(builder.build(), body_handle)
             } else {
-                builder = builder.translation(rapier::vector![
-                    tf.position.x + col.offset.x,
-                    tf.position.y + col.offset.y
-                ]);
-                builder = builder.rotation(tf.rotation);
-                physics.colliders.insert(builder.build())
+                // Standalone colliders without a RigidBody2D get an internal Fixed body in Rapier
+                let fixed_body = rapier::RigidBodyBuilder::fixed()
+                    .translation(rapier::vector![tf.position.x, tf.position.y])
+                    .rotation(tf.rotation)
+                    .build();
+                let body_handle = physics.bodies.insert(fixed_body);
+                physics.entity_to_body.insert(entity, body_handle);
+                physics.body_to_entity.insert(body_handle, entity);
+                physics.insert_collider_with_parent(builder.build(), body_handle)
             };
 
             physics.entity_to_collider.insert(entity, col_handle);
@@ -261,6 +316,8 @@ pub fn physics_before_step_system(world: &mut World) {
                     if let Some(body) = physics.bodies.get_mut(body_handle) {
                         body.set_translation(rapier::vector![tf.position.x, tf.position.y], true);
                     }
+                } else if let Some(collider) = physics.colliders.get_mut(col_handle) {
+                    collider.set_translation(rapier::vector![tf.position.x, tf.position.y]);
                 }
 
                 updated_controllers.push((entity, tf, ctl));

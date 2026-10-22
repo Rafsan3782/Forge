@@ -300,7 +300,10 @@ fn test_character_controller_is_grounded_on_floor() {
         ))
         .id();
 
-    step_simulation(&mut world);
+    // Step simulation for 5 frames to settle onto floor
+    for _ in 0..5 {
+        step_simulation(&mut world);
+    }
 
     let controller = world.get::<CharacterController2D>(char_entity).unwrap();
     assert!(

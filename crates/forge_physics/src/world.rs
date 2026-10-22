@@ -60,11 +60,8 @@ impl Default for PhysicsWorld2D {
 impl PhysicsWorld2D {
     /// Creates a new physics simulation world with the given gravity vector.
     pub fn new(gravity: Vec2) -> Self {
-        let integration_parameters = rapier::IntegrationParameters {
-            dt: 1.0 / 60.0,
-            num_solver_iterations: 4.try_into().unwrap(),
-            ..Default::default()
-        };
+        let mut integration_parameters = rapier::IntegrationParameters::default();
+        integration_parameters.dt = 1.0 / 60.0;
 
         Self {
             gravity,
@@ -306,10 +303,11 @@ impl PhysicsWorld2D {
             &mut self.impulse_joints,
             &mut self.multibody_joints,
             &mut self.ccd_solver,
-            Some(&mut self.query_pipeline),
+            None,
             &physics_hooks,
             &event_handler,
         );
+        self.query_pipeline.update(&self.colliders);
 
         // Collect contacts and triggers from narrow phase
         let mut current_contacts = HashSet::new();
@@ -339,15 +337,31 @@ impl PhysicsWorld2D {
                 .unwrap_or(false);
 
             if is_sensor1 || is_sensor2 {
-                // Trigger event
                 let (trigger_e, other_e) = if is_sensor1 { (e1, e2) } else { (e2, e1) };
                 if pair.has_any_active_contact {
                     current_triggers.insert((trigger_e, other_e));
                 }
             } else if pair.has_any_active_contact {
-                // Ensure ordered key for undirected contact
                 let key = if e1 < e2 { (e1, e2) } else { (e2, e1) };
                 current_contacts.insert(key);
+            }
+        }
+
+        // Sensors in Rapier are stored in intersection_pairs
+        for (col1, col2, intersecting) in self.narrow_phase.intersection_pairs() {
+            if intersecting {
+                if let (Some(&e1), Some(&e2)) = (
+                    self.collider_to_entity.get(&col1),
+                    self.collider_to_entity.get(&col2),
+                ) {
+                    let is_sensor1 = self
+                        .colliders
+                        .get(col1)
+                        .map(|c| c.is_sensor())
+                        .unwrap_or(false);
+                    let (trigger_e, other_e) = if is_sensor1 { (e1, e2) } else { (e2, e1) };
+                    current_triggers.insert((trigger_e, other_e));
+                }
             }
         }
 
