@@ -176,6 +176,10 @@ async fn test_bridge_full_lifecycle_and_security() {
                             let _ = responder
                                 .send(Err("Assets not initialized in dummy fallback".to_string()));
                         }
+                        forge_bridge::BridgeCommand::PhysicsRaycast { params, responder } => {
+                            let res = forge_runtime::bridge_ops::handle_physics_raycast(&world, &params);
+                            let _ = responder.send(res);
+                        }
                     }
                 }
             }

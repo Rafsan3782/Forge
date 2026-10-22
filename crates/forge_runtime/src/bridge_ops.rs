@@ -396,7 +396,8 @@ pub fn apply_simulated_input(
     }
 }
 
-fn handle_physics_raycast(
+/// Executes a spatial raycast query against the physics world.
+pub fn handle_physics_raycast(
     world: &World,
     params: &forge_protocol::PhysicsRaycastParams,
 ) -> Result<forge_protocol::PhysicsRaycastResult, String> {
