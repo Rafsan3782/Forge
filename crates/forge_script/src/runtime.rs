@@ -89,6 +89,7 @@ impl Default for InterruptController {
 
 /// Wrapper around QuickJS Runtime and Context.
 pub struct ScriptRuntime {
+    #[allow(dead_code)]
     runtime: Runtime,
     context: Context,
     config: SandboxConfig,

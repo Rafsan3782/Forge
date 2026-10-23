@@ -1,5 +1,5 @@
 use forge_protocol::ScriptEntityTransform;
-use rquickjs::{Context, Ctx, Function, IntoJs, Object, Value};
+use rquickjs::{Context, Function, Object, Value};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 
@@ -249,13 +249,11 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
                             let new_id = format!("entity_{}", rand_id());
                             let components = comp.and_then(|c| {
                                 let c_ctx = c.ctx().clone();
-                                if let Ok(json_str) = c_ctx.json_stringify(c) {
-                                    if let Some(s) = json_str {
-                                        return serde_json::from_str(
-                                            &s.to_string().unwrap_or_default(),
-                                        )
-                                        .ok();
-                                    }
+                                if let Ok(Some(s)) = c_ctx.json_stringify(c) {
+                                    return serde_json::from_str(
+                                        &s.to_string().unwrap_or_default(),
+                                    )
+                                    .ok();
                                 }
                                 None
                             });
