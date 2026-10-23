@@ -228,3 +228,7 @@ Run from the repository root:
    - All tests pass (`cargo nextest run` and `pnpm -r test`).
    - Zero new compiler, clippy, or ESLint warnings (`cargo clippy --workspace -- -D warnings` and `pnpm -r lint`).
    - All TypeScript types pass strict validation (`pnpm -r typecheck`).
+
+5. **Tilemap & Command Pattern Undo (TODO):**
+   - Tilemap operations (`tilemap.set_tile`, `tilemap.fill_rect`, `tilemap.clear`) return `prev_tile_id` or affected chunks to facilitate undoable transactions.
+   - Currently, a generalized undo command pattern does not yet exist in `forge_bridge` / `forge_core`. TODO: Integrate tilemap operations into the centralized command history / transaction stack once the editor undo system is implemented.

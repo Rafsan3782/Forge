@@ -96,6 +96,34 @@ pub enum BridgeCommand {
         /// Channel to return raycast hit result.
         responder: oneshot::Sender<Result<forge_protocol::PhysicsRaycastResult, String>>,
     },
+    /// Query tile ID at specific tilemap coordinate.
+    TilemapGet {
+        /// Parameters specifying entity, layer, and coordinates.
+        params: forge_protocol::TilemapGetParams,
+        /// Channel to return tile query result.
+        responder: oneshot::Sender<Result<forge_protocol::TilemapGetResult, String>>,
+    },
+    /// Set a tile ID at specific tilemap coordinate.
+    TilemapSetTile {
+        /// Parameters specifying entity, layer, coordinates, and tile ID.
+        params: forge_protocol::TilemapSetTileParams,
+        /// Channel to return previous tile ID and affected chunk.
+        responder: oneshot::Sender<Result<forge_protocol::TilemapSetTileResult, String>>,
+    },
+    /// Fill a rectangle of tiles on a tilemap.
+    TilemapFillRect {
+        /// Parameters specifying entity, layer, bounds, and tile ID.
+        params: forge_protocol::TilemapFillRectParams,
+        /// Channel to return modified tile and chunk counts.
+        responder: oneshot::Sender<Result<forge_protocol::TilemapFillRectResult, String>>,
+    },
+    /// Clear all tiles or a specific layer from a tilemap.
+    TilemapClear {
+        /// Parameters specifying entity and optional layer.
+        params: forge_protocol::TilemapClearParams,
+        /// Channel to return number of cleared chunks.
+        responder: oneshot::Sender<Result<forge_protocol::TilemapClearResult, String>>,
+    },
 }
 
 /// Sender side held by the bridge server to dispatch commands to the engine loop.

@@ -1,0 +1,7 @@
+{
+  "entity_id": "tilemap_1",
+  "layer": "ground",
+  "min": [0, 0],
+  "max": [15, 15],
+  "tile_id": 1
+}

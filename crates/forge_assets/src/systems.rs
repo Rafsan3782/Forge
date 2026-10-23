@@ -140,6 +140,72 @@ impl SpriteSheetStore {
     }
 }
 
+/// Storage and caching for loaded `Tileset` assets.
+#[derive(Resource, Debug, Default, Clone)]
+pub struct TilesetStore {
+    tilesets: HashMap<String, crate::tileset::Tileset>,
+    base_dir: Option<PathBuf>,
+}
+
+impl TilesetStore {
+    /// Creates a new empty tileset store.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Sets the base directory for loading tilesets.
+    pub fn set_base_dir(&mut self, dir: impl Into<PathBuf>) {
+        self.base_dir = Some(dir.into());
+    }
+
+    /// Registers a tileset under an asset ID.
+    pub fn insert(&mut self, asset_id: impl Into<String>, tileset: crate::tileset::Tileset) {
+        self.tilesets.insert(asset_id.into(), tileset);
+    }
+
+    /// Retrieves a tileset by asset ID.
+    pub fn get(&self, asset_id: &str) -> Option<&crate::tileset::Tileset> {
+        self.tilesets.get(asset_id)
+    }
+
+    /// Loads or fetches a tileset from file or cache.
+    pub fn get_or_load(&mut self, asset_id: &str) -> Result<&crate::tileset::Tileset, AssetError> {
+        if !self.tilesets.contains_key(asset_id) {
+            let mut candidate_paths = Vec::new();
+            if let Some(base) = &self.base_dir {
+                candidate_paths.push(base.join(asset_id));
+            }
+            candidate_paths.push(PathBuf::from(asset_id));
+
+            let mut resolved = None;
+            for p in &candidate_paths {
+                if p.exists() && p.is_file() {
+                    resolved = Some(p.clone());
+                    break;
+                }
+            }
+
+            let path = resolved.ok_or_else(|| {
+                AssetError::AssetNotFound(format!("Tileset asset '{}' not found", asset_id))
+            })?;
+
+            let content = fs::read_to_string(path)?;
+            let tileset: crate::tileset::Tileset = serde_json::from_str(&content)?;
+            self.tilesets.insert(asset_id.to_string(), tileset);
+        }
+
+        Ok(self.tilesets.get(asset_id).unwrap())
+    }
+
+    /// Reloads a tileset from disk.
+    pub fn reload(&mut self, asset_id: &str, path: impl AsRef<Path>) -> Result<(), AssetError> {
+        let content = fs::read_to_string(path)?;
+        let tileset: crate::tileset::Tileset = serde_json::from_str(&content)?;
+        self.tilesets.insert(asset_id.to_string(), tileset);
+        Ok(())
+    }
+}
+
 /// Fixed timestep animation system advancing `Animator` components and setting `Sprite.frame`.
 /// Emits any triggered `AnimationEvent` items to the `EventBus` if present.
 pub fn animator_update_system(

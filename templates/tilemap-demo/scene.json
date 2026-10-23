@@ -1,0 +1,106 @@
+{
+  "name": "Tilemap Demo",
+  "entities": [
+    {
+      "id": "camera",
+      "name": "Main Camera",
+      "components": {
+        "Transform2D": {
+          "position": [0.0, 0.0],
+          "rotation": 0.0,
+          "scale": [1.0, 1.0]
+        },
+        "Camera2D": {
+          "zoom": 1.0,
+          "is_active": true
+        }
+      }
+    },
+    {
+      "id": "tilemap",
+      "name": "World Tilemap",
+      "components": {
+        "Transform2D": {
+          "position": [-320.0, -240.0],
+          "rotation": 0.0,
+          "scale": [1.0, 1.0]
+        },
+        "Tilemap": {
+          "tileset_id": "tileset.json",
+          "tile_size": [32.0, 32.0],
+          "chunk_size": 16,
+          "layers": ["main"],
+          "chunks": {
+            "[0, 0]": {
+              "coord": [0, 0],
+              "layers": {
+                "main": [
+                  "1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1",
+                  "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,3,3,3,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,3,3,3,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,2,2,2,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
+                ]
+              }
+            }
+          },
+          "collision_groups": 4294967295,
+          "collision_mask": 4294967295,
+          "friction": 0.5,
+          "restitution": 0.0,
+          "z_order": -10
+        }
+      }
+    },
+    {
+      "id": "player",
+      "name": "Knight Player",
+      "components": {
+        "Transform2D": {
+          "position": [-160.0, -100.0],
+          "rotation": 0.0,
+          "scale": [1.0, 1.0]
+        },
+        "Sprite": {
+          "asset_id": "hero.png",
+          "size": [32.0, 32.0],
+          "color_tint": [1.0, 1.0, 1.0, 1.0],
+          "z_order": 10
+        },
+        "Collider2D": {
+          "shape": {
+            "type": "box",
+            "half_extents": [12.0, 16.0]
+          },
+          "offset": [0.0, 0.0],
+          "is_sensor": false,
+          "collision_groups": 4294967295,
+          "collision_mask": 4294967295,
+          "friction": 0.5,
+          "restitution": 0.0,
+          "density": 1.0
+        },
+        "CharacterController2D": {
+          "offset": 0.01,
+          "slide_enabled": true,
+          "max_slope_angle": 0.7853982,
+          "min_slope_slide_angle": 0.7853982,
+          "autostep_max_height": 4.0,
+          "autostep_min_width": 2.0,
+          "snap_to_ground_distance": 2.0
+        }
+      }
+    }
+  ]
+}

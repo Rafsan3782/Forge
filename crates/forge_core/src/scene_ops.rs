@@ -56,6 +56,9 @@ pub fn build_entity_node(world: &World, entity: Entity) -> EntityNode {
     if world.get::<Children>(entity).is_some() {
         components.push("Children".to_string());
     }
+    if world.get::<crate::tilemap::Tilemap>(entity).is_some() {
+        components.push("Tilemap".to_string());
+    }
     components.sort();
 
     let mut children_nodes = Vec::new();
@@ -457,6 +460,28 @@ fn apply_component_from_hashmap(
             }
 
             world.entity_mut(entity).insert(col);
+            Ok(())
+        }
+        "Tilemap" => {
+            let mut tm = world
+                .get::<crate::tilemap::Tilemap>(entity)
+                .cloned()
+                .unwrap_or_default();
+
+            if let Some(tileset_id) = data.get("tileset_id") {
+                tm.tileset_id = tileset_id.clone();
+            }
+            if let Some(cs_str) = data.get("chunk_size") {
+                if let Ok(cs) = cs_str.parse::<u32>() {
+                    tm.chunk_size = cs;
+                }
+            }
+            if let Some(z_str) = data.get("z_order") {
+                if let Ok(z) = z_str.parse::<i32>() {
+                    tm.z_order = z;
+                }
+            }
+            world.entity_mut(entity).insert(tm);
             Ok(())
         }
         other => Err(SceneError::UnknownComponent(other.to_string())),

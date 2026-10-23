@@ -45,6 +45,8 @@ pub struct PhysicsWorld2D {
     pub entity_to_collider: HashMap<Entity, rapier::ColliderHandle>,
     /// Mapping from Rapier ColliderHandle to ECS Entity.
     pub collider_to_entity: HashMap<rapier::ColliderHandle, Entity>,
+    /// Mapping from ECS Tilemap Entity and ChunkCoord to Rapier ColliderHandles.
+    pub entity_chunk_colliders: HashMap<(Entity, [i32; 2]), Vec<rapier::ColliderHandle>>,
     /// Set of active collisions from previous step: `(Entity, Entity)`.
     pub active_contacts: HashSet<(Entity, Entity)>,
     /// Set of active trigger overlaps from previous step: `(TriggerEntity, OtherEntity)`.
@@ -82,6 +84,7 @@ impl PhysicsWorld2D {
             body_to_entity: HashMap::new(),
             entity_to_collider: HashMap::new(),
             collider_to_entity: HashMap::new(),
+            entity_chunk_colliders: HashMap::new(),
             active_contacts: HashSet::new(),
             active_triggers: HashSet::new(),
         }
@@ -102,6 +105,7 @@ impl PhysicsWorld2D {
         self.body_to_entity.clear();
         self.entity_to_collider.clear();
         self.collider_to_entity.clear();
+        self.entity_chunk_colliders.clear();
         self.active_contacts.clear();
         self.active_triggers.clear();
     }

@@ -41,6 +41,20 @@ pub fn run_headless(args: &CliArgs) -> Result<(), Box<dyn std::error::Error>> {
     let scene_dir = scene_path.parent().unwrap_or(Path::new("."));
     let assets_dir = scene_dir.join("assets");
 
+    if args.scene.contains("tilemap-demo")
+        && (!assets_dir.exists() || !assets_dir.join("tileset.png").exists())
+    {
+        if let Err(e) = crate::procedural::generate_tilemap_assets(&assets_dir) {
+            tracing::warn!("Failed to auto-generate tilemap demo assets: {}", e);
+        }
+    } else if args.scene.contains("hello")
+        && (!assets_dir.exists() || !assets_dir.join("hero.png").exists())
+    {
+        if let Err(e) = crate::procedural::generate_hello_assets(&assets_dir) {
+            tracing::warn!("Failed to auto-generate hello assets: {}", e);
+        }
+    }
+
     // Initialize and scan AssetDatabase
     let mut asset_db = forge_assets::AssetDatabase::new(&assets_dir);
     if let Err(e) = asset_db.scan_and_index() {
@@ -52,6 +66,8 @@ pub fn run_headless(args: &CliArgs) -> Result<(), Box<dyn std::error::Error>> {
     animation_store.set_base_dir(&assets_dir);
     let mut sheet_store = forge_assets::SpriteSheetStore::new();
     sheet_store.set_base_dir(&assets_dir);
+    let mut tileset_store = forge_assets::TilesetStore::new();
+    tileset_store.set_base_dir(&assets_dir);
 
     let scene = Scene::load_from_file(&args.scene)?;
     let mut world = World::new();
@@ -61,6 +77,7 @@ pub fn run_headless(args: &CliArgs) -> Result<(), Box<dyn std::error::Error>> {
     world.insert_resource(asset_db);
     world.insert_resource(animation_store);
     world.insert_resource(sheet_store);
+    world.insert_resource(tileset_store);
     world.insert_resource(forge_core::EventBus::new());
 
     // Initialize ActionMap

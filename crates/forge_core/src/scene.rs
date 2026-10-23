@@ -152,6 +152,17 @@ impl Scene {
                 entity_builder.insert(col);
             }
 
+            if let Some(val) = se.components.get("Tilemap") {
+                let tm: crate::tilemap::Tilemap =
+                    serde_json::from_value(val.clone()).map_err(|e| {
+                        SceneError::ComponentParseError {
+                            component_name: "Tilemap".to_string(),
+                            message: e.to_string(),
+                        }
+                    })?;
+                entity_builder.insert(tm);
+            }
+
             let entity = entity_builder.id();
             id_to_entity.insert(se.id.clone(), entity);
         }
@@ -210,6 +221,9 @@ impl Scene {
                 }
                 if let Some(col) = entity_ref.get::<Collider2D>() {
                     components.insert("Collider2D".to_string(), serde_json::to_value(col)?);
+                }
+                if let Some(tm) = entity_ref.get::<crate::tilemap::Tilemap>() {
+                    components.insert("Tilemap".to_string(), serde_json::to_value(tm)?);
                 }
 
                 // Resolve parent stable id

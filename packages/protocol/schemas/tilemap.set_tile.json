@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/tilemap.set_tile.json",
+  "title": "TilemapSetTile",
+  "description": "Sets a tile ID at a specific coordinate on a tilemap layer (undoable operation)",
+  "definitions": {
+    "TilemapSetTileParams": {
+      "type": "object",
+      "required": ["entity_id", "coord", "tile_id"],
+      "properties": {
+        "entity_id": {
+          "type": "string",
+          "description": "Target entity containing a Tilemap component"
+        },
+        "layer": {
+          "type": "string",
+          "default": "main",
+          "description": "Target tilemap layer name"
+        },
+        "coord": {
+          "type": "array",
+          "items": { "type": "integer" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Tile grid coordinate [x, y]"
+        },
+        "tile_id": {
+          "type": "integer",
+          "description": "New tile ID (0 or -1 indicates empty/erased tile)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "TilemapSetTileResult": {
+      "type": "object",
+      "required": ["success", "prev_tile_id"],
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "prev_tile_id": {
+          "type": "integer",
+          "description": "Previous tile ID for undo support"
+        },
+        "chunk_coord": {
+          "type": "array",
+          "items": { "type": "integer" },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

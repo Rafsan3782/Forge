@@ -1,0 +1,6 @@
+{
+  "entity_id": "tilemap_1",
+  "layer": "ground",
+  "coord": [12, 8],
+  "tile_id": 5
+}

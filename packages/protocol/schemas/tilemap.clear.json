@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/tilemap.clear.json",
+  "title": "TilemapClear",
+  "description": "Clears tiles from an entire tilemap or a specific layer (undoable operation)",
+  "definitions": {
+    "TilemapClearParams": {
+      "type": "object",
+      "required": ["entity_id"],
+      "properties": {
+        "entity_id": {
+          "type": "string",
+          "description": "Target entity containing a Tilemap component"
+        },
+        "layer": {
+          "type": "string",
+          "description": "Optional specific layer name to clear. If omitted, all layers are cleared."
+        }
+      },
+      "additionalProperties": false
+    },
+    "TilemapClearResult": {
+      "type": "object",
+      "required": ["success", "chunks_cleared"],
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "chunks_cleared": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

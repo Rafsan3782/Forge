@@ -319,5 +319,115 @@ pub fn get_mcp_tools() -> Vec<McpTool> {
                 }
             }),
         },
+        McpTool {
+            name: "tilemap.get".to_string(),
+            description: "Retrieve the tile ID at specific tile coordinates on a tilemap layer".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "required": ["entity_id", "x", "y"],
+                "properties": {
+                    "entity_id": {
+                        "type": "string",
+                        "description": "ID of the entity containing the Tilemap component"
+                    },
+                    "layer": {
+                        "type": ["string", "null"],
+                        "description": "Layer name (defaults to main)"
+                    },
+                    "x": {
+                        "type": "integer",
+                        "description": "Tile X coordinate"
+                    },
+                    "y": {
+                        "type": "integer",
+                        "description": "Tile Y coordinate"
+                    }
+                }
+            }),
+        },
+        McpTool {
+            name: "tilemap.set_tile".to_string(),
+            description: "Set a tile ID at specific tile coordinates on a tilemap layer".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "required": ["entity_id", "x", "y", "tile_id"],
+                "properties": {
+                    "entity_id": {
+                        "type": "string",
+                        "description": "ID of the entity containing the Tilemap component"
+                    },
+                    "layer": {
+                        "type": ["string", "null"],
+                        "description": "Layer name (defaults to main)"
+                    },
+                    "x": {
+                        "type": "integer",
+                        "description": "Tile X coordinate"
+                    },
+                    "y": {
+                        "type": "integer",
+                        "description": "Tile Y coordinate"
+                    },
+                    "tile_id": {
+                        "type": "integer",
+                        "description": "Tile ID to set (0 to clear)"
+                    }
+                }
+            }),
+        },
+        McpTool {
+            name: "tilemap.fill_rect".to_string(),
+            description: "Fill a rectangle of tiles on a tilemap layer".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "required": ["entity_id", "min", "max", "tile_id"],
+                "properties": {
+                    "entity_id": {
+                        "type": "string",
+                        "description": "ID of the entity containing the Tilemap component"
+                    },
+                    "layer": {
+                        "type": ["string", "null"],
+                        "description": "Layer name (defaults to main)"
+                    },
+                    "min": {
+                        "type": "array",
+                        "items": { "type": "integer" },
+                        "minItems": 2,
+                        "maxItems": 2,
+                        "description": "Minimum tile coordinates [min_x, min_y]"
+                    },
+                    "max": {
+                        "type": "array",
+                        "items": { "type": "integer" },
+                        "minItems": 2,
+                        "maxItems": 2,
+                        "description": "Maximum tile coordinates [max_x, max_y]"
+                    },
+                    "tile_id": {
+                        "type": "integer",
+                        "description": "Tile ID to fill"
+                    }
+                }
+            }),
+        },
+        McpTool {
+            name: "tilemap.clear".to_string(),
+            description: "Clear all tiles or an entire layer from a tilemap".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "required": ["entity_id"],
+                "properties": {
+                    "entity_id": {
+                        "type": "string",
+                        "description": "ID of the entity containing the Tilemap component"
+                    },
+                    "layer": {
+                        "type": ["string", "null"],
+                        "description": "Optional specific layer to clear"
+                    }
+                }
+            }),
+        },
     ]
 }
