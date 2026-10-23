@@ -294,32 +294,39 @@ impl ScriptRuntime {
     ) -> ScriptExecutionError {
         let (message, stack, raw_line, raw_col) = match err {
             rquickjs::Error::Exception => {
-                let exc = ctx.catch();
-                let msg = exc
-                    .message()
-                    .unwrap_or_else(|| "Unknown script exception".to_string());
+                let val = ctx.catch();
                 let mut stack_str = None;
                 let mut line = None;
                 let mut col = None;
 
-                if let Some(stack) = exc.stack() {
-                    // Extract line / col from stack if available
-                    for line_str in stack.lines() {
-                        if let Some(pos) = line_str.rfind(':') {
-                            if let Ok(c) = line_str[pos + 1..].trim_end_matches(')').parse::<u32>()
-                            {
-                                if let Some(prev_pos) = line_str[..pos].rfind(':') {
-                                    if let Ok(l) = line_str[prev_pos + 1..pos].parse::<u32>() {
-                                        line = Some(l);
-                                        col = Some(c);
-                                        break;
+                let msg = if let Some(exc) = val.as_exception() {
+                    let m = exc
+                        .message()
+                        .unwrap_or_else(|| "Unknown script exception".to_string());
+                    if let Some(stack) = exc.stack() {
+                        for line_str in stack.lines() {
+                            if let Some(pos) = line_str.rfind(':') {
+                                if let Ok(c) =
+                                    line_str[pos + 1..].trim_end_matches(')').parse::<u32>()
+                                {
+                                    if let Some(prev_pos) = line_str[..pos].rfind(':') {
+                                        if let Ok(l) = line_str[prev_pos + 1..pos].parse::<u32>() {
+                                            line = Some(l);
+                                            col = Some(c);
+                                            break;
+                                        }
                                     }
                                 }
                             }
                         }
+                        stack_str = Some(stack);
                     }
-                    stack_str = Some(stack);
-                }
+                    m
+                } else if let Some(s) = val.as_string() {
+                    s.to_string().unwrap_or_else(|_| format!("{:?}", val))
+                } else {
+                    format!("{:?}", val)
+                };
 
                 (msg, stack_str, line, col)
             }

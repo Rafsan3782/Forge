@@ -13,7 +13,7 @@ forge_audio = { path = "../forge_audio" }
 forge_protocol = { path = "../forge_protocol" }
 rquickjs = { version = "0.14", features = ["classes", "properties"] }
 swc = "80.0"
-swc_common = { version = "26.0", features = ["sourcemap"] }
+swc_common = { version = "26.0", features = ["sourcemap", "tty-emitter"] }
 swc_ecma_ast = "29.0"
 swc_ecma_parser = { version = "46.1", features = ["typescript"] }
 sourcemap = "9.0"

@@ -156,10 +156,10 @@ pub fn script_prepare_frame_system(
 pub fn script_start_system(
     mut server: Option<ResMut<ScriptServer>>,
     mut event_bus: Option<ResMut<EventBus>>,
-    mut query: Query<(Entity, Option<&EntityId>, &Script)>,
+    mut query: Query<(Entity, Option<&EntityId>, &mut Script)>,
 ) {
     let Some(ref mut server) = server else { return };
-    let mut errors = Vec::new();
+    let mut to_run = Vec::new();
 
     for (entity, entity_id, script) in query.iter() {
         if !script.enabled || server.initialized_entities.contains(&entity) {
@@ -170,33 +170,36 @@ pub fn script_start_system(
         let id_str = entity_id
             .map(|id| id.0.clone())
             .unwrap_or_else(|| format!("{:?}", entity));
-        server.exec_context.set_current_entity(&id_str);
 
         match server.get_or_load_script(&script.path) {
             Ok(loaded) => {
                 if loaded.has_on_start {
-                    let script_copy = loaded.clone();
-                    let mut rt = server.runtime.0.lock().unwrap();
-                    if let Err(e) =
-                        rt.invoke_function::<(), ()>(&id_str, &script_copy, "onStart", ())
-                    {
-                        errors.push((entity, e));
-                    }
+                    to_run.push((entity, id_str, loaded.clone()));
                 }
             }
             Err(e) => {
-                errors.push((entity, e));
+                tracing::error!("[script error] {}", e.message);
+                if let Some(ref mut bus) = event_bus {
+                    bus.send(e.to_event());
+                }
+                if let Ok((_, _, mut s)) = query.get_mut(entity) {
+                    s.disable();
+                }
             }
         }
     }
 
-    for (entity, err) in errors {
-        tracing::error!("[script error] {}", err.message);
-        if let Some(ref mut bus) = event_bus {
-            bus.send(err.to_event());
-        }
-        if let Ok((_, _, mut s)) = query.get_mut(entity) {
-            s.disable();
+    for (entity, id_str, loaded) in to_run {
+        server.exec_context.set_current_entity(&id_str);
+        let mut rt = server.runtime.0.lock().unwrap();
+        if let Err(e) = rt.invoke_function::<(), ()>(&id_str, &loaded, "onStart", ()) {
+            tracing::error!("[script error] {}", e.message);
+            if let Some(ref mut bus) = event_bus {
+                bus.send(e.to_event());
+            }
+            if let Ok((_, _, mut s)) = query.get_mut(entity) {
+                s.disable();
+            }
         }
     }
 }
@@ -206,11 +209,11 @@ pub fn script_update_system(
     time: Option<Res<Time>>,
     mut server: Option<ResMut<ScriptServer>>,
     mut event_bus: Option<ResMut<EventBus>>,
-    mut query: Query<(Entity, Option<&EntityId>, &Script)>,
+    mut query: Query<(Entity, Option<&EntityId>, &mut Script)>,
 ) {
     let Some(ref mut server) = server else { return };
     let dt = time.map(|t| t.delta_seconds).unwrap_or(0.016);
-    let mut errors = Vec::new();
+    let mut to_run = Vec::new();
 
     for (entity, entity_id, script) in query.iter() {
         if !script.enabled {
@@ -220,33 +223,36 @@ pub fn script_update_system(
         let id_str = entity_id
             .map(|id| id.0.clone())
             .unwrap_or_else(|| format!("{:?}", entity));
-        server.exec_context.set_current_entity(&id_str);
 
         match server.get_or_load_script(&script.path) {
             Ok(loaded) => {
                 if loaded.has_on_update {
-                    let script_copy = loaded.clone();
-                    let mut rt = server.runtime.0.lock().unwrap();
-                    if let Err(e) =
-                        rt.invoke_function::<(f32,), ()>(&id_str, &script_copy, "onUpdate", (dt,))
-                    {
-                        errors.push((entity, e));
-                    }
+                    to_run.push((entity, id_str, loaded.clone()));
                 }
             }
             Err(e) => {
-                errors.push((entity, e));
+                tracing::error!("[script error] {}", e.message);
+                if let Some(ref mut bus) = event_bus {
+                    bus.send(e.to_event());
+                }
+                if let Ok((_, _, mut s)) = query.get_mut(entity) {
+                    s.disable();
+                }
             }
         }
     }
 
-    for (entity, err) in errors {
-        tracing::error!("[script error] {}", err.message);
-        if let Some(ref mut bus) = event_bus {
-            bus.send(err.to_event());
-        }
-        if let Ok((_, _, mut s)) = query.get_mut(entity) {
-            s.disable();
+    for (entity, id_str, loaded) in to_run {
+        server.exec_context.set_current_entity(&id_str);
+        let mut rt = server.runtime.0.lock().unwrap();
+        if let Err(e) = rt.invoke_function::<(f32,), ()>(&id_str, &loaded, "onUpdate", (dt,)) {
+            tracing::error!("[script error] {}", e.message);
+            if let Some(ref mut bus) = event_bus {
+                bus.send(e.to_event());
+            }
+            if let Ok((_, _, mut s)) = query.get_mut(entity) {
+                s.disable();
+            }
         }
     }
 }
@@ -256,11 +262,11 @@ pub fn script_fixed_update_system(
     time: Option<Res<Time>>,
     mut server: Option<ResMut<ScriptServer>>,
     mut event_bus: Option<ResMut<EventBus>>,
-    mut query: Query<(Entity, Option<&EntityId>, &Script)>,
+    mut query: Query<(Entity, Option<&EntityId>, &mut Script)>,
 ) {
     let Some(ref mut server) = server else { return };
     let dt = time.map(|t| t.fixed_delta_seconds).unwrap_or(0.02);
-    let mut errors = Vec::new();
+    let mut to_run = Vec::new();
 
     for (entity, entity_id, script) in query.iter() {
         if !script.enabled {
@@ -270,36 +276,36 @@ pub fn script_fixed_update_system(
         let id_str = entity_id
             .map(|id| id.0.clone())
             .unwrap_or_else(|| format!("{:?}", entity));
-        server.exec_context.set_current_entity(&id_str);
 
         match server.get_or_load_script(&script.path) {
             Ok(loaded) => {
                 if loaded.has_on_fixed_update {
-                    let script_copy = loaded.clone();
-                    let mut rt = server.runtime.0.lock().unwrap();
-                    if let Err(e) = rt.invoke_function::<(f32,), ()>(
-                        &id_str,
-                        &script_copy,
-                        "onFixedUpdate",
-                        (dt,),
-                    ) {
-                        errors.push((entity, e));
-                    }
+                    to_run.push((entity, id_str, loaded.clone()));
                 }
             }
             Err(e) => {
-                errors.push((entity, e));
+                tracing::error!("[script error] {}", e.message);
+                if let Some(ref mut bus) = event_bus {
+                    bus.send(e.to_event());
+                }
+                if let Ok((_, _, mut s)) = query.get_mut(entity) {
+                    s.disable();
+                }
             }
         }
     }
 
-    for (entity, err) in errors {
-        tracing::error!("[script error] {}", err.message);
-        if let Some(ref mut bus) = event_bus {
-            bus.send(err.to_event());
-        }
-        if let Ok((_, _, mut s)) = query.get_mut(entity) {
-            s.disable();
+    for (entity, id_str, loaded) in to_run {
+        server.exec_context.set_current_entity(&id_str);
+        let mut rt = server.runtime.0.lock().unwrap();
+        if let Err(e) = rt.invoke_function::<(f32,), ()>(&id_str, &loaded, "onFixedUpdate", (dt,)) {
+            tracing::error!("[script error] {}", e.message);
+            if let Some(ref mut bus) = event_bus {
+                bus.send(e.to_event());
+            }
+            if let Ok((_, _, mut s)) = query.get_mut(entity) {
+                s.disable();
+            }
         }
     }
 }
