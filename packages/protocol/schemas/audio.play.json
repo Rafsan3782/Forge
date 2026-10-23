@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/audio.play.json",
+  "title": "AudioPlayParams",
+  "description": "Parameters for playing an audio sound or music track",
+  "type": "object",
+  "required": ["asset_id"],
+  "properties": {
+    "asset_id": {
+      "type": "string",
+      "description": "Asset ID or path of the audio file to play"
+    },
+    "bus": {
+      "type": "string",
+      "enum": ["master", "music", "sfx"],
+      "default": "sfx",
+      "description": "Audio bus channel to route playback to"
+    },
+    "volume": {
+      "type": "number",
+      "default": 1.0,
+      "description": "Playback volume multiplier (0.0 to 1.0+)"
+    },
+    "pitch": {
+      "type": "number",
+      "default": 1.0,
+      "description": "Playback pitch multiplier"
+    },
+    "loop": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether playback should loop indefinitely"
+    },
+    "fade_in_seconds": {
+      "type": "number",
+      "default": 0.0,
+      "description": "Optional fade-in duration in seconds"
+    }
+  },
+  "additionalProperties": false
+}

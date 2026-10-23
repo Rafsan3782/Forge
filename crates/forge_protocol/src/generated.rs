@@ -461,3 +461,66 @@ pub struct TilemapClearResult {
     pub success: bool,
     pub chunks_cleared: u32,
 }
+
+// -----------------------------------------------------------------------------
+// audio.play / stop / set_bus_volume
+// -----------------------------------------------------------------------------
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AudioPlayParams {
+    pub asset_id: String,
+    #[serde(default = "default_audio_bus")]
+    pub bus: String,
+    #[serde(default = "default_audio_volume")]
+    pub volume: f64,
+    #[serde(default = "default_audio_pitch")]
+    pub pitch: f64,
+    #[serde(default)]
+    pub r#loop: bool,
+    #[serde(default)]
+    pub fade_in_seconds: f64,
+}
+
+fn default_audio_bus() -> String {
+    "sfx".to_string()
+}
+
+fn default_audio_volume() -> f64 {
+    1.0
+}
+
+fn default_audio_pitch() -> f64 {
+    1.0
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AudioPlayResult {
+    pub playback_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct AudioStopParams {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sound_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bus: Option<String>,
+    #[serde(default)]
+    pub fade_out_seconds: f64,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AudioStopResult {
+    pub stopped: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AudioSetBusVolumeParams {
+    pub bus: String,
+    pub volume: f64,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AudioSetBusVolumeResult {
+    pub bus: String,
+    pub volume: f64,
+}

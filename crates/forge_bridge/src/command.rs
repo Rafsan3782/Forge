@@ -124,6 +124,27 @@ pub enum BridgeCommand {
         /// Channel to return number of cleared chunks.
         responder: oneshot::Sender<Result<forge_protocol::TilemapClearResult, String>>,
     },
+    /// Play a sound or music track.
+    AudioPlay {
+        /// Playback parameters.
+        params: forge_protocol::AudioPlayParams,
+        /// Channel to return playback ID.
+        responder: oneshot::Sender<Result<forge_protocol::AudioPlayResult, String>>,
+    },
+    /// Stop playback of an active sound or all sounds on a bus.
+    AudioStop {
+        /// Stop parameters.
+        params: forge_protocol::AudioStopParams,
+        /// Channel to return stop confirmation.
+        responder: oneshot::Sender<Result<forge_protocol::AudioStopResult, String>>,
+    },
+    /// Set the volume multiplier of an audio bus.
+    AudioSetBusVolume {
+        /// Bus volume parameters.
+        params: forge_protocol::AudioSetBusVolumeParams,
+        /// Channel to return updated volume confirmation.
+        responder: oneshot::Sender<Result<forge_protocol::AudioSetBusVolumeResult, String>>,
+    },
 }
 
 /// Sender side held by the bridge server to dispatch commands to the engine loop.

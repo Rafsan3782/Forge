@@ -1,0 +1,49 @@
+{
+  "actions": {
+    "play_tone_1": {
+      "description": "Play sound effect tone 1",
+      "bindings": [
+        {
+          "type": "key",
+          "code": "Digit1"
+        }
+      ]
+    },
+    "play_tone_2": {
+      "description": "Play sound effect tone 2",
+      "bindings": [
+        {
+          "type": "key",
+          "code": "Digit2"
+        }
+      ]
+    },
+    "play_tone_3": {
+      "description": "Play sound effect tone 3",
+      "bindings": [
+        {
+          "type": "key",
+          "code": "Digit3"
+        }
+      ]
+    },
+    "play_tone_4": {
+      "description": "Play sound effect tone 4",
+      "bindings": [
+        {
+          "type": "key",
+          "code": "Digit4"
+        }
+      ]
+    },
+    "toggle_music": {
+      "description": "Toggle / fade music",
+      "bindings": [
+        {
+          "type": "key",
+          "code": "KeyM"
+        }
+      ]
+    }
+  }
+}

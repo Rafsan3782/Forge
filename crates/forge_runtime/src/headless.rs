@@ -53,6 +53,12 @@ pub fn run_headless(args: &CliArgs) -> Result<(), Box<dyn std::error::Error>> {
         if let Err(e) = crate::procedural::generate_hello_assets(&assets_dir) {
             tracing::warn!("Failed to auto-generate hello assets: {}", e);
         }
+    } else if args.scene.contains("audio-demo")
+        && (!assets_dir.exists() || !assets_dir.join("tone1.wav").exists())
+    {
+        if let Err(e) = crate::procedural::generate_audio_demo_assets(&assets_dir) {
+            tracing::warn!("Failed to auto-generate audio demo assets: {}", e);
+        }
     }
 
     // Initialize and scan AssetDatabase
@@ -102,12 +108,19 @@ pub fn run_headless(args: &CliArgs) -> Result<(), Box<dyn std::error::Error>> {
     world.insert_resource(forge_physics::PhysicsWorld2D::default());
     world.insert_resource(crate::render_scene::PhysicsDebugDraw::default());
 
+    // Insert audio resource
+    let audio_server = forge_audio::AudioServer::new(&assets_dir);
+    world.insert_resource(audio_server);
+
     let mut game_loop = GameLoop::new();
     game_loop.add_pre_update_system(forge_input::fixed_input_tick_system);
     game_loop.add_pre_update_system(forge_physics::physics_before_step_system);
     game_loop.add_update_system(forge_physics::physics_step_system);
     game_loop.add_post_update_system(forge_physics::physics_after_step_system);
     game_loop.add_update_system(forge_assets::animator_update_system);
+    game_loop.add_update_system(forge_audio::audio_source_start_system);
+    game_loop.add_post_update_system(forge_audio::audio_spatial_update_system);
+    game_loop.add_update_system(crate::demo_input::demo_audio_keyboard_system);
 
     game_loop.add_update_system(crate::demo_input::demo_character_controller_system);
 
@@ -211,6 +224,14 @@ pub fn run_headless(args: &CliArgs) -> Result<(), Box<dyn std::error::Error>> {
                                 let _ = db.scan_and_index();
                                 texture_store.set_database(db.clone());
                                 tracing::info!("Hot reloaded asset database metadata: {:?}", p);
+                            }
+                        }
+                        forge_assets::HotReloadEvent::Audio(p) => {
+                            if let Some(mut audio) =
+                                world.get_resource_mut::<forge_audio::AudioServer>()
+                            {
+                                audio.invalidate_cache(&p);
+                                tracing::info!("Invalidated audio cache for: {:?}", p);
                             }
                         }
                         _ => {}

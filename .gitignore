@@ -44,6 +44,12 @@ $RECYCLE.BIN/
 
 # Procedural templates & runtime screenshots
 templates/**/assets/*.png
+templates/**/assets/*.wav
+templates/**/assets/*.ogg
+templates/**/assets/*.mp3
+*.wav
+*.ogg
+*.mp3
 out.png
 hello_screenshot.png
 .forge/

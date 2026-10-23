@@ -8,6 +8,7 @@ base64 = "0.22"
 bevy_ecs = { version = "0.15", default-features = false }
 clap = { version = "4.5", features = ["derive"] }
 forge_assets = { path = "../forge_assets" }
+forge_audio = { path = "../forge_audio" }
 forge_bridge = { path = "../forge_bridge" }
 forge_core = { path = "../forge_core" }
 forge_input = { path = "../forge_input" }

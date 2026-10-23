@@ -429,5 +429,81 @@ pub fn get_mcp_tools() -> Vec<McpTool> {
                 }
             }),
         },
+        McpTool {
+            name: "audio.play".to_string(),
+            description: "Play an audio sound or music track by asset ID".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "required": ["asset_id"],
+                "properties": {
+                    "asset_id": {
+                        "type": "string",
+                        "description": "Asset ID or path of audio file to play"
+                    },
+                    "bus": {
+                        "type": "string",
+                        "enum": ["master", "music", "sfx"],
+                        "description": "Bus to route audio to (default sfx)"
+                    },
+                    "volume": {
+                        "type": "number",
+                        "description": "Volume multiplier (default 1.0)"
+                    },
+                    "pitch": {
+                        "type": "number",
+                        "description": "Pitch multiplier (default 1.0)"
+                    },
+                    "loop": {
+                        "type": "boolean",
+                        "description": "Whether playback loops indefinitely"
+                    },
+                    "fade_in_seconds": {
+                        "type": "number",
+                        "description": "Optional fade in duration in seconds"
+                    }
+                }
+            }),
+        },
+        McpTool {
+            name: "audio.stop".to_string(),
+            description: "Stop audio playback for a sound ID or bus".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "sound_id": {
+                        "type": ["string", "null"],
+                        "description": "Optional playback instance ID"
+                    },
+                    "bus": {
+                        "type": ["string", "null"],
+                        "enum": ["master", "music", "sfx"],
+                        "description": "Optional bus to stop all playback on"
+                    },
+                    "fade_out_seconds": {
+                        "type": "number",
+                        "description": "Optional fade out duration in seconds"
+                    }
+                }
+            }),
+        },
+        McpTool {
+            name: "audio.set_bus_volume".to_string(),
+            description: "Set the volume of an audio bus".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "required": ["bus", "volume"],
+                "properties": {
+                    "bus": {
+                        "type": "string",
+                        "enum": ["master", "music", "sfx"],
+                        "description": "Audio bus channel"
+                    },
+                    "volume": {
+                        "type": "number",
+                        "description": "Volume multiplier from 0.0 to 1.0"
+                    }
+                }
+            }),
+        },
     ]
 }

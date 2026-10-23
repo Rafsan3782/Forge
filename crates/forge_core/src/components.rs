@@ -694,3 +694,150 @@ impl Default for Collider2D {
         Self::box_shape(16.0, 16.0)
     }
 }
+
+/// Target audio channel / mixing bus.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum AudioBus {
+    /// Master bus affecting all playback.
+    Master,
+    /// Music bus with fade support.
+    Music,
+    /// Sound effects bus.
+    Sfx,
+}
+
+impl Default for AudioBus {
+    fn default() -> Self {
+        Self::Sfx
+    }
+}
+
+impl std::str::FromStr for AudioBus {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "master" => Ok(Self::Master),
+            "music" => Ok(Self::Music),
+            "sfx" => Ok(Self::Sfx),
+            other => Err(format!("Unknown audio bus '{}'", other)),
+        }
+    }
+}
+
+/// Audio playback source component.
+#[derive(Component, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AudioSource {
+    /// Asset ID or path of the audio file in the asset database.
+    pub asset: String,
+    /// Playback volume (default 1.0).
+    #[serde(default = "default_audio_source_volume")]
+    pub volume: f32,
+    /// Pitch multiplier (default 1.0).
+    #[serde(default = "default_audio_source_pitch")]
+    pub pitch: f32,
+    /// Whether playback loops indefinitely.
+    #[serde(default)]
+    pub r#loop: bool,
+    /// Routing bus (Master, Music, Sfx).
+    #[serde(default)]
+    pub bus: AudioBus,
+    /// Automatically play sound on scene start.
+    #[serde(default = "default_true")]
+    pub play_on_start: bool,
+    /// Optional 2D spatial pan and distance falloff relative to the camera AudioListener.
+    #[serde(default)]
+    pub spatial: bool,
+    /// Maximum distance for spatial falloff (sound is inaudible beyond this).
+    #[serde(default = "default_spatial_max_distance")]
+    pub max_distance: f32,
+    /// Spatial distance falloff exponent or factor.
+    #[serde(default = "default_spatial_falloff")]
+    pub falloff: f32,
+}
+
+fn default_audio_source_volume() -> f32 {
+    1.0
+}
+
+fn default_audio_source_pitch() -> f32 {
+    1.0
+}
+
+fn default_true() -> bool {
+    true
+}
+
+fn default_spatial_max_distance() -> f32 {
+    1000.0
+}
+
+fn default_spatial_falloff() -> f32 {
+    1.0
+}
+
+impl Default for AudioSource {
+    fn default() -> Self {
+        Self {
+            asset: String::new(),
+            volume: 1.0,
+            pitch: 1.0,
+            r#loop: false,
+            bus: AudioBus::Sfx,
+            play_on_start: true,
+            spatial: false,
+            max_distance: 1000.0,
+            falloff: 1.0,
+        }
+    }
+}
+
+impl AudioSource {
+    /// Creates a new audio source with given asset ID or path.
+    pub fn new(asset: impl Into<String>) -> Self {
+        Self {
+            asset: asset.into(),
+            ..Default::default()
+        }
+    }
+
+    /// Sets the playback bus.
+    pub fn with_bus(mut self, bus: AudioBus) -> Self {
+        self.bus = bus;
+        self
+    }
+
+    /// Sets looping flag.
+    pub fn with_loop(mut self, r#loop: bool) -> Self {
+        self.r#loop = r#loop;
+        self
+    }
+
+    /// Sets volume.
+    pub fn with_volume(mut self, volume: f32) -> Self {
+        self.volume = volume;
+        self
+    }
+
+    /// Sets spatial audio properties.
+    pub fn with_spatial(mut self, max_distance: f32, falloff: f32) -> Self {
+        self.spatial = true;
+        self.max_distance = max_distance;
+        self.falloff = falloff;
+        self
+    }
+}
+
+/// Audio listener component attached to the active camera or player entity.
+#[derive(Component, Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct AudioListener {
+    /// Whether this listener is currently active.
+    #[serde(default = "default_true")]
+    pub is_active: bool,
+}
+
+impl Default for AudioListener {
+    fn default() -> Self {
+        Self { is_active: true }
+    }
+}

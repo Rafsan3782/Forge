@@ -1,0 +1,8 @@
+{
+  "asset_id": "sound_coin",
+  "bus": "sfx",
+  "volume": 0.8,
+  "pitch": 1.0,
+  "loop": false,
+  "fade_in_seconds": 0.0
+}

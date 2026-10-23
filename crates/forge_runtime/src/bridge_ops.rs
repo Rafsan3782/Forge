@@ -137,6 +137,21 @@ pub fn process_bridge_commands(
                 let res = handle_tilemap_clear(world, &params);
                 let _ = responder.send(res);
             }
+
+            BridgeCommand::AudioPlay { params, responder } => {
+                let res = handle_audio_play(world, &params);
+                let _ = responder.send(res);
+            }
+
+            BridgeCommand::AudioStop { params, responder } => {
+                let res = handle_audio_stop(world, &params);
+                let _ = responder.send(res);
+            }
+
+            BridgeCommand::AudioSetBusVolume { params, responder } => {
+                let res = handle_audio_set_bus_volume(world, &params);
+                let _ = responder.send(res);
+            }
         }
     }
 }
@@ -611,5 +626,66 @@ fn handle_tilemap_clear(
     Ok(forge_protocol::TilemapClearResult {
         success: true,
         chunks_cleared,
+    })
+}
+
+fn handle_audio_play(
+    world: &mut World,
+    params: &forge_protocol::AudioPlayParams,
+) -> Result<forge_protocol::AudioPlayResult, String> {
+    let mut server = world
+        .get_resource_mut::<forge_audio::AudioServer>()
+        .ok_or_else(|| "AudioServer resource not initialized in world".to_string())?;
+
+    let bus = params.bus.parse::<forge_core::AudioBus>().map_err(|e| e)?;
+    let playback_id = server.play(
+        &params.asset_id,
+        bus,
+        params.volume as f32,
+        params.pitch as f32,
+        params.r#loop,
+        params.fade_in_seconds as f32,
+    )?;
+
+    Ok(forge_protocol::AudioPlayResult { playback_id })
+}
+
+fn handle_audio_stop(
+    world: &mut World,
+    params: &forge_protocol::AudioStopParams,
+) -> Result<forge_protocol::AudioStopResult, String> {
+    let mut server = world
+        .get_resource_mut::<forge_audio::AudioServer>()
+        .ok_or_else(|| "AudioServer resource not initialized in world".to_string())?;
+
+    let bus = if let Some(ref b) = params.bus {
+        Some(b.parse::<forge_core::AudioBus>().map_err(|e| e)?)
+    } else {
+        None
+    };
+
+    let stopped = server.stop(
+        params.sound_id.as_deref(),
+        bus,
+        params.fade_out_seconds as f32,
+    );
+
+    Ok(forge_protocol::AudioStopResult { stopped })
+}
+
+fn handle_audio_set_bus_volume(
+    world: &mut World,
+    params: &forge_protocol::AudioSetBusVolumeParams,
+) -> Result<forge_protocol::AudioSetBusVolumeResult, String> {
+    let mut server = world
+        .get_resource_mut::<forge_audio::AudioServer>()
+        .ok_or_else(|| "AudioServer resource not initialized in world".to_string())?;
+
+    let bus = params.bus.parse::<forge_core::AudioBus>().map_err(|e| e)?;
+    server.set_bus_volume(bus, params.volume as f32);
+
+    Ok(forge_protocol::AudioSetBusVolumeResult {
+        bus: params.bus.clone(),
+        volume: params.volume,
     })
 }

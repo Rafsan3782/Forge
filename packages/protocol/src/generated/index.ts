@@ -417,6 +417,7 @@ export type TilemapFillRectResult = z.infer<typeof TilemapFillRectResultSchema>;
 
 // -----------------------------------------------------------------------------
 // tilemap.clear
+
 // -----------------------------------------------------------------------------
 
 export const TilemapClearParamsSchema = z.object({
@@ -430,3 +431,47 @@ export const TilemapClearResultSchema = z.object({
   chunks_cleared: z.number().int(),
 });
 export type TilemapClearResult = z.infer<typeof TilemapClearResultSchema>;
+
+// -----------------------------------------------------------------------------
+// audio.play / stop / set_bus_volume
+// -----------------------------------------------------------------------------
+
+
+export const AudioPlayParamsSchema = z.object({
+  asset_id: z.string(),
+  bus: z.enum(["master", "music", "sfx"]).optional().default("sfx"),
+  volume: z.number().optional().default(1.0),
+  pitch: z.number().optional().default(1.0),
+  loop: z.boolean().optional().default(false),
+  fade_in_seconds: z.number().optional().default(0.0),
+});
+export type AudioPlayParams = z.infer<typeof AudioPlayParamsSchema>;
+
+export const AudioPlayResultSchema = z.object({
+  playback_id: z.string(),
+});
+export type AudioPlayResult = z.infer<typeof AudioPlayResultSchema>;
+
+export const AudioStopParamsSchema = z.object({
+  sound_id: z.string().optional(),
+  bus: z.enum(["master", "music", "sfx"]).optional(),
+  fade_out_seconds: z.number().optional().default(0.0),
+});
+export type AudioStopParams = z.infer<typeof AudioStopParamsSchema>;
+
+export const AudioStopResultSchema = z.object({
+  stopped: z.boolean(),
+});
+export type AudioStopResult = z.infer<typeof AudioStopResultSchema>;
+
+export const AudioSetBusVolumeParamsSchema = z.object({
+  bus: z.enum(["master", "music", "sfx"]),
+  volume: z.number(),
+});
+export type AudioSetBusVolumeParams = z.infer<typeof AudioSetBusVolumeParamsSchema>;
+
+export const AudioSetBusVolumeResultSchema = z.object({
+  bus: z.string(),
+  volume: z.number(),
+});
+export type AudioSetBusVolumeResult = z.infer<typeof AudioSetBusVolumeResultSchema>;
