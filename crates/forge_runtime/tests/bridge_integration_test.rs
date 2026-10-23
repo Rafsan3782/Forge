@@ -181,6 +181,9 @@ async fn test_bridge_full_lifecycle_and_security() {
                                 forge_runtime::bridge_ops::handle_physics_raycast(&world, &params);
                             let _ = responder.send(res);
                         }
+                        _ => {
+                            // Any other command in dummy non-GPU fallback
+                        }
                     }
                 }
             }
