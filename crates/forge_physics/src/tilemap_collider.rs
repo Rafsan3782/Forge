@@ -77,6 +77,7 @@ pub fn merge_solid_tiles(solid_grid: &[Vec<bool>], chunk_size: u32) -> Vec<Merge
 /// Generates `Collider2D` components for a chunk's solid tiles.
 ///
 /// Offsets are calculated in world coordinates relative to the chunk origin.
+#[allow(clippy::too_many_arguments)]
 pub fn generate_chunk_colliders(
     chunk_coord: ChunkCoord,
     chunk_size: u32,
