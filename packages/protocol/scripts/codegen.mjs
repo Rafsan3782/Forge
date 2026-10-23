@@ -451,6 +451,7 @@ export type TilemapFillRectResult = z.infer<typeof TilemapFillRectResultSchema>;
 
 // -----------------------------------------------------------------------------
 // tilemap.clear
+
 // -----------------------------------------------------------------------------
 
 export const TilemapClearParamsSchema = z.object({
@@ -464,6 +465,50 @@ export const TilemapClearResultSchema = z.object({
   chunks_cleared: z.number().int(),
 });
 export type TilemapClearResult = z.infer<typeof TilemapClearResultSchema>;
+
+// -----------------------------------------------------------------------------
+// audio.play / stop / set_bus_volume
+// -----------------------------------------------------------------------------
+
+
+export const AudioPlayParamsSchema = z.object({
+  asset_id: z.string(),
+  bus: z.enum(["master", "music", "sfx"]).optional().default("sfx"),
+  volume: z.number().optional().default(1.0),
+  pitch: z.number().optional().default(1.0),
+  loop: z.boolean().optional().default(false),
+  fade_in_seconds: z.number().optional().default(0.0),
+});
+export type AudioPlayParams = z.infer<typeof AudioPlayParamsSchema>;
+
+export const AudioPlayResultSchema = z.object({
+  playback_id: z.string(),
+});
+export type AudioPlayResult = z.infer<typeof AudioPlayResultSchema>;
+
+export const AudioStopParamsSchema = z.object({
+  sound_id: z.string().optional(),
+  bus: z.enum(["master", "music", "sfx"]).optional(),
+  fade_out_seconds: z.number().optional().default(0.0),
+});
+export type AudioStopParams = z.infer<typeof AudioStopParamsSchema>;
+
+export const AudioStopResultSchema = z.object({
+  stopped: z.boolean(),
+});
+export type AudioStopResult = z.infer<typeof AudioStopResultSchema>;
+
+export const AudioSetBusVolumeParamsSchema = z.object({
+  bus: z.enum(["master", "music", "sfx"]),
+  volume: z.number(),
+});
+export type AudioSetBusVolumeParams = z.infer<typeof AudioSetBusVolumeParamsSchema>;
+
+export const AudioSetBusVolumeResultSchema = z.object({
+  bus: z.string(),
+  volume: z.number(),
+});
+export type AudioSetBusVolumeResult = z.infer<typeof AudioSetBusVolumeResultSchema>;
 `;
 
 // Generate Rust Serde Types
@@ -931,6 +976,69 @@ pub struct TilemapClearParams {
 pub struct TilemapClearResult {
     pub success: bool,
     pub chunks_cleared: u32,
+}
+
+// -----------------------------------------------------------------------------
+// audio.play / stop / set_bus_volume
+// -----------------------------------------------------------------------------
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AudioPlayParams {
+    pub asset_id: String,
+    #[serde(default = "default_audio_bus")]
+    pub bus: String,
+    #[serde(default = "default_audio_volume")]
+    pub volume: f64,
+    #[serde(default = "default_audio_pitch")]
+    pub pitch: f64,
+    #[serde(default)]
+    pub r#loop: bool,
+    #[serde(default)]
+    pub fade_in_seconds: f64,
+}
+
+fn default_audio_bus() -> String {
+    "sfx".to_string()
+}
+
+fn default_audio_volume() -> f64 {
+    1.0
+}
+
+fn default_audio_pitch() -> f64 {
+    1.0
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AudioPlayResult {
+    pub playback_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct AudioStopParams {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sound_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bus: Option<String>,
+    #[serde(default)]
+    pub fade_out_seconds: f64,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AudioStopResult {
+    pub stopped: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AudioSetBusVolumeParams {
+    pub bus: String,
+    pub volume: f64,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AudioSetBusVolumeResult {
+    pub bus: String,
+    pub volume: f64,
 }
 `;
 

@@ -43,6 +43,12 @@ import {
   TilemapFillRectResultSchema,
   TilemapClearParamsSchema,
   TilemapClearResultSchema,
+  AudioPlayParamsSchema,
+  AudioPlayResultSchema,
+  AudioStopParamsSchema,
+  AudioStopResultSchema,
+  AudioSetBusVolumeParamsSchema,
+  AudioSetBusVolumeResultSchema,
 } from "./generated/index.ts";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -349,5 +355,49 @@ test("tilemap operations serialize and deserialize against fixtures", () => {
   assert.deepStrictEqual(
     TilemapClearResultSchema.parse(JSON.parse(JSON.stringify(parsedClearResult))),
     parsedClearResult,
+  );
+});
+
+test("audio operations serialize and deserialize against fixtures", () => {
+  const playParams = loadFixture("audio_play_params.json");
+  const parsedPlayParams = AudioPlayParamsSchema.parse(playParams);
+  assert.deepStrictEqual(
+    AudioPlayParamsSchema.parse(JSON.parse(JSON.stringify(parsedPlayParams))),
+    parsedPlayParams,
+  );
+
+  const playResult = loadFixture("audio_play_result.json");
+  const parsedPlayResult = AudioPlayResultSchema.parse(playResult);
+  assert.deepStrictEqual(
+    AudioPlayResultSchema.parse(JSON.parse(JSON.stringify(parsedPlayResult))),
+    parsedPlayResult,
+  );
+
+  const stopParams = loadFixture("audio_stop_params.json");
+  const parsedStopParams = AudioStopParamsSchema.parse(stopParams);
+  assert.deepStrictEqual(
+    AudioStopParamsSchema.parse(JSON.parse(JSON.stringify(parsedStopParams))),
+    parsedStopParams,
+  );
+
+  const stopResult = loadFixture("audio_stop_result.json");
+  const parsedStopResult = AudioStopResultSchema.parse(stopResult);
+  assert.deepStrictEqual(
+    AudioStopResultSchema.parse(JSON.parse(JSON.stringify(parsedStopResult))),
+    parsedStopResult,
+  );
+
+  const volParams = loadFixture("audio_set_bus_volume_params.json");
+  const parsedVolParams = AudioSetBusVolumeParamsSchema.parse(volParams);
+  assert.deepStrictEqual(
+    AudioSetBusVolumeParamsSchema.parse(JSON.parse(JSON.stringify(parsedVolParams))),
+    parsedVolParams,
+  );
+
+  const volResult = loadFixture("audio_set_bus_volume_result.json");
+  const parsedVolResult = AudioSetBusVolumeResultSchema.parse(volResult);
+  assert.deepStrictEqual(
+    AudioSetBusVolumeResultSchema.parse(JSON.parse(JSON.stringify(parsedVolResult))),
+    parsedVolResult,
   );
 });

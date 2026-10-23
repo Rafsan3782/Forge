@@ -163,6 +163,28 @@ impl Scene {
                 entity_builder.insert(tm);
             }
 
+            if let Some(val) = se.components.get("AudioSource") {
+                let audio_source: crate::components::AudioSource =
+                    serde_json::from_value(val.clone()).map_err(|e| {
+                        SceneError::ComponentParseError {
+                            component_name: "AudioSource".to_string(),
+                            message: e.to_string(),
+                        }
+                    })?;
+                entity_builder.insert(audio_source);
+            }
+
+            if let Some(val) = se.components.get("AudioListener") {
+                let listener: crate::components::AudioListener =
+                    serde_json::from_value(val.clone()).map_err(|e| {
+                        SceneError::ComponentParseError {
+                            component_name: "AudioListener".to_string(),
+                            message: e.to_string(),
+                        }
+                    })?;
+                entity_builder.insert(listener);
+            }
+
             let entity = entity_builder.id();
             id_to_entity.insert(se.id.clone(), entity);
         }
@@ -224,6 +246,12 @@ impl Scene {
                 }
                 if let Some(tm) = entity_ref.get::<crate::tilemap::Tilemap>() {
                     components.insert("Tilemap".to_string(), serde_json::to_value(tm)?);
+                }
+                if let Some(audio_src) = entity_ref.get::<crate::components::AudioSource>() {
+                    components.insert("AudioSource".to_string(), serde_json::to_value(audio_src)?);
+                }
+                if let Some(listener) = entity_ref.get::<crate::components::AudioListener>() {
+                    components.insert("AudioListener".to_string(), serde_json::to_value(listener)?);
                 }
 
                 // Resolve parent stable id

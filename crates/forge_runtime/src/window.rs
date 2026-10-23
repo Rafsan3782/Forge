@@ -50,6 +50,20 @@ impl WindowApp {
         let scene_dir = scene_path.parent().unwrap_or(Path::new("."));
         let assets_dir = scene_dir.join("assets");
 
+        if args.scene.contains("tilemap-demo")
+            && (!assets_dir.exists() || !assets_dir.join("tileset.png").exists())
+        {
+            let _ = crate::procedural::generate_tilemap_assets(&assets_dir);
+        } else if args.scene.contains("hello")
+            && (!assets_dir.exists() || !assets_dir.join("hero.png").exists())
+        {
+            let _ = crate::procedural::generate_hello_assets(&assets_dir);
+        } else if args.scene.contains("audio-demo")
+            && (!assets_dir.exists() || !assets_dir.join("tone1.wav").exists())
+        {
+            let _ = crate::procedural::generate_audio_demo_assets(&assets_dir);
+        }
+
         // Initialize and scan AssetDatabase
         let mut asset_db = forge_assets::AssetDatabase::new(&assets_dir);
         if let Err(e) = asset_db.scan_and_index() {
@@ -96,12 +110,19 @@ impl WindowApp {
         world.insert_resource(forge_physics::PhysicsWorld2D::default());
         world.insert_resource(crate::render_scene::PhysicsDebugDraw::default());
 
+        // Insert audio resource
+        let audio_server = forge_audio::AudioServer::new(&assets_dir);
+        world.insert_resource(audio_server);
+
         let mut game_loop = GameLoop::new();
         game_loop.add_pre_update_system(fixed_input_tick_system);
         game_loop.add_pre_update_system(forge_physics::physics_before_step_system);
         game_loop.add_update_system(forge_physics::physics_step_system);
         game_loop.add_post_update_system(forge_physics::physics_after_step_system);
         game_loop.add_update_system(forge_assets::animator_update_system);
+        game_loop.add_update_system(forge_audio::audio_source_start_system);
+        game_loop.add_post_update_system(forge_audio::audio_spatial_update_system);
+        game_loop.add_update_system(crate::demo_input::demo_audio_keyboard_system);
 
         game_loop.add_update_system(demo_character_controller_system);
 
@@ -355,6 +376,14 @@ impl ApplicationHandler for WindowApp {
                                     let _ = db.scan_and_index();
                                     state.texture_store.set_database(db.clone());
                                     tracing::info!("Hot reloaded asset database metadata: {:?}", p);
+                                }
+                            }
+                            forge_assets::HotReloadEvent::Audio(p) => {
+                                if let Some(mut audio) =
+                                    self.world.get_resource_mut::<forge_audio::AudioServer>()
+                                {
+                                    audio.invalidate_cache(&p);
+                                    tracing::info!("Invalidated audio cache for: {:?}", p);
                                 }
                             }
                             _ => {}

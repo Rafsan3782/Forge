@@ -23,6 +23,8 @@ pub enum HotReloadEvent {
     Scene(PathBuf),
     /// Asset metadata `.meta.json` file changed on disk.
     Meta(PathBuf),
+    /// Audio file (.wav, .ogg, .mp3) changed on disk.
+    Audio(PathBuf),
     /// Other generic asset changed.
     Other(PathBuf),
 }
@@ -44,6 +46,11 @@ impl HotReloadEvent {
             HotReloadEvent::Animation(path)
         } else if path_str.ends_with(".scene.json") || path_str.ends_with("scene.json") {
             HotReloadEvent::Scene(path)
+        } else if path_str.ends_with(".wav")
+            || path_str.ends_with(".ogg")
+            || path_str.ends_with(".mp3")
+        {
+            HotReloadEvent::Audio(path)
         } else {
             HotReloadEvent::Other(path)
         }
@@ -57,6 +64,7 @@ impl HotReloadEvent {
             | HotReloadEvent::Animation(p)
             | HotReloadEvent::Scene(p)
             | HotReloadEvent::Meta(p)
+            | HotReloadEvent::Audio(p)
             | HotReloadEvent::Other(p) => p.as_path(),
         }
     }

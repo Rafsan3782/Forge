@@ -404,6 +404,71 @@ pub async fn dispatch_direct_tool(
             Ok(serde_json::to_value(result)?)
         }
 
+        "audio.play" => {
+            let play_params: forge_protocol::AudioPlayParams = serde_json::from_value(params)
+                .map_err(|e| BridgeError::InvalidParams(e.to_string()))?;
+
+            let (tx, rx) = oneshot::channel();
+            command_sender
+                .send(BridgeCommand::AudioPlay {
+                    params: play_params,
+                    responder: tx,
+                })
+                .map_err(|_| BridgeError::ChannelClosed)?;
+
+            let result = rx
+                .await
+                .map_err(|_| BridgeError::ChannelClosed)?
+                .map_err(BridgeError::Engine)?;
+
+            Ok(serde_json::to_value(result)?)
+        }
+
+        "audio.stop" => {
+            let stop_params: forge_protocol::AudioStopParams = if params.is_null() {
+                forge_protocol::AudioStopParams::default()
+            } else {
+                serde_json::from_value(params)
+                    .map_err(|e| BridgeError::InvalidParams(e.to_string()))?
+            };
+
+            let (tx, rx) = oneshot::channel();
+            command_sender
+                .send(BridgeCommand::AudioStop {
+                    params: stop_params,
+                    responder: tx,
+                })
+                .map_err(|_| BridgeError::ChannelClosed)?;
+
+            let result = rx
+                .await
+                .map_err(|_| BridgeError::ChannelClosed)?
+                .map_err(BridgeError::Engine)?;
+
+            Ok(serde_json::to_value(result)?)
+        }
+
+        "audio.set_bus_volume" => {
+            let vol_params: forge_protocol::AudioSetBusVolumeParams =
+                serde_json::from_value(params)
+                    .map_err(|e| BridgeError::InvalidParams(e.to_string()))?;
+
+            let (tx, rx) = oneshot::channel();
+            command_sender
+                .send(BridgeCommand::AudioSetBusVolume {
+                    params: vol_params,
+                    responder: tx,
+                })
+                .map_err(|_| BridgeError::ChannelClosed)?;
+
+            let result = rx
+                .await
+                .map_err(|_| BridgeError::ChannelClosed)?
+                .map_err(BridgeError::Engine)?;
+
+            Ok(serde_json::to_value(result)?)
+        }
+
         unknown => Err(BridgeError::MethodNotFound(unknown.to_string())),
     }
 }

@@ -33,6 +33,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+    // Ensure audio-demo template procedural assets exist if missing
+    let audio_assets_dir = Path::new("templates/audio-demo/assets");
+    if !audio_assets_dir.exists() || !audio_assets_dir.join("tone1.wav").exists() {
+        if let Err(e) = forge_runtime::procedural::generate_audio_demo_assets(audio_assets_dir) {
+            tracing::warn!("Failed to auto-generate audio demo assets: {}", e);
+        }
+    }
+
     if args.headless {
         run_headless(&args)
     } else {

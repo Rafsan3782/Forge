@@ -484,6 +484,74 @@ fn apply_component_from_hashmap(
             world.entity_mut(entity).insert(tm);
             Ok(())
         }
+        "AudioSource" => {
+            let mut src = world
+                .get::<crate::components::AudioSource>(entity)
+                .cloned()
+                .unwrap_or_default();
+
+            if let Some(asset) = data.get("asset") {
+                src.asset = asset.clone();
+            }
+            if let Some(vol_str) = data.get("volume") {
+                if let Ok(v) = vol_str.parse::<f32>() {
+                    src.volume = v;
+                }
+            }
+            if let Some(pitch_str) = data.get("pitch") {
+                if let Ok(p) = pitch_str.parse::<f32>() {
+                    src.pitch = p;
+                }
+            }
+            if let Some(loop_str) = data.get("loop") {
+                if let Ok(l) = loop_str.parse::<bool>() {
+                    src.r#loop = l;
+                }
+            }
+            if let Some(bus_str) = data.get("bus") {
+                if let Ok(b) = bus_str.parse::<crate::components::AudioBus>() {
+                    src.bus = b;
+                }
+            }
+            if let Some(play_str) = data.get("play_on_start") {
+                if let Ok(pos) = play_str.parse::<bool>() {
+                    src.play_on_start = pos;
+                }
+            }
+            if let Some(spat_str) = data.get("spatial") {
+                if let Ok(s) = spat_str.parse::<bool>() {
+                    src.spatial = s;
+                }
+            }
+            if let Some(dist_str) = data.get("max_distance") {
+                if let Ok(d) = dist_str.parse::<f32>() {
+                    src.max_distance = d;
+                }
+            }
+            if let Some(fall_str) = data.get("falloff") {
+                if let Ok(f) = fall_str.parse::<f32>() {
+                    src.falloff = f;
+                }
+            }
+
+            world.entity_mut(entity).insert(src);
+            Ok(())
+        }
+        "AudioListener" => {
+            let mut listener = world
+                .get::<crate::components::AudioListener>(entity)
+                .copied()
+                .unwrap_or_default();
+
+            if let Some(active_str) = data.get("is_active") {
+                if let Ok(a) = active_str.parse::<bool>() {
+                    listener.is_active = a;
+                }
+            }
+
+            world.entity_mut(entity).insert(listener);
+            Ok(())
+        }
         other => Err(SceneError::UnknownComponent(other.to_string())),
     }
 }

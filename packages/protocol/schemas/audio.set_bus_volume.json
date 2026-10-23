@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/audio.set_bus_volume.json",
+  "title": "AudioSetBusVolumeParams",
+  "description": "Parameters for adjusting audio bus volume",
+  "type": "object",
+  "required": ["bus", "volume"],
+  "properties": {
+    "bus": {
+      "type": "string",
+      "enum": ["master", "music", "sfx"],
+      "description": "Target bus channel"
+    },
+    "volume": {
+      "type": "number",
+      "description": "Linear volume multiplier between 0.0 (silent) and 1.0 (full)"
+    }
+  },
+  "additionalProperties": false
+}

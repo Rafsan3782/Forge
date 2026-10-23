@@ -274,3 +274,189 @@ pub fn generate_tilemap_assets(output_dir: &Path) -> Result<(), Box<dyn std::err
 
     Ok(())
 }
+
+/// Generates procedural tones and music WAV assets for `templates/audio-demo`:
+/// - `tone1.wav`: High coin ping (987 Hz / B5)
+/// - `tone2.wav`: Jump blip (440 Hz -> 880 Hz sweep)
+/// - `tone3.wav`: Laser zap (1200 Hz -> 200 Hz sweep)
+/// - `tone4.wav`: Explosion hit (low noisy thud)
+/// - `music.wav`: Looping melodic arpeggio track (C major chord sequence)
+pub fn generate_audio_demo_assets(output_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    std::fs::create_dir_all(output_dir)?;
+
+    generate_coin_ping(&output_dir.join("tone1.wav"))?;
+    generate_jump_blip(&output_dir.join("tone2.wav"))?;
+    generate_laser_zap(&output_dir.join("tone3.wav"))?;
+    generate_explosion_thud(&output_dir.join("tone4.wav"))?;
+    generate_music_loop(&output_dir.join("music.wav"))?;
+
+    Ok(())
+}
+
+/// Helper encoding 16-bit mono PCM samples into a standard RIFF WAV file.
+fn write_wav_file(path: &Path, sample_rate: u32, samples: &[i16]) -> std::io::Result<()> {
+    use std::fs::File;
+    use std::io::Write;
+
+    let mut file = File::create(path)?;
+    let num_samples = samples.len() as u32;
+    let data_bytes = num_samples * 2;
+    let riff_size = 36 + data_bytes;
+
+    // RIFF header
+    file.write_all(b"RIFF")?;
+    file.write_all(&riff_size.to_le_bytes())?;
+    file.write_all(b"WAVE")?;
+
+    // fmt subchunk
+    file.write_all(b"fmt ")?;
+    file.write_all(&16u32.to_le_bytes())?; // Subchunk1Size (16 for PCM)
+    file.write_all(&1u16.to_le_bytes())?; // AudioFormat (1 = PCM)
+    file.write_all(&1u16.to_le_bytes())?; // NumChannels (1 = Mono)
+    file.write_all(&sample_rate.to_le_bytes())?;
+    let byte_rate = sample_rate * 2;
+    file.write_all(&byte_rate.to_le_bytes())?;
+    file.write_all(&2u16.to_le_bytes())?; // BlockAlign (NumChannels * BitsPerSample/8)
+    file.write_all(&16u16.to_le_bytes())?; // BitsPerSample
+
+    // data subchunk
+    file.write_all(b"data")?;
+    file.write_all(&data_bytes.to_le_bytes())?;
+    for sample in samples {
+        file.write_all(&sample.to_le_bytes())?;
+    }
+
+    Ok(())
+}
+
+fn generate_coin_ping(path: &Path) -> std::io::Result<()> {
+    const SAMPLE_RATE: u32 = 44100;
+    const DURATION_SECS: f32 = 0.35;
+    let num_samples = (SAMPLE_RATE as f32 * DURATION_SECS) as usize;
+    let mut samples = Vec::with_capacity(num_samples);
+
+    for i in 0..num_samples {
+        let t = i as f32 / SAMPLE_RATE as f32;
+        let env = (-t * 12.0).exp();
+        // Two-stage coin tone (B5 -> E6)
+        let freq = if t < 0.08 { 987.77 } else { 1318.51 };
+        let wave = (2.0 * std::f32::consts::PI * freq * t).sin();
+        let val = (wave * env * 24000.0) as i16;
+        samples.push(val);
+    }
+
+    write_wav_file(path, SAMPLE_RATE, &samples)
+}
+
+fn generate_jump_blip(path: &Path) -> std::io::Result<()> {
+    const SAMPLE_RATE: u32 = 44100;
+    const DURATION_SECS: f32 = 0.25;
+    let num_samples = (SAMPLE_RATE as f32 * DURATION_SECS) as usize;
+    let mut samples = Vec::with_capacity(num_samples);
+
+    for i in 0..num_samples {
+        let t = i as f32 / SAMPLE_RATE as f32;
+        let env = (1.0 - t / DURATION_SECS).max(0.0);
+        // Pitch rises from 300 to 750 Hz
+        let freq = 300.0 + 450.0 * (t / DURATION_SECS);
+        // Square-ish wave for retro jump sound
+        let wave = if (2.0 * std::f32::consts::PI * freq * t).sin() >= 0.0 {
+            0.6
+        } else {
+            -0.6
+        };
+        let val = (wave * env * 20000.0) as i16;
+        samples.push(val);
+    }
+
+    write_wav_file(path, SAMPLE_RATE, &samples)
+}
+
+fn generate_laser_zap(path: &Path) -> std::io::Result<()> {
+    const SAMPLE_RATE: u32 = 44100;
+    const DURATION_SECS: f32 = 0.2;
+    let num_samples = (SAMPLE_RATE as f32 * DURATION_SECS) as usize;
+    let mut samples = Vec::with_capacity(num_samples);
+
+    for i in 0..num_samples {
+        let t = i as f32 / SAMPLE_RATE as f32;
+        let env = (1.0 - t / DURATION_SECS).max(0.0).powi(2);
+        // Rapid pitch descent from 1400 Hz to 200 Hz
+        let freq = 200.0 + 1200.0 * (1.0 - t / DURATION_SECS).powi(2);
+        let wave = (2.0 * std::f32::consts::PI * freq * t).sin();
+        let val = (wave * env * 22000.0) as i16;
+        samples.push(val);
+    }
+
+    write_wav_file(path, SAMPLE_RATE, &samples)
+}
+
+fn generate_explosion_thud(path: &Path) -> std::io::Result<()> {
+    const SAMPLE_RATE: u32 = 44100;
+    const DURATION_SECS: f32 = 0.45;
+    let num_samples = (SAMPLE_RATE as f32 * DURATION_SECS) as usize;
+    let mut samples = Vec::with_capacity(num_samples);
+
+    let mut seed = 12345u32;
+    for i in 0..num_samples {
+        let t = i as f32 / SAMPLE_RATE as f32;
+        let env = (-t * 7.0).exp();
+
+        // Pseudo-random noise
+        seed = seed.wrapping_mul(1664525).wrapping_add(1013904223);
+        let noise = ((seed >> 16) as f32 / 32768.0) - 1.0;
+
+        // Low frequency thud
+        let sub = (2.0 * std::f32::consts::PI * 65.0 * t).sin();
+        let mixed = 0.6 * noise + 0.5 * sub;
+        let val = (mixed * env * 25000.0).clamp(-32767.0, 32767.0) as i16;
+        samples.push(val);
+    }
+
+    write_wav_file(path, SAMPLE_RATE, &samples)
+}
+
+fn generate_music_loop(path: &Path) -> std::io::Result<()> {
+    const SAMPLE_RATE: u32 = 44100;
+    // 4 bars of 4/4 at 120 BPM = 8.0 seconds
+    const DURATION_SECS: f32 = 8.0;
+    let num_samples = (SAMPLE_RATE as f32 * DURATION_SECS) as usize;
+    let mut samples = vec![0i16; num_samples];
+
+    // C - G - Am - F progression (notes in Hz)
+    let notes = [
+        261.63, 329.63, 392.00, 523.25, // C chord arpeggio
+        196.00, 246.94, 293.66, 392.00, // G chord arpeggio
+        220.00, 261.63, 329.63, 440.00, // Am chord arpeggio
+        174.61, 220.00, 261.63, 349.23, // F chord arpeggio
+    ];
+
+    let note_duration = 0.5; // Eighth note at 120 BPM
+    let total_notes = (DURATION_SECS / note_duration) as usize;
+
+    for n in 0..total_notes {
+        let note_freq = notes[n % notes.len()];
+        let start_idx = (n as f32 * note_duration * SAMPLE_RATE as f32) as usize;
+        let note_samples = (note_duration * SAMPLE_RATE as f32) as usize;
+
+        for i in 0..note_samples {
+            let idx = start_idx + i;
+            if idx >= num_samples {
+                break;
+            }
+            let t = i as f32 / SAMPLE_RATE as f32;
+            let env = (-t * 4.0).exp();
+            // Pleasant synth organ tone: fundamental + second harmonic
+            let wave = 0.7 * (2.0 * std::f32::consts::PI * note_freq * t).sin()
+                + 0.3 * (4.0 * std::f32::consts::PI * note_freq * t).sin();
+            let sample_val = (wave * env * 14000.0) as i32;
+
+            // Mix into buffer
+            let current = samples[idx] as i32;
+            let sum = (current + sample_val).clamp(-32767, 32767);
+            samples[idx] = sum as i16;
+        }
+    }
+
+    write_wav_file(path, SAMPLE_RATE, &samples)
+}

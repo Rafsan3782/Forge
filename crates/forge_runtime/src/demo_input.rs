@@ -117,3 +117,57 @@ pub fn demo_character_controller_system(
         controller.translation = forge_core::Vec2::new(trans_x, trans_y);
     }
 }
+
+/// System that handles keyboard inputs for `templates/audio-demo`:
+/// - Keys 1 to 4 trigger sound effects:
+///   - '1': tone1.wav (Coin ping)
+///   - '2': tone2.wav (Jump blip)
+///   - '3': tone3.wav (Laser zap)
+///   - '4': tone4.wav (Explosion thud)
+/// - Key 'M': Toggles / fades background music in and out.
+pub fn demo_audio_keyboard_system(
+    input: Res<FixedInput>,
+    mut audio_server: forge_core::ecs::ResMut<forge_audio::AudioServer>,
+) {
+    // Keys 1..4 trigger tones
+    if input
+        .just_pressed_keys
+        .contains(&forge_input::KeyCode::Digit1)
+    {
+        let _ = audio_server.play("tone1.wav", forge_core::AudioBus::Sfx, 1.0, 1.0, false, 0.0);
+    }
+    if input
+        .just_pressed_keys
+        .contains(&forge_input::KeyCode::Digit2)
+    {
+        let _ = audio_server.play("tone2.wav", forge_core::AudioBus::Sfx, 1.0, 1.0, false, 0.0);
+    }
+    if input
+        .just_pressed_keys
+        .contains(&forge_input::KeyCode::Digit3)
+    {
+        let _ = audio_server.play("tone3.wav", forge_core::AudioBus::Sfx, 1.0, 1.0, false, 0.0);
+    }
+    if input
+        .just_pressed_keys
+        .contains(&forge_input::KeyCode::Digit4)
+    {
+        let _ = audio_server.play("tone4.wav", forge_core::AudioBus::Sfx, 1.0, 1.0, false, 0.0);
+    }
+
+    // Key M toggles / fades music
+    if input
+        .just_pressed_keys
+        .contains(&forge_input::KeyCode::KeyM)
+    {
+        if audio_server.music_volume > 0.05 {
+            // Fade out music
+            audio_server.set_bus_volume(forge_core::AudioBus::Music, 0.0);
+            tracing::info!("Music bus faded out (volume = 0.0)");
+        } else {
+            // Fade in music
+            audio_server.set_bus_volume(forge_core::AudioBus::Music, 1.0);
+            tracing::info!("Music bus faded in (volume = 1.0)");
+        }
+    }
+}

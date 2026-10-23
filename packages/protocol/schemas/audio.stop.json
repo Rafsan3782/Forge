@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/audio.stop.json",
+  "title": "AudioStopParams",
+  "description": "Parameters for stopping active audio playback",
+  "type": "object",
+  "properties": {
+    "sound_id": {
+      "type": "string",
+      "description": "Optional specific sound playback instance ID to stop. If omitted, stops all or bus"
+    },
+    "bus": {
+      "type": "string",
+      "enum": ["master", "music", "sfx"],
+      "description": "Optional bus to stop all playback on"
+    },
+    "fade_out_seconds": {
+      "type": "number",
+      "default": 0.0,
+      "description": "Optional fade-out duration in seconds"
+    }
+  },
+  "additionalProperties": false
+}

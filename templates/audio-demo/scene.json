@@ -1,0 +1,67 @@
+{
+  "name": "Audio Demo",
+  "entities": [
+    {
+      "id": "camera",
+      "name": "Main Camera",
+      "components": {
+        "Transform2D": {
+          "position": [0.0, 0.0],
+          "rotation": 0.0,
+          "scale": [1.0, 1.0]
+        },
+        "Camera2D": {
+          "zoom": 1.0,
+          "is_active": true
+        },
+        "AudioListener": {
+          "is_active": true
+        }
+      }
+    },
+    {
+      "id": "music_emitter",
+      "name": "Background Music Emitter",
+      "components": {
+        "Transform2D": {
+          "position": [0.0, 0.0],
+          "rotation": 0.0,
+          "scale": [1.0, 1.0]
+        },
+        "AudioSource": {
+          "asset": "music.wav",
+          "volume": 0.8,
+          "pitch": 1.0,
+          "loop": true,
+          "bus": "music",
+          "play_on_start": true,
+          "spatial": false,
+          "max_distance": 1000.0,
+          "falloff": 1.0
+        }
+      }
+    },
+    {
+      "id": "spatial_beacon",
+      "name": "Spatial Audio Beacon",
+      "components": {
+        "Transform2D": {
+          "position": [150.0, 0.0],
+          "rotation": 0.0,
+          "scale": [1.0, 1.0]
+        },
+        "AudioSource": {
+          "asset": "tone1.wav",
+          "volume": 0.6,
+          "pitch": 1.0,
+          "loop": true,
+          "bus": "sfx",
+          "play_on_start": false,
+          "spatial": true,
+          "max_distance": 800.0,
+          "falloff": 1.0
+        }
+      }
+    }
+  ]
+}
