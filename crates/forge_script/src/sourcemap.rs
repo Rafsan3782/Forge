@@ -1,6 +1,7 @@
 //! Source map decoder and location mapper.
 
 use sourcemap::SourceMap;
+use std::sync::Arc;
 
 /// Represents a mapped source location in original TypeScript source.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -14,8 +15,9 @@ pub struct SourceLocation {
 }
 
 /// Helper for mapping runtime JavaScript line/column to original TypeScript locations.
+#[derive(Clone)]
 pub struct ScriptSourceMapper {
-    map: Option<SourceMap>,
+    map: Option<Arc<SourceMap>>,
     default_filename: String,
 }
 
@@ -23,7 +25,9 @@ impl ScriptSourceMapper {
     /// Creates a new mapper from source map JSON (if available).
     pub fn new(default_filename: impl Into<String>, source_map_json: Option<&str>) -> Self {
         let default_filename = default_filename.into();
-        let map = source_map_json.and_then(|json| SourceMap::from_reader(json.as_bytes()).ok());
+        let map = source_map_json
+            .and_then(|json| SourceMap::from_reader(json.as_bytes()).ok())
+            .map(Arc::new);
         Self {
             map,
             default_filename,

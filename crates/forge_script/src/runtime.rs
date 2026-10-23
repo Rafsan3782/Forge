@@ -27,6 +27,7 @@ impl Default for SandboxConfig {
 }
 
 /// Compiled and loaded script module with lifecycle hooks.
+#[derive(Clone)]
 pub struct LoadedScript {
     pub script_path: String,
     pub source_mapper: ScriptSourceMapper,

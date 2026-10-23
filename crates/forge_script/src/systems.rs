@@ -74,7 +74,7 @@ pub fn script_prepare_frame_system(
     time: Option<Res<Time>>,
     action_map: Option<Res<ActionMap>>,
     input_state: Option<Res<InputState>>,
-    mut server: Option<ResMut<ScriptServer>>,
+    server: Option<ResMut<ScriptServer>>,
     entities_query: Query<(
         Entity,
         Option<&EntityId>,
@@ -84,7 +84,7 @@ pub fn script_prepare_frame_system(
         Option<&Children>,
     )>,
 ) {
-    let Some(mut server) = server else { return };
+    let Some(server) = server else { return };
 
     if let Some(t) = time {
         *server.exec_context.delta_time.lock().unwrap() = t.delta_seconds;
@@ -154,15 +154,14 @@ pub fn script_prepare_frame_system(
 
 /// ECS System: Dispatches `onStart` for newly registered scripts.
 pub fn script_start_system(
-    mut commands: Commands,
     mut server: Option<ResMut<ScriptServer>>,
     mut event_bus: Option<ResMut<EventBus>>,
-    mut query: Query<(Entity, Option<&EntityId>, &mut Script)>,
+    mut query: Query<(Entity, Option<&EntityId>, &Script)>,
 ) {
-    let Some(mut server) = server else { return };
+    let Some(ref mut server) = server else { return };
     let mut errors = Vec::new();
 
-    for (entity, entity_id, mut script) in query.iter_mut() {
+    for (entity, entity_id, script) in query.iter() {
         if !script.enabled || server.initialized_entities.contains(&entity) {
             continue;
         }
@@ -176,8 +175,11 @@ pub fn script_start_system(
         match server.get_or_load_script(&script.path) {
             Ok(loaded) => {
                 if loaded.has_on_start {
+                    let script_copy = loaded.clone();
                     let mut rt = server.runtime.0.lock().unwrap();
-                    if let Err(e) = rt.invoke_function::<(), ()>(&id_str, loaded, "onStart", ()) {
+                    if let Err(e) =
+                        rt.invoke_function::<(), ()>(&id_str, &script_copy, "onStart", ())
+                    {
                         errors.push((entity, e));
                     }
                 }
@@ -204,13 +206,13 @@ pub fn script_update_system(
     time: Option<Res<Time>>,
     mut server: Option<ResMut<ScriptServer>>,
     mut event_bus: Option<ResMut<EventBus>>,
-    mut query: Query<(Entity, Option<&EntityId>, &mut Script)>,
+    mut query: Query<(Entity, Option<&EntityId>, &Script)>,
 ) {
-    let Some(mut server) = server else { return };
+    let Some(ref mut server) = server else { return };
     let dt = time.map(|t| t.delta_seconds).unwrap_or(0.016);
     let mut errors = Vec::new();
 
-    for (entity, entity_id, mut script) in query.iter_mut() {
+    for (entity, entity_id, script) in query.iter() {
         if !script.enabled {
             continue;
         }
@@ -223,9 +225,10 @@ pub fn script_update_system(
         match server.get_or_load_script(&script.path) {
             Ok(loaded) => {
                 if loaded.has_on_update {
+                    let script_copy = loaded.clone();
                     let mut rt = server.runtime.0.lock().unwrap();
                     if let Err(e) =
-                        rt.invoke_function::<(f32,), ()>(&id_str, loaded, "onUpdate", (dt,))
+                        rt.invoke_function::<(f32,), ()>(&id_str, &script_copy, "onUpdate", (dt,))
                     {
                         errors.push((entity, e));
                     }
@@ -253,13 +256,13 @@ pub fn script_fixed_update_system(
     time: Option<Res<Time>>,
     mut server: Option<ResMut<ScriptServer>>,
     mut event_bus: Option<ResMut<EventBus>>,
-    mut query: Query<(Entity, Option<&EntityId>, &mut Script)>,
+    mut query: Query<(Entity, Option<&EntityId>, &Script)>,
 ) {
-    let Some(mut server) = server else { return };
+    let Some(ref mut server) = server else { return };
     let dt = time.map(|t| t.fixed_delta_seconds).unwrap_or(0.02);
     let mut errors = Vec::new();
 
-    for (entity, entity_id, mut script) in query.iter_mut() {
+    for (entity, entity_id, script) in query.iter() {
         if !script.enabled {
             continue;
         }
@@ -272,10 +275,14 @@ pub fn script_fixed_update_system(
         match server.get_or_load_script(&script.path) {
             Ok(loaded) => {
                 if loaded.has_on_fixed_update {
+                    let script_copy = loaded.clone();
                     let mut rt = server.runtime.0.lock().unwrap();
-                    if let Err(e) =
-                        rt.invoke_function::<(f32,), ()>(&id_str, loaded, "onFixedUpdate", (dt,))
-                    {
+                    if let Err(e) = rt.invoke_function::<(f32,), ()>(
+                        &id_str,
+                        &script_copy,
+                        "onFixedUpdate",
+                        (dt,),
+                    ) {
                         errors.push((entity, e));
                     }
                 }
@@ -300,11 +307,11 @@ pub fn script_fixed_update_system(
 /// ECS System: Applies script commands (spawn, transform updates, audio, tilemaps) back to World.
 pub fn script_apply_commands_system(
     mut commands: Commands,
-    mut server: Option<ResMut<ScriptServer>>,
+    server: Option<ResMut<ScriptServer>>,
     mut query_transforms: Query<&mut Transform2D>,
     entities_query: Query<(Entity, &EntityId)>,
 ) {
-    let Some(mut server) = server else { return };
+    let Some(server) = server else { return };
     let queued = server.exec_context.take_commands();
 
     let id_map: HashMap<String, Entity> = entities_query
@@ -316,7 +323,7 @@ pub fn script_apply_commands_system(
         match cmd {
             ScriptCommand::SpawnEntity {
                 name,
-                components,
+                components: _,
                 parent,
                 result_id,
             } => {
@@ -350,10 +357,10 @@ pub fn script_apply_commands_system(
                 }
             }
             ScriptCommand::SetTile {
-                entity_id,
-                layer,
-                coord,
-                tile_id,
+                entity_id: _,
+                layer: _,
+                coord: _,
+                tile_id: _,
             } => {
                 // Handled via tilemap cache and system
             }
