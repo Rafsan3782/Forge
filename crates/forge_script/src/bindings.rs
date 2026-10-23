@@ -127,7 +127,7 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
                 let ec = exec_ctx.clone();
                 entity_obj.set(
                     "getId",
-                    Function::new(ctx, move || -> String {
+                    Function::new(ctx.clone(), move || -> String {
                         ec.current_entity_id.lock().unwrap().clone()
                     })?,
                 )?;
@@ -136,7 +136,7 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
                 let ec = exec_ctx.clone();
                 entity_obj.set(
                     "getName",
-                    Function::new(ctx, move || -> String {
+                    Function::new(ctx.clone(), move || -> String {
                         let id = ec.current_entity_id.lock().unwrap().clone();
                         let hier = ec.entity_hierarchy.lock().unwrap();
                         hier.get(&id)
@@ -149,7 +149,7 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
                 let ec = exec_ctx.clone();
                 entity_obj.set(
                     "getParent",
-                    Function::new(ctx, move || -> Option<String> {
+                    Function::new(ctx.clone(), move || -> Option<String> {
                         let id = ec.current_entity_id.lock().unwrap().clone();
                         let hier = ec.entity_hierarchy.lock().unwrap();
                         hier.get(&id).and_then(|(_, parent, _)| parent.clone())
@@ -160,7 +160,7 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
                 let ec = exec_ctx.clone();
                 entity_obj.set(
                     "getChildren",
-                    Function::new(ctx, move || -> Vec<String> {
+                    Function::new(ctx.clone(), move || -> Vec<String> {
                         let id = ec.current_entity_id.lock().unwrap().clone();
                         let hier = ec.entity_hierarchy.lock().unwrap();
                         hier.get(&id)
@@ -173,7 +173,7 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
                 let ec = exec_ctx.clone();
                 entity_obj.set(
                     "getTransform",
-                    Function::new(ctx, move |call_ctx: Ctx<'_>| -> Object<'_> {
+                    Function::new(ctx.clone(), move |call_ctx: Ctx<'_>| -> Object<'_> {
                         let id = ec.current_entity_id.lock().unwrap().clone();
                         let cache = ec.transform_cache.lock().unwrap();
                         let trans = cache.get(&id).cloned().unwrap_or(ScriptEntityTransform {
@@ -201,7 +201,7 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
                 let ec = exec_ctx.clone();
                 entity_obj.set(
                     "setTransform",
-                    Function::new(ctx, move |trans: Object<'_>| {
+                    Function::new(ctx.clone(), move |trans: Object<'_>| {
                         let id = ec.current_entity_id.lock().unwrap().clone();
                         let mut current = {
                             let cache = ec.transform_cache.lock().unwrap();
@@ -290,7 +290,7 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
                 let ec = exec_ctx.clone();
                 forge.set(
                     "destroy",
-                    Function::new(ctx, move |entity_id: String| {
+                    Function::new(ctx.clone(), move |entity_id: String| {
                         ec.command_queue
                             .lock()
                             .unwrap()
@@ -305,7 +305,7 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
                 let ec = exec_ctx.clone();
                 scene_obj.set(
                     "load",
-                    Function::new(ctx, move |scene_path: String| {
+                    Function::new(ctx.clone(), move |scene_path: String| {
                         ec.command_queue
                             .lock()
                             .unwrap()
@@ -321,7 +321,7 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
                 let ec = exec_ctx.clone();
                 input_obj.set(
                     "isActionPressed",
-                    Function::new(ctx, move |action: String| -> bool {
+                    Function::new(ctx.clone(), move |action: String| -> bool {
                         let pressed = ec.pressed_actions.lock().unwrap();
                         pressed.contains(&action)
                     })?,
@@ -331,7 +331,7 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
                 let ec = exec_ctx.clone();
                 input_obj.set(
                     "isActionJustPressed",
-                    Function::new(ctx, move |action: String| -> bool {
+                    Function::new(ctx.clone(), move |action: String| -> bool {
                         let pressed = ec.just_pressed_actions.lock().unwrap();
                         pressed.contains(&action)
                     })?,
@@ -341,7 +341,7 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
                 let ec = exec_ctx.clone();
                 input_obj.set(
                     "isActionJustReleased",
-                    Function::new(ctx, move |action: String| -> bool {
+                    Function::new(ctx.clone(), move |action: String| -> bool {
                         let released = ec.just_released_actions.lock().unwrap();
                         released.contains(&action)
                     })?,
@@ -351,7 +351,7 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
                 let ec = exec_ctx.clone();
                 input_obj.set(
                     "getAxis",
-                    Function::new(ctx, move |axis: String| -> f32 {
+                    Function::new(ctx.clone(), move |axis: String| -> f32 {
                         let axes = ec.axes.lock().unwrap();
                         axes.get(&axis).copied().unwrap_or(0.0)
                     })?,
@@ -361,7 +361,7 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
                 let ec = exec_ctx.clone();
                 input_obj.set(
                     "getMousePosition",
-                    Function::new(ctx, move || -> Vec<f32> {
+                    Function::new(ctx.clone(), move || -> Vec<f32> {
                         let m = ec.mouse_pos.lock().unwrap();
                         vec![m[0], m[1]]
                     })?,
@@ -375,21 +375,25 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
                 let ec = exec_ctx.clone();
                 time_obj.set(
                     "deltaTime",
-                    Function::new(ctx, move || -> f32 { *ec.delta_time.lock().unwrap() })?,
+                    Function::new(ctx.clone(), move || -> f32 {
+                        *ec.delta_time.lock().unwrap()
+                    })?,
                 )?;
             }
             {
                 let ec = exec_ctx.clone();
                 time_obj.set(
                     "elapsedTime",
-                    Function::new(ctx, move || -> f32 { *ec.elapsed_time.lock().unwrap() })?,
+                    Function::new(ctx.clone(), move || -> f32 {
+                        *ec.elapsed_time.lock().unwrap()
+                    })?,
                 )?;
             }
             {
                 let ec = exec_ctx.clone();
                 time_obj.set(
                     "frameCount",
-                    Function::new(ctx, move || -> u64 {
+                    Function::new(ctx.clone(), move || -> u64 {
                         ec.frame_count.load(Ordering::Relaxed)
                     })?,
                 )?;
@@ -410,9 +414,10 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
                 )?;
                 physics_obj.set(
                     "overlapCircle",
-                    Function::new(ctx, |_center: Value<'_>, _radius: f32| -> Vec<String> {
-                        Vec::new()
-                    })?,
+                    Function::new(
+                        ctx.clone(),
+                        |_center: Value<'_>, _radius: f32| -> Vec<String> { Vec::new() },
+                    )?,
                 )?;
             }
             forge.set("physics", physics_obj)?;
@@ -481,7 +486,7 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
                 let ec = exec_ctx.clone();
                 audio_obj.set(
                     "setBusVolume",
-                    Function::new(ctx, move |bus: String, volume: f32| {
+                    Function::new(ctx.clone(), move |bus: String, volume: f32| {
                         ec.command_queue
                             .lock()
                             .unwrap()
@@ -497,15 +502,18 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
                 let ec = exec_ctx.clone();
                 anim_obj.set(
                     "play",
-                    Function::new(ctx, move |clip_name: String, entity_id: Option<String>| {
-                        ec.command_queue
-                            .lock()
-                            .unwrap()
-                            .push(ScriptCommand::PlayAnimation {
-                                clip_name,
-                                entity_id,
-                            });
-                    })?,
+                    Function::new(
+                        ctx.clone(),
+                        move |clip_name: String, entity_id: Option<String>| {
+                            ec.command_queue
+                                .lock()
+                                .unwrap()
+                                .push(ScriptCommand::PlayAnimation {
+                                    clip_name,
+                                    entity_id,
+                                });
+                        },
+                    )?,
                 )?;
             }
             forge.set("animation", anim_obj)?;
@@ -555,7 +563,7 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
             let log_obj = Object::new(ctx)?;
             log_obj.set(
                 "info",
-                Function::new(ctx, |msg: Value<'_>| {
+                Function::new(ctx.clone(), |msg: Value<'_>| {
                     let text = msg
                         .as_string()
                         .and_then(|s| s.to_string().ok())
@@ -565,7 +573,7 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
             )?;
             log_obj.set(
                 "warn",
-                Function::new(ctx, |msg: Value<'_>| {
+                Function::new(ctx.clone(), |msg: Value<'_>| {
                     let text = msg
                         .as_string()
                         .and_then(|s| s.to_string().ok())
@@ -575,7 +583,7 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
             )?;
             log_obj.set(
                 "error",
-                Function::new(ctx, |msg: Value<'_>| {
+                Function::new(ctx.clone(), |msg: Value<'_>| {
                     let text = msg
                         .as_string()
                         .and_then(|s| s.to_string().ok())
