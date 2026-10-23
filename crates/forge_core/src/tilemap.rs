@@ -138,7 +138,7 @@ pub struct Tilemap {
     pub layers: Vec<String>,
     /// Map of chunk coordinate `[chunk_x, chunk_y]` -> Chunk data.
     /// Uses BTreeMap for deterministic diff-friendly JSON key ordering.
-    #[serde(default)]
+    #[serde(default, serialize_with = "serialize_chunks", deserialize_with = "deserialize_chunks")]
     pub chunks: BTreeMap<ChunkCoord, TilemapChunk>,
     /// Collision layer bitmask for generated colliders.
     #[serde(default = "default_collision_groups")]
@@ -171,6 +171,51 @@ fn default_collision_groups() -> u32 {
 
 fn default_friction() -> f32 {
     0.5
+}
+
+fn serialize_chunks<S>(
+    chunks: &BTreeMap<ChunkCoord, TilemapChunk>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    use serde::ser::SerializeMap;
+    let mut map = serializer.serialize_map(Some(chunks.len()))?;
+    for (k, v) in chunks {
+        let key_str = format!("[{}, {}]", k[0], k[1]);
+        map.serialize_entry(&key_str, v)?;
+    }
+    map.end()
+}
+
+fn deserialize_chunks<'de, D>(
+    deserializer: D,
+) -> Result<BTreeMap<ChunkCoord, TilemapChunk>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::Error;
+    let raw_map: std::collections::HashMap<String, TilemapChunk> =
+        serde::Deserialize::deserialize(deserializer)?;
+    let mut chunks = BTreeMap::new();
+
+    for (k_str, chunk) in raw_map {
+        let trimmed = k_str.trim().trim_matches(|c| c == '[' || c == ']' || c == '(' || c == ')');
+        let parts: Vec<&str> = trimmed.split(',').map(|s| s.trim()).collect();
+        if parts.len() == 2 {
+            if let (Ok(x), Ok(y)) = (parts[0].parse::<i32>(), parts[1].parse::<i32>()) {
+                chunks.insert([x, y], chunk);
+                continue;
+            }
+        }
+        return Err(D::Error::custom(format!(
+            "Invalid chunk coordinate key: '{}', expected format '[x, y]'",
+            k_str
+        )));
+    }
+
+    Ok(chunks)
 }
 
 impl Default for Tilemap {
