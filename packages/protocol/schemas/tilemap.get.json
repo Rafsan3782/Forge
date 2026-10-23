@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/tilemap.get.json",
+  "title": "TilemapGet",
+  "description": "Query tile IDs and chunk information for a tilemap component on an entity",
+  "definitions": {
+    "TilemapGetParams": {
+      "type": "object",
+      "required": ["entity_id"],
+      "properties": {
+        "entity_id": {
+          "type": "string",
+          "description": "Target entity containing a Tilemap component"
+        },
+        "layer": {
+          "type": "string",
+          "description": "Optional specific layer name to query"
+        },
+        "chunk_coord": {
+          "type": "array",
+          "items": { "type": "integer" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Optional chunk coordinates [chunk_x, chunk_y]"
+        },
+        "tile_coord": {
+          "type": "array",
+          "items": { "type": "integer" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Optional tile coordinate [x, y]"
+        }
+      },
+      "additionalProperties": false
+    },
+    "TilemapGetResult": {
+      "type": "object",
+      "required": ["tileset_id", "tile_size", "chunk_size", "layers"],
+      "properties": {
+        "tileset_id": {
+          "type": "string"
+        },
+        "tile_size": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "chunk_size": {
+          "type": "integer"
+        },
+        "layers": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "tile_id": {
+          "type": "integer",
+          "description": "Tile ID if tile_coord was queried"
+        },
+        "chunk_data": {
+          "type": "string",
+          "description": "Compact row string representation of chunk if chunk_coord was queried"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

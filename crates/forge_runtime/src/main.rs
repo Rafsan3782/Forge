@@ -25,6 +25,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+    // Ensure tilemap-demo template procedural assets exist if missing
+    let tilemap_assets_dir = Path::new("templates/tilemap-demo/assets");
+    if !tilemap_assets_dir.exists() || !tilemap_assets_dir.join("tileset.png").exists() {
+        if let Err(e) = forge_runtime::procedural::generate_tilemap_assets(tilemap_assets_dir) {
+            tracing::warn!("Failed to auto-generate tilemap demo assets: {}", e);
+        }
+    }
+
     if args.headless {
         run_headless(&args)
     } else {

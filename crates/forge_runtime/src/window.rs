@@ -60,6 +60,8 @@ impl WindowApp {
         animation_store.set_base_dir(&assets_dir);
         let mut sheet_store = forge_assets::SpriteSheetStore::new();
         sheet_store.set_base_dir(&assets_dir);
+        let mut tileset_store = forge_assets::TilesetStore::new();
+        tileset_store.set_base_dir(&assets_dir);
 
         let scene = Scene::load_from_file(&args.scene)?;
         let mut world = World::new();
@@ -69,6 +71,7 @@ impl WindowApp {
         world.insert_resource(asset_db);
         world.insert_resource(animation_store);
         world.insert_resource(sheet_store);
+        world.insert_resource(tileset_store);
         world.insert_resource(forge_core::EventBus::new());
 
         // Initialize ActionMap

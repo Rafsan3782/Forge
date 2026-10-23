@@ -353,3 +353,80 @@ export const PhysicsRaycastResultSchema = z.object({
   data: RaycastHitSchema.optional(),
 });
 export type PhysicsRaycastResult = z.infer<typeof PhysicsRaycastResultSchema>;
+
+// -----------------------------------------------------------------------------
+// tilemap.get
+// -----------------------------------------------------------------------------
+
+export const TilemapGetParamsSchema = z.object({
+  entity_id: z.string(),
+  layer: z.string().optional(),
+  chunk_coord: z.tuple([z.number().int(), z.number().int()]).optional(),
+  tile_coord: z.tuple([z.number().int(), z.number().int()]).optional(),
+});
+export type TilemapGetParams = z.infer<typeof TilemapGetParamsSchema>;
+
+export const TilemapGetResultSchema = z.object({
+  tileset_id: z.string(),
+  tile_size: z.tuple([z.number(), z.number()]),
+  chunk_size: z.number().int(),
+  layers: z.array(z.string()),
+  tile_id: z.number().int().optional(),
+  chunk_data: z.string().optional(),
+});
+export type TilemapGetResult = z.infer<typeof TilemapGetResultSchema>;
+
+// -----------------------------------------------------------------------------
+// tilemap.set_tile
+// -----------------------------------------------------------------------------
+
+export const TilemapSetTileParamsSchema = z.object({
+  entity_id: z.string(),
+  layer: z.string().optional().default("main"),
+  coord: z.tuple([z.number().int(), z.number().int()]),
+  tile_id: z.number().int(),
+});
+export type TilemapSetTileParams = z.infer<typeof TilemapSetTileParamsSchema>;
+
+export const TilemapSetTileResultSchema = z.object({
+  success: z.boolean(),
+  prev_tile_id: z.number().int(),
+  chunk_coord: z.tuple([z.number().int(), z.number().int()]).optional(),
+});
+export type TilemapSetTileResult = z.infer<typeof TilemapSetTileResultSchema>;
+
+// -----------------------------------------------------------------------------
+// tilemap.fill_rect
+// -----------------------------------------------------------------------------
+
+export const TilemapFillRectParamsSchema = z.object({
+  entity_id: z.string(),
+  layer: z.string().optional().default("main"),
+  min: z.tuple([z.number().int(), z.number().int()]),
+  max: z.tuple([z.number().int(), z.number().int()]),
+  tile_id: z.number().int(),
+});
+export type TilemapFillRectParams = z.infer<typeof TilemapFillRectParamsSchema>;
+
+export const TilemapFillRectResultSchema = z.object({
+  success: z.boolean(),
+  tiles_modified: z.number().int(),
+  affected_chunks: z.number().int(),
+});
+export type TilemapFillRectResult = z.infer<typeof TilemapFillRectResultSchema>;
+
+// -----------------------------------------------------------------------------
+// tilemap.clear
+// -----------------------------------------------------------------------------
+
+export const TilemapClearParamsSchema = z.object({
+  entity_id: z.string(),
+  layer: z.string().optional(),
+});
+export type TilemapClearParams = z.infer<typeof TilemapClearParamsSchema>;
+
+export const TilemapClearResultSchema = z.object({
+  success: z.boolean(),
+  chunks_cleared: z.number().int(),
+});
+export type TilemapClearResult = z.infer<typeof TilemapClearResultSchema>;

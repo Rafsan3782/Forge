@@ -117,6 +117,26 @@ pub fn process_bridge_commands(
                 let res = handle_physics_raycast(world, &params);
                 let _ = responder.send(res);
             }
+
+            BridgeCommand::TilemapGet { params, responder } => {
+                let res = handle_tilemap_get(world, &params);
+                let _ = responder.send(res);
+            }
+
+            BridgeCommand::TilemapSetTile { params, responder } => {
+                let res = handle_tilemap_set_tile(world, &params);
+                let _ = responder.send(res);
+            }
+
+            BridgeCommand::TilemapFillRect { params, responder } => {
+                let res = handle_tilemap_fill_rect(world, &params);
+                let _ = responder.send(res);
+            }
+
+            BridgeCommand::TilemapClear { params, responder } => {
+                let res = handle_tilemap_clear(world, &params);
+                let _ = responder.send(res);
+            }
         }
     }
 }
@@ -139,6 +159,7 @@ fn handle_asset_list(
             forge_assets::AssetType::Animation => "animation".to_string(),
             forge_assets::AssetType::Scene => "scene".to_string(),
             forge_assets::AssetType::Audio => "audio".to_string(),
+            forge_assets::AssetType::Tileset => "tileset".to_string(),
             forge_assets::AssetType::Other(s) => s.clone(),
         };
 
@@ -177,6 +198,7 @@ fn handle_asset_get_info(
         forge_assets::AssetType::Animation => "animation".to_string(),
         forge_assets::AssetType::Scene => "scene".to_string(),
         forge_assets::AssetType::Audio => "audio".to_string(),
+        forge_assets::AssetType::Tileset => "tileset".to_string(),
         forge_assets::AssetType::Other(s) => s.clone(),
     };
 
@@ -208,6 +230,7 @@ fn handle_asset_import(
             "animation" => forge_assets::AssetType::Animation,
             "scene" => forge_assets::AssetType::Scene,
             "audio" => forge_assets::AssetType::Audio,
+            "tileset" => forge_assets::AssetType::Tileset,
             other => forge_assets::AssetType::Other(other.to_string()),
         });
 
@@ -226,6 +249,7 @@ fn handle_asset_import(
         forge_assets::AssetType::Animation => "animation".to_string(),
         forge_assets::AssetType::Scene => "scene".to_string(),
         forge_assets::AssetType::Audio => "audio".to_string(),
+        forge_assets::AssetType::Tileset => "tileset".to_string(),
         forge_assets::AssetType::Other(s) => s.clone(),
     };
 
@@ -437,4 +461,155 @@ pub fn handle_physics_raycast(
             data: None,
         })
     }
+}
+
+fn find_tilemap_entity(
+    world: &World,
+    entity_id_str: &str,
+) -> Result<forge_core::ecs::Entity, String> {
+    for entity_ref in world.iter_entities() {
+        if let Some(id) = entity_ref.get::<forge_core::EntityId>() {
+            if id.as_str() == entity_id_str {
+                return Ok(entity_ref.id());
+            }
+        }
+    }
+    Err(format!("Entity with id '{}' not found", entity_id_str))
+}
+
+fn handle_tilemap_get(
+    world: &World,
+    params: &forge_protocol::TilemapGetParams,
+) -> Result<forge_protocol::TilemapGetResult, String> {
+    let entity = find_tilemap_entity(world, &params.entity_id)?;
+    let tilemap = world.get::<forge_core::Tilemap>(entity).ok_or_else(|| {
+        format!(
+            "Entity '{}' does not have a Tilemap component",
+            params.entity_id
+        )
+    })?;
+
+    let layer = params.layer.as_deref().unwrap_or("main");
+
+    let tile_id = params
+        .tile_coord
+        .map(|tc| tilemap.get_tile(layer, tc[0], tc[1]));
+
+    let chunk_data = params.chunk_coord.and_then(|cc| {
+        tilemap
+            .chunks
+            .get(&cc)
+            .and_then(|chunk| chunk.layers.get(layer).map(|rows| rows.join(";")))
+    });
+
+    Ok(forge_protocol::TilemapGetResult {
+        tileset_id: tilemap.tileset_id.clone(),
+        tile_size: [tilemap.tile_size.x, tilemap.tile_size.y],
+        chunk_size: tilemap.chunk_size,
+        layers: tilemap.layers.clone(),
+        tile_id,
+        chunk_data,
+    })
+}
+
+fn handle_tilemap_set_tile(
+    world: &mut World,
+    params: &forge_protocol::TilemapSetTileParams,
+) -> Result<forge_protocol::TilemapSetTileResult, String> {
+    let entity = find_tilemap_entity(world, &params.entity_id)?;
+    let (prev_tile_id, chunk_coord) = {
+        let mut tilemap = world
+            .get_mut::<forge_core::Tilemap>(entity)
+            .ok_or_else(|| {
+                format!(
+                    "Entity '{}' does not have a Tilemap component",
+                    params.entity_id
+                )
+            })?;
+
+        let layer = if params.layer.is_empty() {
+            "main"
+        } else {
+            &params.layer
+        };
+        let prev = tilemap.set_tile(layer, params.coord[0], params.coord[1], params.tile_id);
+        let (coord, _) = tilemap.tile_to_chunk_coord(params.coord[0], params.coord[1]);
+        (prev, coord)
+    };
+
+    // Mark dirty in collider cache if present
+    if let Some(mut cache) = world.get_mut::<forge_physics::TilemapColliderCache>(entity) {
+        cache.mark_dirty(chunk_coord);
+    }
+
+    Ok(forge_protocol::TilemapSetTileResult {
+        success: true,
+        prev_tile_id,
+        chunk_coord: Some(chunk_coord),
+    })
+}
+
+fn handle_tilemap_fill_rect(
+    world: &mut World,
+    params: &forge_protocol::TilemapFillRectParams,
+) -> Result<forge_protocol::TilemapFillRectResult, String> {
+    let entity = find_tilemap_entity(world, &params.entity_id)?;
+    let (tiles_modified, affected_chunks) = {
+        let mut tilemap = world
+            .get_mut::<forge_core::Tilemap>(entity)
+            .ok_or_else(|| {
+                format!(
+                    "Entity '{}' does not have a Tilemap component",
+                    params.entity_id
+                )
+            })?;
+
+        let layer = if params.layer.is_empty() {
+            "main"
+        } else {
+            &params.layer
+        };
+        tilemap.fill_rect(layer, params.min, params.max, params.tile_id)
+    };
+
+    // Mark all chunks dirty in collider cache if present
+    if let Some(mut cache) = world.get_mut::<forge_physics::TilemapColliderCache>(entity) {
+        cache.chunk_colliders.clear();
+    }
+
+    Ok(forge_protocol::TilemapFillRectResult {
+        success: true,
+        tiles_modified,
+        affected_chunks,
+    })
+}
+
+fn handle_tilemap_clear(
+    world: &mut World,
+    params: &forge_protocol::TilemapClearParams,
+) -> Result<forge_protocol::TilemapClearResult, String> {
+    let entity = find_tilemap_entity(world, &params.entity_id)?;
+    let chunks_cleared = {
+        let mut tilemap = world
+            .get_mut::<forge_core::Tilemap>(entity)
+            .ok_or_else(|| {
+                format!(
+                    "Entity '{}' does not have a Tilemap component",
+                    params.entity_id
+                )
+            })?;
+
+        tilemap.clear_map(params.layer.as_deref())
+    };
+
+    // Clear collider cache
+    if let Some(mut cache) = world.get_mut::<forge_physics::TilemapColliderCache>(entity) {
+        cache.chunk_colliders.clear();
+        cache.dirty_chunks.clear();
+    }
+
+    Ok(forge_protocol::TilemapClearResult {
+        success: true,
+        chunks_cleared,
+    })
 }

@@ -35,6 +35,14 @@ import {
   PhysicsRaycastParamsSchema,
   PhysicsRaycastResultSchema,
   PlaytestReportSchema,
+  TilemapGetParamsSchema,
+  TilemapGetResultSchema,
+  TilemapSetTileParamsSchema,
+  TilemapSetTileResultSchema,
+  TilemapFillRectParamsSchema,
+  TilemapFillRectResultSchema,
+  TilemapClearParamsSchema,
+  TilemapClearResultSchema,
 } from "./generated/index.ts";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -284,4 +292,62 @@ test("playtest.report serialize and deserialize against fixtures", () => {
   assert.strictEqual(parsedReport.screenshots.length, 2);
   assert.strictEqual(parsedReport.input_trace.length, 2);
   assert.strictEqual(parsedReport.severity, "medium");
+});
+
+test("tilemap operations serialize and deserialize against fixtures", () => {
+  const getParams = loadFixture("tilemap_get_params.json");
+  const parsedGetParams = TilemapGetParamsSchema.parse(getParams);
+  assert.deepStrictEqual(
+    TilemapGetParamsSchema.parse(JSON.parse(JSON.stringify(parsedGetParams))),
+    parsedGetParams,
+  );
+
+  const getResult = loadFixture("tilemap_get_result.json");
+  const parsedGetResult = TilemapGetResultSchema.parse(getResult);
+  assert.deepStrictEqual(
+    TilemapGetResultSchema.parse(JSON.parse(JSON.stringify(parsedGetResult))),
+    parsedGetResult,
+  );
+
+  const setParams = loadFixture("tilemap_set_tile_params.json");
+  const parsedSetParams = TilemapSetTileParamsSchema.parse(setParams);
+  assert.deepStrictEqual(
+    TilemapSetTileParamsSchema.parse(JSON.parse(JSON.stringify(parsedSetParams))),
+    parsedSetParams,
+  );
+
+  const setResult = loadFixture("tilemap_set_tile_result.json");
+  const parsedSetResult = TilemapSetTileResultSchema.parse(setResult);
+  assert.deepStrictEqual(
+    TilemapSetTileResultSchema.parse(JSON.parse(JSON.stringify(parsedSetResult))),
+    parsedSetResult,
+  );
+
+  const fillParams = loadFixture("tilemap_fill_rect_params.json");
+  const parsedFillParams = TilemapFillRectParamsSchema.parse(fillParams);
+  assert.deepStrictEqual(
+    TilemapFillRectParamsSchema.parse(JSON.parse(JSON.stringify(parsedFillParams))),
+    parsedFillParams,
+  );
+
+  const fillResult = loadFixture("tilemap_fill_rect_result.json");
+  const parsedFillResult = TilemapFillRectResultSchema.parse(fillResult);
+  assert.deepStrictEqual(
+    TilemapFillRectResultSchema.parse(JSON.parse(JSON.stringify(parsedFillResult))),
+    parsedFillResult,
+  );
+
+  const clearParams = loadFixture("tilemap_clear_params.json");
+  const parsedClearParams = TilemapClearParamsSchema.parse(clearParams);
+  assert.deepStrictEqual(
+    TilemapClearParamsSchema.parse(JSON.parse(JSON.stringify(parsedClearParams))),
+    parsedClearParams,
+  );
+
+  const clearResult = loadFixture("tilemap_clear_result.json");
+  const parsedClearResult = TilemapClearResultSchema.parse(clearResult);
+  assert.deepStrictEqual(
+    TilemapClearResultSchema.parse(JSON.parse(JSON.stringify(parsedClearResult))),
+    parsedClearResult,
+  );
 });

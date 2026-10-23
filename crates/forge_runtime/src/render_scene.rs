@@ -3,6 +3,7 @@
 use forge_assets::TextureStore;
 use forge_core::{Camera2D, Sprite, Transform2D, Vec2, World};
 use forge_render::{CameraUniform, RenderContext, RenderError, Renderer2D};
+use std::sync::Arc;
 
 /// Default background clear color: dark slate blue `[0.08, 0.09, 0.13, 1.0]`.
 pub const DEFAULT_CLEAR_COLOR: [f64; 4] = [0.08, 0.09, 0.13, 1.0];
@@ -101,6 +102,110 @@ pub fn render_world_scene(
 
             let gpu_texture = texture_store.get_or_load(&sprite.asset_id, render_context);
             renderer.draw_sprite(render_tf, resolved_sprite, gpu_texture.bind_group);
+        }
+    }
+
+    // 2b. Queue all Tilemaps with chunk frustum culling and batching
+    let tileset_store = world.get_resource::<forge_assets::TilesetStore>();
+    // Compute camera orthographic visible AABB bounds in world space
+    let zoom = if active_camera.zoom <= 0.0 {
+        1.0
+    } else {
+        active_camera.zoom
+    };
+    let half_view_w = (viewport_width / (2.0 * zoom)).max(1.0);
+    let half_view_h = (viewport_height / (2.0 * zoom)).max(1.0);
+    let cam_x = active_transform.position.x;
+    let cam_y = active_transform.position.y;
+    let cam_min_x = cam_x - half_view_w;
+    let cam_max_x = cam_x + half_view_w;
+    let cam_min_y = cam_y - half_view_h;
+    let cam_max_y = cam_y + half_view_h;
+
+    for entity_ref in world.iter_entities() {
+        if let (Some(tf), Some(tilemap)) = (
+            entity_ref.get::<Transform2D>(),
+            entity_ref.get::<forge_core::Tilemap>(),
+        ) {
+            let tileset = tileset_store.and_then(|ts| ts.get(&tilemap.tileset_id));
+            let tex_asset_id = tileset
+                .map(|ts| ts.texture_asset_id.as_str())
+                .unwrap_or(tilemap.tileset_id.as_str());
+
+            let gpu_texture = texture_store.get_or_load(tex_asset_id, render_context);
+            let tex_w = gpu_texture.width;
+            let tex_h = gpu_texture.height;
+
+            let cs = tilemap.chunk_size as f32;
+            let chunk_world_w = cs * tilemap.tile_size.x * tf.scale.x;
+            let chunk_world_h = cs * tilemap.tile_size.y * tf.scale.y;
+
+            for (chunk_coord, chunk) in &tilemap.chunks {
+                if chunk.is_empty() {
+                    continue;
+                }
+
+                // Chunk AABB in world coordinates
+                let chunk_origin_x = tf.position.x + chunk_coord[0] as f32 * chunk_world_w;
+                let chunk_origin_y = tf.position.y + chunk_coord[1] as f32 * chunk_world_h;
+                let chunk_min_x = chunk_origin_x.min(chunk_origin_x + chunk_world_w);
+                let chunk_max_x = chunk_origin_x.max(chunk_origin_x + chunk_world_w);
+                let chunk_min_y = chunk_origin_y.min(chunk_origin_y + chunk_world_h);
+                let chunk_max_y = chunk_origin_y.max(chunk_origin_y + chunk_world_h);
+
+                // Frustum cull chunk AABB against camera viewport AABB
+                if chunk_max_x < cam_min_x
+                    || chunk_min_x > cam_max_x
+                    || chunk_max_y < cam_min_y
+                    || chunk_min_y > cam_max_y
+                {
+                    continue;
+                }
+
+                // Chunk is visible: batch all tile quads across all layers for this chunk
+                let mut chunk_quads = Vec::new();
+                let tint = [1.0, 1.0, 1.0, 1.0];
+
+                for layer_name in &tilemap.layers {
+                    let layer_grid = chunk.decode_layer(layer_name, tilemap.chunk_size);
+                    for ly in 0..tilemap.chunk_size {
+                        for lx in 0..tilemap.chunk_size {
+                            let tile_id = layer_grid[ly as usize][lx as usize];
+                            if tile_id <= 0 {
+                                continue;
+                            }
+
+                            // 0-indexed tile id for texture uv
+                            let tile_idx = (tile_id - 1) as u32;
+                            let uv = if let Some(ts) = tileset {
+                                ts.get_tile_uv(tile_idx, tex_w, tex_h)
+                            } else {
+                                [0.0, 0.0, 1.0, 1.0]
+                            };
+
+                            let tile_min_x =
+                                chunk_origin_x + lx as f32 * tilemap.tile_size.x * tf.scale.x;
+                            let tile_min_y =
+                                chunk_origin_y + ly as f32 * tilemap.tile_size.y * tf.scale.y;
+                            let tile_max_x = tile_min_x + tilemap.tile_size.x * tf.scale.x;
+                            let tile_max_y = tile_min_y + tilemap.tile_size.y * tf.scale.y;
+
+                            let quad = forge_render::generate_tile_quad(
+                                tile_min_x, tile_min_y, tile_max_x, tile_max_y, uv, tint,
+                            );
+                            chunk_quads.push(quad);
+                        }
+                    }
+                }
+
+                if !chunk_quads.is_empty() {
+                    renderer.draw_quad_batch(
+                        chunk_quads,
+                        tilemap.z_order,
+                        Arc::clone(&gpu_texture.bind_group),
+                    );
+                }
+            }
         }
     }
 

@@ -102,6 +102,17 @@ impl Renderer2D {
         self.batcher.push_quad(quad, z_order, texture_bind_group);
     }
 
+    /// Queues a batch of explicit sprite quads sharing the same z-order and texture (e.g. for tilemap chunks).
+    pub fn draw_quad_batch(
+        &mut self,
+        quads: Vec<[SpriteVertex; 4]>,
+        z_order: i32,
+        texture_bind_group: Arc<wgpu::BindGroup>,
+    ) {
+        self.batcher
+            .push_quad_batch(quads, z_order, texture_bind_group);
+    }
+
     /// Clears any pending queued sprites without drawing.
     pub fn clear_queue(&mut self) {
         self.batcher.clear();

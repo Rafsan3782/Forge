@@ -1,0 +1,8 @@
+{
+  "tileset_id": "tileset_dungeon",
+  "tile_size": [16.0, 16.0],
+  "chunk_size": 16,
+  "layers": ["ground", "walls", "foreground"],
+  "tile_id": 4,
+  "chunk_data": "4,4,4,4"
+}

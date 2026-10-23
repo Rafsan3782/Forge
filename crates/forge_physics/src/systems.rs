@@ -19,6 +19,7 @@ pub fn physics_before_step_system(world: &mut World) {
     let mut ecs_bodies = Vec::new();
     let mut ecs_colliders = Vec::new();
     let mut ecs_controllers = Vec::new();
+    let mut ecs_tilemaps = Vec::new();
 
     for entity_ref in world.iter_entities() {
         let entity = entity_ref.id();
@@ -26,6 +27,10 @@ pub fn physics_before_step_system(world: &mut World) {
         let rb = entity_ref.get::<RigidBody2D>().cloned();
         let col = entity_ref.get::<Collider2D>().cloned();
         let ctl = entity_ref.get::<CharacterController2D>().cloned();
+        let tilemap = entity_ref.get::<forge_core::Tilemap>().cloned();
+        let tilemap_cache = entity_ref
+            .get::<crate::tilemap_collider::TilemapColliderCache>()
+            .cloned();
 
         if let Some(r) = rb {
             ecs_bodies.push((entity, tf, r));
@@ -35,6 +40,9 @@ pub fn physics_before_step_system(world: &mut World) {
         }
         if let Some(c) = ctl {
             ecs_controllers.push((entity, tf, c));
+        }
+        if let Some(t) = tilemap {
+            ecs_tilemaps.push((entity, tf, t, tilemap_cache));
         }
     }
 
@@ -258,6 +266,61 @@ pub fn physics_before_step_system(world: &mut World) {
         }
     }
 
+    // 4b. Sync Tilemap colliders with chunk caching
+    let mut updated_caches = Vec::new();
+    for (entity, tf, tilemap, cache_opt) in ecs_tilemaps {
+        let mut cache = cache_opt.unwrap_or_default();
+        // Determine which tiles are solid:
+        // Default to tile_id > 0 being solid, or use TilesetStore if present
+        cache.update(&tilemap, |_tile_id| true);
+
+        // For each chunk in cache, ensure Rapier colliders are synchronized
+        for (chunk_coord, chunk_cols) in &cache.chunk_colliders {
+            let key = (entity, *chunk_coord);
+            // If already spawned for this chunk, check if dirty
+            if let Some(existing_handles) = physics.entity_chunk_colliders.remove(&key) {
+                for h in existing_handles {
+                    physics.remove_collider(h);
+                }
+            }
+
+            let mut handles = Vec::with_capacity(chunk_cols.len());
+            for col in chunk_cols {
+                let half_extents = match col.shape {
+                    ColliderShape2D::Box { half_extents } => half_extents,
+                    _ => Vec2::new(8.0, 8.0),
+                };
+                let shape = rapier::SharedShape::cuboid(half_extents.x, half_extents.y);
+                let col_pos_x = tf.position.x + col.offset.x;
+                let col_pos_y = tf.position.y + col.offset.y;
+
+                let fixed_body = rapier::RigidBodyBuilder::fixed()
+                    .translation(rapier::vector![col_pos_x, col_pos_y])
+                    .rotation(tf.rotation)
+                    .build();
+                let body_handle = physics.bodies.insert(fixed_body);
+
+                let builder = rapier::ColliderBuilder::new(shape)
+                    .sensor(col.is_sensor)
+                    .friction(col.friction)
+                    .restitution(col.restitution)
+                    .active_events(rapier::ActiveEvents::COLLISION_EVENTS)
+                    .active_collision_types(rapier::ActiveCollisionTypes::all())
+                    .collision_groups(rapier::InteractionGroups::new(
+                        rapier::Group::from_bits_truncate(col.collision_groups),
+                        rapier::Group::from_bits_truncate(col.collision_mask),
+                    ));
+
+                let handle = physics.insert_collider_with_parent(builder.build(), body_handle);
+                physics.collider_to_entity.insert(handle, entity);
+                handles.push(handle);
+            }
+            physics.entity_chunk_colliders.insert(key, handles);
+        }
+
+        updated_caches.push((entity, cache));
+    }
+
     // 5. Update Kinematic Character Controllers
     let mut updated_controllers = Vec::new();
     for (entity, mut tf, mut ctl) in ecs_controllers {
@@ -332,6 +395,17 @@ pub fn physics_before_step_system(world: &mut World) {
         }
         if let Some(mut e_ctl) = world.get_mut::<CharacterController2D>(entity) {
             *e_ctl = ctl;
+        }
+    }
+
+    // Apply updated tilemap collider caches back to ECS entities
+    for (entity, cache) in updated_caches {
+        if let Some(mut e_cache) =
+            world.get_mut::<crate::tilemap_collider::TilemapColliderCache>(entity)
+        {
+            *e_cache = cache;
+        } else if let Ok(mut ent_mut) = world.get_entity_mut(entity) {
+            ent_mut.insert(cache);
         }
     }
 }

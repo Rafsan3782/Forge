@@ -1,0 +1,24 @@
+{
+  "texture_asset_id": "tileset.png",
+  "tile_size": [32, 32],
+  "margin": 0,
+  "spacing": 0,
+  "tile_properties": {
+    "0": {
+      "solid": true,
+      "one_way": false
+    },
+    "1": {
+      "solid": true,
+      "one_way": false
+    },
+    "2": {
+      "solid": true,
+      "one_way": true
+    },
+    "3": {
+      "solid": true,
+      "one_way": false
+    }
+  }
+}

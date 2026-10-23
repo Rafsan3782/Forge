@@ -383,3 +383,81 @@ pub struct PhysicsRaycastResult {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub data: Option<RaycastHit>,
 }
+
+// -----------------------------------------------------------------------------
+// tilemap.get / set_tile / fill_rect / clear
+// -----------------------------------------------------------------------------
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct TilemapGetParams {
+    pub entity_id: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub layer: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub chunk_coord: Option<[i32; 2]>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tile_coord: Option<[i32; 2]>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct TilemapGetResult {
+    pub tileset_id: String,
+    pub tile_size: [f32; 2],
+    pub chunk_size: u32,
+    pub layers: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tile_id: Option<i32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub chunk_data: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct TilemapSetTileParams {
+    pub entity_id: String,
+    #[serde(default = "default_tilemap_layer")]
+    pub layer: String,
+    pub coord: [i32; 2],
+    pub tile_id: i32,
+}
+
+fn default_tilemap_layer() -> String {
+    "main".to_string()
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct TilemapSetTileResult {
+    pub success: bool,
+    pub prev_tile_id: i32,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub chunk_coord: Option<[i32; 2]>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct TilemapFillRectParams {
+    pub entity_id: String,
+    #[serde(default = "default_tilemap_layer")]
+    pub layer: String,
+    pub min: [i32; 2],
+    pub max: [i32; 2],
+    pub tile_id: i32,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct TilemapFillRectResult {
+    pub success: bool,
+    pub tiles_modified: u32,
+    pub affected_chunks: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct TilemapClearParams {
+    pub entity_id: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub layer: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct TilemapClearResult {
+    pub success: bool,
+    pub chunks_cleared: u32,
+}

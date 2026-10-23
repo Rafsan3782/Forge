@@ -192,3 +192,85 @@ fn generate_rock_sprite(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
     img.save(path)?;
     Ok(())
 }
+
+/// Generates procedural tileset texture and assets for `templates/tilemap-demo`.
+///
+/// Creates a 64x64 tileset with 4 32x32 tiles:
+/// - Tile 0 (top-left): Grass top soil (green grass line over brown dirt)
+/// - Tile 1 (top-right): Stone brick / dungeon wall (grey blocks with dark mortar)
+/// - Tile 2 (bottom-left): Wood platform (brown wooden planks)
+/// - Tile 3 (bottom-right): Dirt filler (textured rich brown dirt)
+pub fn generate_tilemap_assets(output_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    std::fs::create_dir_all(output_dir)?;
+
+    let path = output_dir.join("tileset.png");
+    const W: u32 = 64;
+    const H: u32 = 64;
+    let mut img: ImageBuffer<Rgba<u8>, Vec<u8>> = ImageBuffer::new(W, H);
+
+    for y in 0..H {
+        for x in 0..W {
+            let px = match (x, y) {
+                // Tile 0: Grass top (0..32, 0..32)
+                (0..=31, 0..=31) => {
+                    if y < 6 {
+                        Rgba([76, 175, 80, 255]) // Vibrant green top
+                    } else if y < 9 {
+                        Rgba([56, 142, 60, 255]) // Darker green transition
+                    } else if (x + y) % 7 == 0 {
+                        Rgba([110, 70, 45, 255]) // Pebble speckle in dirt
+                    } else {
+                        Rgba([139, 90, 43, 255]) // Warm brown dirt
+                    }
+                }
+                // Tile 1: Stone brick (32..64, 0..32)
+                (32..=63, 0..=31) => {
+                    let lx = x - 32;
+                    let ly = y;
+                    if ly == 0
+                        || ly == 15
+                        || ly == 31
+                        || ((ly < 16 && (lx == 0 || lx == 16))
+                            || (ly >= 16 && (lx == 8 || lx == 24)))
+                    {
+                        Rgba([45, 45, 55, 255]) // Mortar line
+                    } else if (lx + ly) % 5 == 0 {
+                        Rgba([180, 185, 195, 255]) // Highlight speck
+                    } else {
+                        Rgba([120, 125, 135, 255]) // Stone grey
+                    }
+                }
+                // Tile 2: Wood platform (0..32, 32..64)
+                (0..=31, 32..=63) => {
+                    let ly = y - 32;
+                    if ly == 0 || ly == 31 || ly == 10 || ly == 20 {
+                        Rgba([90, 50, 25, 255]) // Dark wood groove
+                    } else if ly < 4 {
+                        Rgba([205, 133, 63, 255]) // Top highlight
+                    } else {
+                        Rgba([160, 82, 45, 255]) // Sienna plank
+                    }
+                }
+                // Tile 3: Dirt filler (32..64, 32..64)
+                (32..=63, 32..=63) => {
+                    if (x * 3 + y * 7) % 11 == 0 {
+                        Rgba([110, 70, 45, 255]) // Dark clump
+                    } else if (x * 5 + y * 2) % 13 == 0 {
+                        Rgba([165, 115, 65, 255]) // Light clump
+                    } else {
+                        Rgba([139, 90, 43, 255]) // Base dirt
+                    }
+                }
+                _ => Rgba([0, 0, 0, 255]),
+            };
+            img.put_pixel(x, y, px);
+        }
+    }
+
+    img.save(&path)?;
+
+    // Also write hero sprite for the character controller in tilemap demo
+    generate_hero_sprite(&output_dir.join("hero.png"))?;
+
+    Ok(())
+}

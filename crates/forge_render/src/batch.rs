@@ -81,6 +81,27 @@ impl SpriteBatcher {
         });
     }
 
+    /// Pushes a batch of explicit quads sharing the same z-order and texture (e.g. for tilemap chunks).
+    pub fn push_quad_batch(
+        &mut self,
+        quads: Vec<[SpriteVertex; 4]>,
+        z_order: i32,
+        texture_bind_group: Arc<wgpu::BindGroup>,
+    ) {
+        let sprite = Sprite {
+            z_order,
+            ..Default::default()
+        };
+        for quad in quads {
+            self.sprites.push(QueuedSprite {
+                transform: Transform2D::default(),
+                sprite: sprite.clone(),
+                texture_bind_group: Arc::clone(&texture_bind_group),
+                explicit_quad: Some(quad),
+            });
+        }
+    }
+
     /// Clears all queued sprites.
     pub fn clear(&mut self) {
         self.sprites.clear();

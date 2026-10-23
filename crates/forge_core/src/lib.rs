@@ -13,6 +13,7 @@ pub mod events;
 pub mod game_loop;
 pub mod scene;
 pub mod scene_ops;
+pub mod tilemap;
 pub mod time;
 
 // Re-export primary ECS types so downstream crates never import bevy_ecs directly
@@ -23,6 +24,7 @@ pub use components::{
     Animator, BodyType2D, Camera2D, Children, Collider2D, ColliderShape2D, EntityId, Name, Parent,
     PreviousTransform2D, RigidBody2D, Sprite, Transform2D, Vec2,
 };
+pub use tilemap::{format_row_string, parse_row_string, ChunkCoord, Tilemap, TilemapChunk};
 
 // Re-export error types
 pub use error::{CoreError, SceneError};

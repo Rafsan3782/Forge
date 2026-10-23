@@ -123,3 +123,27 @@ pub fn generate_line_quad(
         SpriteVertex::new(p3, [0.0, 0.0], color),
     ]
 }
+
+/// Generates 4 vertices for an axis-aligned tile quad.
+///
+/// Order matches SpriteVertex quad layout:
+/// 0: Bottom-Left (min_x, min_y)
+/// 1: Bottom-Right (max_x, min_y)
+/// 2: Top-Right (max_x, max_y)
+/// 3: Top-Left (min_x, max_y)
+pub fn generate_tile_quad(
+    min_x: f32,
+    min_y: f32,
+    max_x: f32,
+    max_y: f32,
+    uv: [f32; 4],
+    tint: [f32; 4],
+) -> [SpriteVertex; 4] {
+    let [u0, v0, u1, v1] = uv;
+    [
+        SpriteVertex::new([min_x, min_y], [u0, v1], tint),
+        SpriteVertex::new([max_x, min_y], [u1, v1], tint),
+        SpriteVertex::new([max_x, max_y], [u1, v0], tint),
+        SpriteVertex::new([min_x, max_y], [u0, v0], tint),
+    ]
+}

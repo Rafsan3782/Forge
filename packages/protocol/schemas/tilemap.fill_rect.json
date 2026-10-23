@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/tilemap.fill_rect.json",
+  "title": "TilemapFillRect",
+  "description": "Fills a rectangular region of tiles with a given tile ID (undoable operation)",
+  "definitions": {
+    "TilemapFillRectParams": {
+      "type": "object",
+      "required": ["entity_id", "min", "max", "tile_id"],
+      "properties": {
+        "entity_id": {
+          "type": "string",
+          "description": "Target entity containing a Tilemap component"
+        },
+        "layer": {
+          "type": "string",
+          "default": "main",
+          "description": "Target tilemap layer name"
+        },
+        "min": {
+          "type": "array",
+          "items": { "type": "integer" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Top-left / minimum tile coordinate [x, y]"
+        },
+        "max": {
+          "type": "array",
+          "items": { "type": "integer" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Bottom-right / maximum tile coordinate [x, y] (inclusive)"
+        },
+        "tile_id": {
+          "type": "integer",
+          "description": "Tile ID to fill"
+        }
+      },
+      "additionalProperties": false
+    },
+    "TilemapFillRectResult": {
+      "type": "object",
+      "required": ["success", "tiles_modified", "affected_chunks"],
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "tiles_modified": {
+          "type": "integer"
+        },
+        "affected_chunks": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

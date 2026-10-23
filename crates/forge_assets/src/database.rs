@@ -22,6 +22,8 @@ pub enum AssetType {
     Texture,
     /// Sprite sheet or grid/atlas definition.
     SpriteSheet,
+    /// Tileset definition associating texture with grid and physical properties.
+    Tileset,
     /// Animation clip defining keyframes and frame rate.
     Animation,
     /// Scene JSON hierarchy.
@@ -44,7 +46,9 @@ impl AssetType {
             "png" | "jpg" | "jpeg" => AssetType::Texture,
             "json" => {
                 let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
-                if stem.ends_with(".spritesheet") || stem.ends_with(".atlas") {
+                if stem.ends_with(".tileset") || stem == "tileset" {
+                    AssetType::Tileset
+                } else if stem.ends_with(".spritesheet") || stem.ends_with(".atlas") {
                     AssetType::SpriteSheet
                 } else if stem.ends_with(".anim") || stem.ends_with(".animation") {
                     AssetType::Animation
@@ -64,6 +68,7 @@ impl AssetType {
         match self {
             AssetType::Texture => "texture",
             AssetType::SpriteSheet => "spritesheet",
+            AssetType::Tileset => "tileset",
             AssetType::Animation => "animation",
             AssetType::Scene => "scene",
             AssetType::Audio => "audio",
