@@ -212,7 +212,7 @@ impl ScriptRuntime {
         args: A,
     ) -> Result<R, ScriptExecutionError>
     where
-        A: for<'js> rquickjs::IntoArgs<'js>,
+        A: for<'js> rquickjs::function::IntoArgs<'js>,
         R: for<'js> rquickjs::FromJs<'js>,
     {
         self.interrupt_controller

@@ -28,8 +28,10 @@ pub fn transpile_typescript(filename: &str, source_code: &str) -> Result<Transpi
 
     let mut options = Options::default();
     options.source_maps = Some(SourceMapsConfig::Bool(true));
-    options.config.jsc.target = Some(swc::config::JscTarget::Es2020);
-    options.config.jsc.syntax = Some(swc::config::Syntax::Typescript(Default::default()));
+    options.config.jsc.target = Some(swc_ecma_ast::EsVersion::Es2020);
+    options.config.jsc.syntax = Some(swc_ecma_parser::Syntax::Typescript(
+        swc_ecma_parser::TsSyntax::default(),
+    ));
 
     match compiler.process_js_file(fm, &handler, &options) {
         Ok(output) => Ok(TranspiledScript {

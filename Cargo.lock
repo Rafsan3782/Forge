@@ -1382,6 +1382,7 @@ dependencies = [
  "forge_physics",
  "forge_protocol",
  "forge_render",
+ "forge_script",
  "futures-util",
  "image",
  "pollster",

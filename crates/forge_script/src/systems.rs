@@ -1,22 +1,26 @@
-//! Systems and state management for running scripts in the Forge ECS game loop.
-
 use crate::bindings::{bind_forge_api, ScriptCommand, ScriptExecutionContext};
 use crate::error::ScriptExecutionError;
 use crate::runtime::{LoadedScript, SandboxConfig, ScriptRuntime};
-use forge_core::components::{Children, EntityId, Name, Parent, Script, Transform2D, Vec2};
-use forge_core::ecs::{Commands, Entity, Query, Res, ResMut, Resource, World};
+use forge_core::components::{EntityId, Name, Parent, Script, Transform2D, Vec2};
+use forge_core::ecs::{Commands, Entity, Query, Res, ResMut, Resource};
 use forge_core::events::EventBus;
 use forge_core::time::Time;
 use forge_input::InputMap;
-use forge_physics::events::{CollisionEvent, TriggerEvent};
 use forge_protocol::ScriptEntityTransform;
 use std::collections::{HashMap, HashSet};
-use std::path::Path;
+use std::sync::{Arc, Mutex};
+
+/// Thread-safe wrapper ensuring Send + Sync for QuickJS runtime on single thread systems.
+pub struct ThreadSafeRuntime(pub Arc<Mutex<ScriptRuntime>>);
+
+// SAFETY: QuickJS runtime calls are guarded by a Mutex and only executed serially per frame.
+unsafe impl Send for ThreadSafeRuntime {}
+unsafe impl Sync for ThreadSafeRuntime {}
 
 /// Resource storing the ScriptRuntime and compiled script cache.
 #[derive(Resource)]
 pub struct ScriptServer {
-    pub runtime: ScriptRuntime,
+    pub runtime: ThreadSafeRuntime,
     pub exec_context: ScriptExecutionContext,
     pub loaded_scripts: HashMap<String, LoadedScript>,
     pub initialized_entities: HashSet<Entity>,
@@ -30,7 +34,7 @@ impl ScriptServer {
         bind_forge_api(runtime.context(), exec_context.clone())?;
 
         Ok(Self {
-            runtime,
+            runtime: ThreadSafeRuntime(Arc::new(Mutex::new(runtime))),
             exec_context,
             loaded_scripts: HashMap::new(),
             initialized_entities: HashSet::new(),
@@ -54,9 +58,10 @@ impl ScriptServer {
                     column: None,
                 })?;
 
-            let loaded = self
-                .runtime
-                .load_typescript_module(script_path, &source_ts)?;
+            let loaded = {
+                let mut rt = self.runtime.0.lock().unwrap();
+                rt.load_typescript_module(script_path, &source_ts)?
+            };
             self.loaded_scripts.insert(script_path.to_string(), loaded);
         }
 
@@ -173,11 +178,8 @@ pub fn script_start_system(
         match server.get_or_load_script(&script.path) {
             Ok(loaded) => {
                 if loaded.has_on_start {
-                    if let Err(e) =
-                        server
-                            .runtime
-                            .invoke_function::<(), ()>(&id_str, loaded, "onStart", ())
-                    {
+                    let mut rt = server.runtime.0.lock().unwrap();
+                    if let Err(e) = rt.invoke_function::<(), ()>(&id_str, loaded, "onStart", ()) {
                         errors.push((entity, e));
                     }
                 }
@@ -223,12 +225,10 @@ pub fn script_update_system(
         match server.get_or_load_script(&script.path) {
             Ok(loaded) => {
                 if loaded.has_on_update {
-                    if let Err(e) = server.runtime.invoke_function::<(f32,), ()>(
-                        &id_str,
-                        loaded,
-                        "onUpdate",
-                        (dt,),
-                    ) {
+                    let mut rt = server.runtime.0.lock().unwrap();
+                    if let Err(e) =
+                        rt.invoke_function::<(f32,), ()>(&id_str, loaded, "onUpdate", (dt,))
+                    {
                         errors.push((entity, e));
                     }
                 }
@@ -274,12 +274,10 @@ pub fn script_fixed_update_system(
         match server.get_or_load_script(&script.path) {
             Ok(loaded) => {
                 if loaded.has_on_fixed_update {
-                    if let Err(e) = server.runtime.invoke_function::<(f32,), ()>(
-                        &id_str,
-                        loaded,
-                        "onFixedUpdate",
-                        (dt,),
-                    ) {
+                    let mut rt = server.runtime.0.lock().unwrap();
+                    if let Err(e) =
+                        rt.invoke_function::<(f32,), ()>(&id_str, loaded, "onFixedUpdate", (dt,))
+                    {
                         errors.push((entity, e));
                     }
                 }

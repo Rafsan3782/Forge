@@ -1,11 +1,5 @@
-//! Rust-side bindings for the global `forge` JavaScript object.
-
-use forge_core::components::{Children, Name, Parent, Transform2D, Vec2};
-use forge_core::ecs::{Entity, World};
 use forge_protocol::ScriptEntityTransform;
-use rquickjs::{Context, Function, IntoJs, Object, Value};
-use std::cell::RefCell;
-use std::rc::Rc;
+use rquickjs::{Context, Function, Object, Value};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 
