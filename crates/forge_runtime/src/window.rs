@@ -114,10 +114,21 @@ impl WindowApp {
         let audio_server = forge_audio::AudioServer::new(&assets_dir);
         world.insert_resource(audio_server);
 
+        // Insert script server if runtime initialized
+        if let Ok(script_server) =
+            forge_script::ScriptServer::new(forge_script::SandboxConfig::default())
+        {
+            world.insert_resource(script_server);
+        }
+
         let mut game_loop = GameLoop::new();
         game_loop.add_pre_update_system(fixed_input_tick_system);
+        game_loop.add_pre_update_system(forge_script::script_prepare_frame_system);
         game_loop.add_pre_update_system(forge_physics::physics_before_step_system);
+        game_loop.add_pre_update_system(forge_script::script_start_system);
         game_loop.add_update_system(forge_physics::physics_step_system);
+        game_loop.add_update_system(forge_script::script_update_system);
+        game_loop.add_update_system(forge_script::script_apply_commands_system);
         game_loop.add_post_update_system(forge_physics::physics_after_step_system);
         game_loop.add_update_system(forge_assets::animator_update_system);
         game_loop.add_update_system(forge_audio::audio_source_start_system);

@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/script.api.json",
+  "title": "ScriptApi",
+  "description": "Script execution runtime and API contracts exposed to scripts through the global forge object",
+  "definitions": {
+    "ScriptErrorEvent": {
+      "type": "object",
+      "required": ["entity_id", "script_path", "message"],
+      "properties": {
+        "entity_id": {
+          "type": "string",
+          "description": "Entity ID where the script error occurred"
+        },
+        "script_path": { "type": "string", "description": "Path to the TypeScript script" },
+        "message": { "type": "string", "description": "Error message" },
+        "stack": { "type": "string", "description": "Original or mapped JavaScript error stack" },
+        "file": { "type": "string", "description": "Mapped source TypeScript file" },
+        "line": {
+          "type": "integer",
+          "description": "Mapped line number in TypeScript (1-indexed)"
+        },
+        "column": {
+          "type": "integer",
+          "description": "Mapped column number in TypeScript (1-indexed)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ScriptEntityTransform": {
+      "type": "object",
+      "required": ["position", "rotation", "scale"],
+      "properties": {
+        "position": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "[x, y] coordinates"
+        },
+        "rotation": { "type": "number", "description": "Rotation in radians" },
+        "scale": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "[x, y] scale factors"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ScriptRaycastHit": {
+      "type": "object",
+      "required": ["entity_id", "point", "normal", "fraction"],
+      "properties": {
+        "entity_id": { "type": "string" },
+        "point": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "normal": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "fraction": { "type": "number" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

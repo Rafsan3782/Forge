@@ -185,6 +185,15 @@ impl Scene {
                 entity_builder.insert(listener);
             }
 
+            if let Some(val) = se.components.get("Script") {
+                let script: crate::components::Script = serde_json::from_value(val.clone())
+                    .map_err(|e| SceneError::ComponentParseError {
+                        component_name: "Script".to_string(),
+                        message: e.to_string(),
+                    })?;
+                entity_builder.insert(script);
+            }
+
             let entity = entity_builder.id();
             id_to_entity.insert(se.id.clone(), entity);
         }
@@ -252,6 +261,9 @@ impl Scene {
                 }
                 if let Some(listener) = entity_ref.get::<crate::components::AudioListener>() {
                     components.insert("AudioListener".to_string(), serde_json::to_value(listener)?);
+                }
+                if let Some(script) = entity_ref.get::<crate::components::Script>() {
+                    components.insert("Script".to_string(), serde_json::to_value(script)?);
                 }
 
                 // Resolve parent stable id

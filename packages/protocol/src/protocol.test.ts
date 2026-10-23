@@ -49,6 +49,7 @@ import {
   AudioStopResultSchema,
   AudioSetBusVolumeParamsSchema,
   AudioSetBusVolumeResultSchema,
+  ScriptErrorEventSchema,
 } from "./generated/index.ts";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -400,4 +401,20 @@ test("audio operations serialize and deserialize against fixtures", () => {
     AudioSetBusVolumeResultSchema.parse(JSON.parse(JSON.stringify(parsedVolResult))),
     parsedVolResult,
   );
+});
+
+test("script operations and errors serialize and deserialize", () => {
+  const errorEvent = {
+    entity_id: "player_1",
+    script_path: "scripts/player.ts",
+    message: "Cannot read property of undefined",
+    stack: "TypeError: Cannot read property of undefined\n    at onUpdate (scripts/player.ts:15:5)",
+    file: "scripts/player.ts",
+    line: 15,
+    column: 5,
+  };
+  const parsed = ScriptErrorEventSchema.parse(errorEvent);
+  assert.strictEqual(parsed.line, 15);
+  assert.strictEqual(parsed.column, 5);
+  assert.deepStrictEqual(ScriptErrorEventSchema.parse(JSON.parse(JSON.stringify(parsed))), parsed);
 });

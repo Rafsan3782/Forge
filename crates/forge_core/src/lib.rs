@@ -22,8 +22,8 @@ pub use ecs::{Bundle, Commands, Component, Entity, Query, Res, ResMut, Resource,
 // Re-export built-in components and math primitives
 pub use components::{
     Animator, AudioBus, AudioListener, AudioSource, BodyType2D, Camera2D, Children, Collider2D,
-    ColliderShape2D, EntityId, Name, Parent, PreviousTransform2D, RigidBody2D, Sprite, Transform2D,
-    Vec2,
+    ColliderShape2D, EntityId, Name, Parent, PreviousTransform2D, RigidBody2D, Script, Sprite,
+    Transform2D, Vec2,
 };
 pub use tilemap::{format_row_string, parse_row_string, ChunkCoord, Tilemap, TilemapChunk};
 
