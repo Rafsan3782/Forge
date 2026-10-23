@@ -556,19 +556,31 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
             log_obj.set(
                 "info",
                 Function::new(ctx, |msg: Value<'_>| {
-                    tracing::info!("[script] {}", msg.to_string().unwrap_or_default());
+                    let text = msg
+                        .as_string()
+                        .and_then(|s| s.to_string().ok())
+                        .unwrap_or_else(|| format!("{:?}", msg));
+                    tracing::info!("[script] {}", text);
                 })?,
             )?;
             log_obj.set(
                 "warn",
                 Function::new(ctx, |msg: Value<'_>| {
-                    tracing::warn!("[script] {}", msg.to_string().unwrap_or_default());
+                    let text = msg
+                        .as_string()
+                        .and_then(|s| s.to_string().ok())
+                        .unwrap_or_else(|| format!("{:?}", msg));
+                    tracing::warn!("[script] {}", text);
                 })?,
             )?;
             log_obj.set(
                 "error",
                 Function::new(ctx, |msg: Value<'_>| {
-                    tracing::error!("[script] {}", msg.to_string().unwrap_or_default());
+                    let text = msg
+                        .as_string()
+                        .and_then(|s| s.to_string().ok())
+                        .unwrap_or_else(|| format!("{:?}", msg));
+                    tracing::error!("[script] {}", text);
                 })?,
             )?;
             forge.set("log", log_obj)?;

@@ -1,11 +1,11 @@
 use crate::bindings::{bind_forge_api, ScriptCommand, ScriptExecutionContext};
 use crate::error::ScriptExecutionError;
 use crate::runtime::{LoadedScript, SandboxConfig, ScriptRuntime};
-use forge_core::components::{EntityId, Name, Parent, Script, Transform2D, Vec2};
+use forge_core::components::{Children, EntityId, Name, Parent, Script, Transform2D, Vec2};
 use forge_core::ecs::{Commands, Entity, Query, Res, ResMut, Resource};
 use forge_core::events::EventBus;
 use forge_core::time::Time;
-use forge_input::InputMap;
+use forge_input::{ActionMap, InputState};
 use forge_protocol::ScriptEntityTransform;
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
@@ -72,7 +72,8 @@ impl ScriptServer {
 /// ECS System: Updates input, time, and hierarchy snapshots in `ScriptExecutionContext`.
 pub fn script_prepare_frame_system(
     time: Option<Res<Time>>,
-    input_map: Option<Res<InputMap>>,
+    action_map: Option<Res<ActionMap>>,
+    input_state: Option<Res<InputState>>,
     mut server: Option<ResMut<ScriptServer>>,
     entities_query: Query<(
         Entity,
@@ -86,37 +87,34 @@ pub fn script_prepare_frame_system(
     let Some(mut server) = server else { return };
 
     if let Some(t) = time {
-        *server.exec_context.delta_time.lock().unwrap() = t.delta_seconds();
-        *server.exec_context.elapsed_time.lock().unwrap() = t.elapsed_seconds() as f32;
+        *server.exec_context.delta_time.lock().unwrap() = t.delta_seconds;
+        *server.exec_context.elapsed_time.lock().unwrap() = t.elapsed_seconds as f32;
         server
             .exec_context
             .frame_count
-            .store(t.frame_count(), std::sync::atomic::Ordering::Relaxed);
+            .store(t.tick_count, std::sync::atomic::Ordering::Relaxed);
     }
 
-    if let Some(input) = input_map {
+    if let (Some(map), Some(state)) = (action_map, input_state) {
         let mut pressed = Vec::new();
         let mut just_pressed = Vec::new();
         let mut just_released = Vec::new();
         let mut axes = HashMap::new();
 
-        for action in input.actions() {
-            if input.is_action_pressed(action) {
-                pressed.push(action.to_string());
+        for action_name in map.actions.keys() {
+            if map.action_pressed(action_name, &state) {
+                pressed.push(action_name.clone());
             }
-            if input.is_action_just_pressed(action) {
-                just_pressed.push(action.to_string());
+            if map.action_just_pressed(action_name, &state) {
+                just_pressed.push(action_name.clone());
             }
-            if input.is_action_just_released(action) {
-                just_released.push(action.to_string());
+            if map.action_just_released(action_name, &state) {
+                just_released.push(action_name.clone());
             }
+            axes.insert(action_name.clone(), map.action_axis(action_name, &state));
         }
 
-        for axis in input.axes() {
-            axes.insert(axis.to_string(), input.get_axis(axis));
-        }
-
-        let mouse = input.mouse_position();
+        let mouse = state.mouse_position();
         *server.exec_context.mouse_pos.lock().unwrap() = [mouse.x, mouse.y];
         *server.exec_context.pressed_actions.lock().unwrap() = pressed;
         *server.exec_context.just_pressed_actions.lock().unwrap() = just_pressed;
@@ -133,7 +131,7 @@ pub fn script_prepare_frame_system(
         let name_str = name.map(|n| n.as_str().to_string()).unwrap_or_default();
         let parent_id = parent.map(|p| format!("{:?}", p.entity()));
         let children_ids = children
-            .map(|ch| ch.iter().map(|c| format!("{:?}", c)).collect())
+            .map(|ch| ch.as_slice().iter().map(|c| format!("{:?}", c)).collect())
             .unwrap_or_default();
 
         hier.insert(id_str.clone(), (name_str, parent_id, children_ids));
@@ -209,7 +207,7 @@ pub fn script_update_system(
     mut query: Query<(Entity, Option<&EntityId>, &mut Script)>,
 ) {
     let Some(mut server) = server else { return };
-    let dt = time.map(|t| t.delta_seconds()).unwrap_or(0.016);
+    let dt = time.map(|t| t.delta_seconds).unwrap_or(0.016);
     let mut errors = Vec::new();
 
     for (entity, entity_id, mut script) in query.iter_mut() {
@@ -258,7 +256,7 @@ pub fn script_fixed_update_system(
     mut query: Query<(Entity, Option<&EntityId>, &mut Script)>,
 ) {
     let Some(mut server) = server else { return };
-    let dt = time.map(|t| t.fixed_delta_seconds()).unwrap_or(0.02);
+    let dt = time.map(|t| t.fixed_delta_seconds).unwrap_or(0.02);
     let mut errors = Vec::new();
 
     for (entity, entity_id, mut script) in query.iter_mut() {

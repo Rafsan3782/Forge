@@ -294,36 +294,30 @@ impl ScriptRuntime {
         let (message, stack, raw_line, raw_col) = match err {
             rquickjs::Error::Exception => {
                 let exc = ctx.catch();
-                let msg = exc.to_string();
+                let msg = exc
+                    .message()
+                    .unwrap_or_else(|| "Unknown script exception".to_string());
                 let mut stack_str = None;
                 let mut line = None;
                 let mut col = None;
 
-                if let Some(obj) = exc.as_object() {
-                    if let Ok(stack) = obj.get::<_, String>("stack") {
-                        // Extract line / col from stack if available
-                        for line_str in stack.lines() {
-                            if let Some(pos) = line_str.rfind(':') {
-                                if let Ok(c) =
-                                    line_str[pos + 1..].trim_end_matches(')').parse::<u32>()
-                                {
-                                    if let Some(prev_pos) = line_str[..pos].rfind(':') {
-                                        if let Ok(l) = line_str[prev_pos + 1..pos].parse::<u32>() {
-                                            line = Some(l);
-                                            col = Some(c);
-                                            break;
-                                        }
+                if let Some(stack) = exc.stack() {
+                    // Extract line / col from stack if available
+                    for line_str in stack.lines() {
+                        if let Some(pos) = line_str.rfind(':') {
+                            if let Ok(c) = line_str[pos + 1..].trim_end_matches(')').parse::<u32>()
+                            {
+                                if let Some(prev_pos) = line_str[..pos].rfind(':') {
+                                    if let Ok(l) = line_str[prev_pos + 1..pos].parse::<u32>() {
+                                        line = Some(l);
+                                        col = Some(c);
+                                        break;
                                     }
                                 }
                             }
                         }
-                        stack_str = Some(stack);
                     }
-                    if line.is_none() {
-                        if let Ok(l) = obj.get::<_, u32>("lineNumber") {
-                            line = Some(l);
-                        }
-                    }
+                    stack_str = Some(stack);
                 }
 
                 (msg, stack_str, line, col)
