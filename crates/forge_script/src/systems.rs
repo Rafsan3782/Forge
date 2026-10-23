@@ -160,6 +160,7 @@ pub fn script_start_system(
 ) {
     let Some(ref mut server) = server else { return };
     let mut to_run = Vec::new();
+    let mut to_disable = Vec::new();
 
     for (entity, entity_id, script) in query.iter() {
         if !script.enabled || server.initialized_entities.contains(&entity) {
@@ -178,13 +179,7 @@ pub fn script_start_system(
                 }
             }
             Err(e) => {
-                tracing::error!("[script error] {}", e.message);
-                if let Some(ref mut bus) = event_bus {
-                    bus.send(e.to_event());
-                }
-                if let Ok((_, _, mut s)) = query.get_mut(entity) {
-                    s.disable();
-                }
+                to_disable.push((entity, e));
             }
         }
     }
@@ -193,13 +188,17 @@ pub fn script_start_system(
         server.exec_context.set_current_entity(&id_str);
         let mut rt = server.runtime.0.lock().unwrap();
         if let Err(e) = rt.invoke_function::<(), ()>(&id_str, &loaded, "onStart", ()) {
-            tracing::error!("[script error] {}", e.message);
-            if let Some(ref mut bus) = event_bus {
-                bus.send(e.to_event());
-            }
-            if let Ok((_, _, mut s)) = query.get_mut(entity) {
-                s.disable();
-            }
+            to_disable.push((entity, e));
+        }
+    }
+
+    for (entity, err) in to_disable {
+        tracing::error!("[script error] {}", err.message);
+        if let Some(ref mut bus) = event_bus {
+            bus.send(err.to_event());
+        }
+        if let Ok((_, _, mut s)) = query.get_mut(entity) {
+            s.disable();
         }
     }
 }
@@ -214,6 +213,7 @@ pub fn script_update_system(
     let Some(ref mut server) = server else { return };
     let dt = time.map(|t| t.delta_seconds).unwrap_or(0.016);
     let mut to_run = Vec::new();
+    let mut to_disable = Vec::new();
 
     for (entity, entity_id, script) in query.iter() {
         if !script.enabled {
@@ -231,13 +231,7 @@ pub fn script_update_system(
                 }
             }
             Err(e) => {
-                tracing::error!("[script error] {}", e.message);
-                if let Some(ref mut bus) = event_bus {
-                    bus.send(e.to_event());
-                }
-                if let Ok((_, _, mut s)) = query.get_mut(entity) {
-                    s.disable();
-                }
+                to_disable.push((entity, e));
             }
         }
     }
@@ -246,13 +240,17 @@ pub fn script_update_system(
         server.exec_context.set_current_entity(&id_str);
         let mut rt = server.runtime.0.lock().unwrap();
         if let Err(e) = rt.invoke_function::<(f32,), ()>(&id_str, &loaded, "onUpdate", (dt,)) {
-            tracing::error!("[script error] {}", e.message);
-            if let Some(ref mut bus) = event_bus {
-                bus.send(e.to_event());
-            }
-            if let Ok((_, _, mut s)) = query.get_mut(entity) {
-                s.disable();
-            }
+            to_disable.push((entity, e));
+        }
+    }
+
+    for (entity, err) in to_disable {
+        tracing::error!("[script error] {}", err.message);
+        if let Some(ref mut bus) = event_bus {
+            bus.send(err.to_event());
+        }
+        if let Ok((_, _, mut s)) = query.get_mut(entity) {
+            s.disable();
         }
     }
 }
@@ -267,6 +265,7 @@ pub fn script_fixed_update_system(
     let Some(ref mut server) = server else { return };
     let dt = time.map(|t| t.fixed_delta_seconds).unwrap_or(0.02);
     let mut to_run = Vec::new();
+    let mut to_disable = Vec::new();
 
     for (entity, entity_id, script) in query.iter() {
         if !script.enabled {
@@ -284,13 +283,7 @@ pub fn script_fixed_update_system(
                 }
             }
             Err(e) => {
-                tracing::error!("[script error] {}", e.message);
-                if let Some(ref mut bus) = event_bus {
-                    bus.send(e.to_event());
-                }
-                if let Ok((_, _, mut s)) = query.get_mut(entity) {
-                    s.disable();
-                }
+                to_disable.push((entity, e));
             }
         }
     }
@@ -299,13 +292,17 @@ pub fn script_fixed_update_system(
         server.exec_context.set_current_entity(&id_str);
         let mut rt = server.runtime.0.lock().unwrap();
         if let Err(e) = rt.invoke_function::<(f32,), ()>(&id_str, &loaded, "onFixedUpdate", (dt,)) {
-            tracing::error!("[script error] {}", e.message);
-            if let Some(ref mut bus) = event_bus {
-                bus.send(e.to_event());
-            }
-            if let Ok((_, _, mut s)) = query.get_mut(entity) {
-                s.disable();
-            }
+            to_disable.push((entity, e));
+        }
+    }
+
+    for (entity, err) in to_disable {
+        tracing::error!("[script error] {}", err.message);
+        if let Some(ref mut bus) = event_bus {
+            bus.send(err.to_event());
+        }
+        if let Ok((_, _, mut s)) = query.get_mut(entity) {
+            s.disable();
         }
     }
 }

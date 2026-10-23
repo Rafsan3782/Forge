@@ -173,7 +173,7 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
                 let ec = exec_ctx.clone();
                 entity_obj.set(
                     "getTransform",
-                    Function::new(ctx, move || -> Object<'_> {
+                    Function::new(ctx, move |call_ctx: Ctx<'_>| -> Object<'_> {
                         let id = ec.current_entity_id.lock().unwrap().clone();
                         let cache = ec.transform_cache.lock().unwrap();
                         let trans = cache.get(&id).cloned().unwrap_or(ScriptEntityTransform {
@@ -182,11 +182,11 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
                             scale: [1.0, 1.0],
                         });
 
-                        let obj = Object::new(ctx).unwrap();
-                        let pos = Object::new(ctx).unwrap();
+                        let obj = Object::new(call_ctx.clone()).unwrap();
+                        let pos = Object::new(call_ctx.clone()).unwrap();
                         let _ = pos.set(0, trans.position[0]);
                         let _ = pos.set(1, trans.position[1]);
-                        let scale = Object::new(ctx).unwrap();
+                        let scale = Object::new(call_ctx).unwrap();
                         let _ = scale.set(0, trans.scale[0]);
                         let _ = scale.set(1, trans.scale[1]);
 
