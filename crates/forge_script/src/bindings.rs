@@ -119,10 +119,10 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
     context
         .with(|ctx| {
             let global = ctx.globals();
-            let forge = Object::new(ctx)?;
+            let forge = Object::new(ctx.clone())?;
 
             // 1. forge.entity
-            let entity_obj = Object::new(ctx)?;
+            let entity_obj = Object::new(ctx.clone())?;
             {
                 let ec = exec_ctx.clone();
                 entity_obj.set(
@@ -253,7 +253,7 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
                 forge.set(
                     "spawn",
                     Function::new(
-                        ctx,
+                        ctx.clone(),
                         move |name: String,
                               comp: Option<Value<'_>>,
                               parent: Option<String>|
@@ -300,7 +300,7 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
             }
 
             // 3. forge.scene
-            let scene_obj = Object::new(ctx)?;
+            let scene_obj = Object::new(ctx.clone())?;
             {
                 let ec = exec_ctx.clone();
                 scene_obj.set(
@@ -316,7 +316,7 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
             forge.set("scene", scene_obj)?;
 
             // 4. forge.input
-            let input_obj = Object::new(ctx)?;
+            let input_obj = Object::new(ctx.clone())?;
             {
                 let ec = exec_ctx.clone();
                 input_obj.set(
@@ -370,7 +370,7 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
             forge.set("input", input_obj)?;
 
             // 5. forge.time
-            let time_obj = Object::new(ctx)?;
+            let time_obj = Object::new(ctx.clone())?;
             {
                 let ec = exec_ctx.clone();
                 time_obj.set(
@@ -401,12 +401,12 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
             forge.set("time", time_obj)?;
 
             // 6. forge.physics
-            let physics_obj = Object::new(ctx)?;
+            let physics_obj = Object::new(ctx.clone())?;
             {
                 physics_obj.set(
                     "raycast",
                     Function::new(
-                        ctx,
+                        ctx.clone(),
                         |_origin: Value<'_>, _dir: Value<'_>, _dist: f32| -> Option<Object<'_>> {
                             None
                         },
@@ -423,13 +423,13 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
             forge.set("physics", physics_obj)?;
 
             // 7. forge.audio
-            let audio_obj = Object::new(ctx)?;
+            let audio_obj = Object::new(ctx.clone())?;
             {
                 let ec = exec_ctx.clone();
                 audio_obj.set(
                     "play",
                     Function::new(
-                        ctx,
+                        ctx.clone(),
                         move |asset_id: String, options: Option<Object<'_>>| -> String {
                             let mut bus = "sfx".to_string();
                             let mut vol = 1.0;
@@ -472,7 +472,7 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
                 audio_obj.set(
                     "stop",
                     Function::new(
-                        ctx,
+                        ctx.clone(),
                         move |playback_id: Option<String>, bus: Option<String>| {
                             ec.command_queue
                                 .lock()
@@ -497,7 +497,7 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
             forge.set("audio", audio_obj)?;
 
             // 8. forge.animation
-            let anim_obj = Object::new(ctx)?;
+            let anim_obj = Object::new(ctx.clone())?;
             {
                 let ec = exec_ctx.clone();
                 anim_obj.set(
@@ -519,13 +519,13 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
             forge.set("animation", anim_obj)?;
 
             // 9. forge.tilemap
-            let tilemap_obj = Object::new(ctx)?;
+            let tilemap_obj = Object::new(ctx.clone())?;
             {
                 let ec = exec_ctx.clone();
                 tilemap_obj.set(
                     "getTile",
                     Function::new(
-                        ctx,
+                        ctx.clone(),
                         move |entity_id: String, layer: String, x: i32, y: i32| -> i32 {
                             let cache = ec.tile_cache.lock().unwrap();
                             cache.get(&(entity_id, layer, x, y)).copied().unwrap_or(-1)
@@ -538,7 +538,7 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
                 tilemap_obj.set(
                     "setTile",
                     Function::new(
-                        ctx,
+                        ctx.clone(),
                         move |entity_id: String, layer: String, x: i32, y: i32, tile_id: i32| {
                             ec.tile_cache
                                 .lock()
@@ -560,7 +560,7 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
             forge.set("tilemap", tilemap_obj)?;
 
             // 10. forge.log
-            let log_obj = Object::new(ctx)?;
+            let log_obj = Object::new(ctx.clone())?;
             log_obj.set(
                 "info",
                 Function::new(ctx.clone(), |msg: Value<'_>| {
