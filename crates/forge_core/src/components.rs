@@ -696,7 +696,7 @@ impl Default for Collider2D {
 }
 
 /// Target audio channel / mixing bus.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum AudioBus {
     /// Master bus affecting all playback.
@@ -704,13 +704,8 @@ pub enum AudioBus {
     /// Music bus with fade support.
     Music,
     /// Sound effects bus.
+    #[default]
     Sfx,
-}
-
-impl Default for AudioBus {
-    fn default() -> Self {
-        Self::Sfx
-    }
 }
 
 impl std::str::FromStr for AudioBus {
