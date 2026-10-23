@@ -1,5 +1,5 @@
 use forge_protocol::ScriptEntityTransform;
-use rquickjs::{Context, Function, Object, Value};
+use rquickjs::{Context, Ctx, Function, Object, Value};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 
