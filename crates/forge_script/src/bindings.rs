@@ -172,32 +172,17 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
             {
                 let ec = exec_ctx.clone();
                 entity_obj.set(
-                    "getTransform",
-                    Function::new(
-                        ctx.clone(),
-                        move |call_ctx: Ctx<'_>| -> rquickjs::Result<Value<'_>> {
-                            let id = ec.current_entity_id.lock().unwrap().clone();
-                            let cache = ec.transform_cache.lock().unwrap();
-                            let trans = cache.get(&id).cloned().unwrap_or(ScriptEntityTransform {
-                                position: [0.0, 0.0],
-                                rotation: 0.0,
-                                scale: [1.0, 1.0],
-                            });
-
-                            let obj = Object::new(call_ctx.clone())?;
-                            let pos = Object::new(call_ctx.clone())?;
-                            pos.set(0, trans.position[0])?;
-                            pos.set(1, trans.position[1])?;
-                            let scale = Object::new(call_ctx.clone())?;
-                            scale.set(0, trans.scale[0])?;
-                            scale.set(1, trans.scale[1])?;
-
-                            obj.set("position", pos)?;
-                            obj.set("rotation", trans.rotation)?;
-                            obj.set("scale", scale)?;
-                            obj.into_js(&call_ctx)
-                        },
-                    )?,
+                    "_getTransformJson",
+                    Function::new(ctx.clone(), move || -> String {
+                        let id = ec.current_entity_id.lock().unwrap().clone();
+                        let cache = ec.transform_cache.lock().unwrap();
+                        let trans = cache.get(&id).cloned().unwrap_or(ScriptEntityTransform {
+                            position: [0.0, 0.0],
+                            rotation: 0.0,
+                            scale: [1.0, 1.0],
+                        });
+                        serde_json::to_string(&trans).unwrap_or_default()
+                    })?,
                 )?;
             }
             {
@@ -598,6 +583,11 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
             forge.set("log", log_obj)?;
 
             global.set("forge", forge)?;
+
+            ctx.eval::<(), _>(
+                "forge.entity.getTransform = function() { return JSON.parse(forge.entity._getTransformJson()); };",
+            )?;
+
             Ok(())
         })
         .map_err(|e: rquickjs::Error| format!("Failed to bind forge API: {}", e))
