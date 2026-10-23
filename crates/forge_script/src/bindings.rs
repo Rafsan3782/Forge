@@ -1,5 +1,5 @@
 use forge_protocol::ScriptEntityTransform;
-use rquickjs::{Context, Ctx, Function, Object, Value};
+use rquickjs::{Context, Ctx, Function, IntoJs, Object, Value};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 
@@ -173,28 +173,31 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
                 let ec = exec_ctx.clone();
                 entity_obj.set(
                     "getTransform",
-                    Function::new(ctx.clone(), move |call_ctx: Ctx<'_>| -> Object<'_> {
-                        let id = ec.current_entity_id.lock().unwrap().clone();
-                        let cache = ec.transform_cache.lock().unwrap();
-                        let trans = cache.get(&id).cloned().unwrap_or(ScriptEntityTransform {
-                            position: [0.0, 0.0],
-                            rotation: 0.0,
-                            scale: [1.0, 1.0],
-                        });
+                    Function::new(
+                        ctx.clone(),
+                        move |call_ctx: Ctx<'_>| -> rquickjs::Result<Value<'_>> {
+                            let id = ec.current_entity_id.lock().unwrap().clone();
+                            let cache = ec.transform_cache.lock().unwrap();
+                            let trans = cache.get(&id).cloned().unwrap_or(ScriptEntityTransform {
+                                position: [0.0, 0.0],
+                                rotation: 0.0,
+                                scale: [1.0, 1.0],
+                            });
 
-                        let obj = Object::new(call_ctx.clone()).unwrap();
-                        let pos = Object::new(call_ctx.clone()).unwrap();
-                        let _ = pos.set(0, trans.position[0]);
-                        let _ = pos.set(1, trans.position[1]);
-                        let scale = Object::new(call_ctx).unwrap();
-                        let _ = scale.set(0, trans.scale[0]);
-                        let _ = scale.set(1, trans.scale[1]);
+                            let obj = Object::new(call_ctx.clone())?;
+                            let pos = Object::new(call_ctx.clone())?;
+                            pos.set(0, trans.position[0])?;
+                            pos.set(1, trans.position[1])?;
+                            let scale = Object::new(call_ctx.clone())?;
+                            scale.set(0, trans.scale[0])?;
+                            scale.set(1, trans.scale[1])?;
 
-                        let _ = obj.set("position", pos);
-                        let _ = obj.set("rotation", trans.rotation);
-                        let _ = obj.set("scale", scale);
-                        obj
-                    })?,
+                            obj.set("position", pos)?;
+                            obj.set("rotation", trans.rotation)?;
+                            obj.set("scale", scale)?;
+                            obj.into_js(&call_ctx)
+                        },
+                    )?,
                 )?;
             }
             {
@@ -260,7 +263,8 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
                               -> String {
                             let new_id = format!("entity_{}", rand_id());
                             let components = comp.and_then(|c| {
-                                if let Ok(json_str) = c.ctx().json_stringify(c) {
+                                let c_ctx = c.ctx().clone();
+                                if let Ok(json_str) = c_ctx.json_stringify(c) {
                                     if let Some(s) = json_str {
                                         return serde_json::from_str(
                                             &s.to_string().unwrap_or_default(),
