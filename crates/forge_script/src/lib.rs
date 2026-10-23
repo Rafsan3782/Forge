@@ -1,5 +1,10 @@
 //! Forge Script: QuickJS-NG embedded runtime with SWC TypeScript transpilation.
 
+#![allow(clippy::result_large_err)]
+#![allow(clippy::arc_with_non_send_sync)]
+#![allow(clippy::type_complexity)]
+#![allow(clippy::field_reassign_with_default)]
+
 pub mod bindings;
 pub mod error;
 pub mod runtime;
