@@ -491,20 +491,16 @@ fn handle_tilemap_get(
 
     let layer = params.layer.as_deref().unwrap_or("main");
 
-    let tile_id = if let Some(tc) = params.tile_coord {
-        Some(tilemap.get_tile(layer, tc[0], tc[1]))
-    } else {
-        None
-    };
+    let tile_id = params
+        .tile_coord
+        .map(|tc| tilemap.get_tile(layer, tc[0], tc[1]));
 
-    let chunk_data = if let Some(cc) = params.chunk_coord {
+    let chunk_data = params.chunk_coord.and_then(|cc| {
         tilemap
             .chunks
             .get(&cc)
             .and_then(|chunk| chunk.layers.get(layer).map(|rows| rows.join(";")))
-    } else {
-        None
-    };
+    });
 
     Ok(forge_protocol::TilemapGetResult {
         tileset_id: tilemap.tileset_id.clone(),
