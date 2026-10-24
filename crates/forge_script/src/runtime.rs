@@ -40,6 +40,8 @@ pub struct LoadedScript {
     pub has_on_collision_exit: bool,
     pub has_on_trigger_enter: bool,
     pub has_on_destroy: bool,
+    pub has_serialize: bool,
+    pub has_deserialize: bool,
 }
 
 /// Execution controller for interrupting scripts that run past frame time limits.
@@ -160,6 +162,8 @@ impl ScriptRuntime {
             has_col_exit,
             has_trig_enter,
             has_destroy,
+            has_serialize,
+            has_deserialize,
         ) = self
             .context
             .with(|ctx| -> Result<_, ScriptExecutionError> {
@@ -188,6 +192,8 @@ impl ScriptRuntime {
                 let has_col_exit = ns.get::<_, Function>("onCollisionExit").is_ok();
                 let has_trig_enter = ns.get::<_, Function>("onTriggerEnter").is_ok();
                 let has_destroy = ns.get::<_, Function>("onDestroy").is_ok();
+                let has_serialize = ns.get::<_, Function>("serialize").is_ok();
+                let has_deserialize = ns.get::<_, Function>("deserialize").is_ok();
 
                 Ok((
                     has_start,
@@ -197,6 +203,8 @@ impl ScriptRuntime {
                     has_col_exit,
                     has_trig_enter,
                     has_destroy,
+                    has_serialize,
+                    has_deserialize,
                 ))
             })?;
 
@@ -212,6 +220,8 @@ impl ScriptRuntime {
             has_on_collision_exit: has_col_exit,
             has_on_trigger_enter: has_trig_enter,
             has_on_destroy: has_destroy,
+            has_serialize,
+            has_deserialize,
         })
     }
 

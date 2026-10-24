@@ -505,5 +505,63 @@ pub fn get_mcp_tools() -> Vec<McpTool> {
                 }
             }),
         },
+        McpTool {
+            name: "script.check".to_string(),
+            description: "Run TypeScript type checking and return structured diagnostics".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "project_path": {
+                        "type": ["string", "null"],
+                        "description": "Optional project root directory containing scripts/ and tsconfig.json"
+                    }
+                }
+            }),
+        },
+        McpTool {
+            name: "script.list".to_string(),
+            description: "List all TypeScript script files in a project scripts directory".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "project_path": {
+                        "type": ["string", "null"],
+                        "description": "Optional project root directory"
+                    }
+                }
+            }),
+        },
+        McpTool {
+            name: "script.read".to_string(),
+            description: "Read the source text of a script file".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "required": ["path"],
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "File path to the script"
+                    }
+                }
+            }),
+        },
+        McpTool {
+            name: "script.write".to_string(),
+            description: "Validate TypeScript syntax with SWC and write script file content".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "required": ["path", "content"],
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "File path where script should be written"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "TypeScript script source code"
+                    }
+                }
+            }),
+        },
     ]
 }

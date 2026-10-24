@@ -13,4 +13,4 @@ pub use command::{
 };
 pub use error::BridgeError;
 pub use mcp::{get_mcp_tools, McpTool, McpToolCallParams, McpToolCallResult, McpToolsListResult};
-pub use server::{generate_auth_token, BridgeServer};
+pub use server::{generate_auth_token, BridgeBroadcaster, BridgeServer};

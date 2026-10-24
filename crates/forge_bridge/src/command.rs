@@ -145,6 +145,34 @@ pub enum BridgeCommand {
         /// Channel to return updated volume confirmation.
         responder: oneshot::Sender<Result<forge_protocol::AudioSetBusVolumeResult, String>>,
     },
+    /// Runs TypeScript typecheck on a project scripts folder.
+    ScriptCheck {
+        /// Typecheck parameters.
+        params: forge_protocol::ScriptCheckParams,
+        /// Channel to return check result.
+        responder: oneshot::Sender<Result<forge_protocol::ScriptCheckResult, String>>,
+    },
+    /// Lists TypeScript script files in a project.
+    ScriptList {
+        /// List parameters.
+        params: forge_protocol::ScriptListParams,
+        /// Channel to return list of script paths.
+        responder: oneshot::Sender<Result<forge_protocol::ScriptListResult, String>>,
+    },
+    /// Reads the source text of a script file.
+    ScriptRead {
+        /// Read parameters.
+        params: forge_protocol::ScriptReadParams,
+        /// Channel to return script content.
+        responder: oneshot::Sender<Result<forge_protocol::ScriptReadResult, String>>,
+    },
+    /// Writes content to a script file, validating SWC TypeScript syntax beforehand.
+    ScriptWrite {
+        /// Write parameters.
+        params: forge_protocol::ScriptWriteParams,
+        /// Channel to return write result.
+        responder: oneshot::Sender<Result<forge_protocol::ScriptWriteResult, String>>,
+    },
 }
 
 /// Sender side held by the bridge server to dispatch commands to the engine loop.
