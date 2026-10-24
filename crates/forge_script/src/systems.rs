@@ -20,9 +20,9 @@ unsafe impl Sync for ThreadSafeRuntime {}
 /// Resource storing the ScriptRuntime and compiled script cache.
 #[derive(Resource)]
 pub struct ScriptServer {
-    pub runtime: ThreadSafeRuntime,
-    pub exec_context: ScriptExecutionContext,
     pub loaded_scripts: HashMap<String, LoadedScript>,
+    pub exec_context: ScriptExecutionContext,
+    pub runtime: ThreadSafeRuntime,
     pub initialized_entities: HashSet<Entity>,
     pub script_mtimes: HashMap<String, std::time::SystemTime>,
     pub entity_script_states: HashMap<Entity, serde_json::Value>,
@@ -36,9 +36,9 @@ impl ScriptServer {
         bind_forge_api(runtime.context(), exec_context.clone())?;
 
         Ok(Self {
-            runtime: ThreadSafeRuntime(Arc::new(Mutex::new(runtime))),
-            exec_context,
             loaded_scripts: HashMap::new(),
+            exec_context,
+            runtime: ThreadSafeRuntime(Arc::new(Mutex::new(runtime))),
             initialized_entities: HashSet::new(),
             script_mtimes: HashMap::new(),
             entity_script_states: HashMap::new(),
@@ -579,5 +579,11 @@ pub fn script_apply_commands_system(
             }
             _ => {}
         }
+    }
+}
+
+impl Drop for ScriptServer {
+    fn drop(&mut self) {
+        self.loaded_scripts.clear();
     }
 }
