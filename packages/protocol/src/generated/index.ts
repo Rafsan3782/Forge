@@ -475,3 +475,87 @@ export const AudioSetBusVolumeResultSchema = z.object({
   volume: z.number(),
 });
 export type AudioSetBusVolumeResult = z.infer<typeof AudioSetBusVolumeResultSchema>;
+
+// -----------------------------------------------------------------------------
+// script.api & script error
+// -----------------------------------------------------------------------------
+
+export const ScriptErrorEventSchema = z.object({
+  entity_id: z.string(),
+  script_path: z.string(),
+  message: z.string(),
+  stack: z.string().optional(),
+  file: z.string().optional(),
+  line: z.number().int().optional(),
+  column: z.number().int().optional(),
+});
+export type ScriptErrorEvent = z.infer<typeof ScriptErrorEventSchema>;
+
+export const ScriptEntityTransformSchema = z.object({
+  position: z.tuple([z.number(), z.number()]),
+  rotation: z.number(),
+  scale: z.tuple([z.number(), z.number()]),
+});
+export type ScriptEntityTransform = z.infer<typeof ScriptEntityTransformSchema>;
+
+export const ScriptRaycastHitSchema = z.object({
+  entity_id: z.string(),
+  point: z.tuple([z.number(), z.number()]),
+  normal: z.tuple([z.number(), z.number()]),
+  fraction: z.number(),
+});
+export type ScriptRaycastHit = z.infer<typeof ScriptRaycastHitSchema>;
+
+/**
+ * Global Forge scripting API contract exposed to quickjs scripts.
+ */
+export interface ForgeScriptApi {
+  entity: {
+    getId(): string;
+    getName(): string;
+    getParent(): string | null;
+    getChildren(): string[];
+    getTransform(): ScriptEntityTransform;
+    setTransform(transform: Partial<ScriptEntityTransform>): void;
+    getComponent<T = unknown>(name: string): T | null;
+    setComponent<T = unknown>(name: string, data: T): void;
+  };
+  spawn(name: string, components?: Record<string, unknown>, parent?: string): string;
+  destroy(entityId: string): void;
+  scene: {
+    load(scenePath: string): void;
+  };
+  input: {
+    isActionPressed(action: string): boolean;
+    isActionJustPressed(action: string): boolean;
+    isActionJustReleased(action: string): boolean;
+    getAxis(axis: string): number;
+    getMousePosition(): [number, number];
+  };
+  time: {
+    deltaTime(): number;
+    elapsedTime(): number;
+    frameCount(): number;
+  };
+  physics: {
+    raycast(origin: [number, number], direction: [number, number], maxDistance: number): ScriptRaycastHit | null;
+    overlapCircle(center: [number, number], radius: number): string[];
+  };
+  audio: {
+    play(assetId: string, options?: { bus?: "master" | "music" | "sfx"; volume?: number; pitch?: number; loop?: boolean }): string;
+    stop(playbackId?: string, bus?: "master" | "music" | "sfx"): void;
+    setBusVolume(bus: "master" | "music" | "sfx", volume: number): void;
+  };
+  animation: {
+    play(clipName: string, entityId?: string): void;
+  };
+  tilemap: {
+    getTile(entityId: string, layer: string, x: number, y: number): number;
+    setTile(entityId: string, layer: string, x: number, y: number, tileId: number): void;
+  };
+  log: {
+    info(...args: unknown[]): void;
+    warn(...args: unknown[]): void;
+    error(...args: unknown[]): void;
+  };
+}

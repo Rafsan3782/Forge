@@ -637,7 +637,7 @@ fn handle_audio_play(
         .get_resource_mut::<forge_audio::AudioServer>()
         .ok_or_else(|| "AudioServer resource not initialized in world".to_string())?;
 
-    let bus = params.bus.parse::<forge_core::AudioBus>().map_err(|e| e)?;
+    let bus = params.bus.parse::<forge_core::AudioBus>()?;
     let playback_id = server.play(
         &params.asset_id,
         bus,
@@ -659,7 +659,7 @@ fn handle_audio_stop(
         .ok_or_else(|| "AudioServer resource not initialized in world".to_string())?;
 
     let bus = if let Some(ref b) = params.bus {
-        Some(b.parse::<forge_core::AudioBus>().map_err(|e| e)?)
+        Some(b.parse::<forge_core::AudioBus>()?)
     } else {
         None
     };
@@ -681,7 +681,7 @@ fn handle_audio_set_bus_volume(
         .get_resource_mut::<forge_audio::AudioServer>()
         .ok_or_else(|| "AudioServer resource not initialized in world".to_string())?;
 
-    let bus = params.bus.parse::<forge_core::AudioBus>().map_err(|e| e)?;
+    let bus = params.bus.parse::<forge_core::AudioBus>()?;
     server.set_bus_volume(bus, params.volume as f32);
 
     Ok(forge_protocol::AudioSetBusVolumeResult {

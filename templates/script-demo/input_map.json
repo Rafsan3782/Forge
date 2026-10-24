@@ -1,0 +1,32 @@
+{
+  "actions": {
+    "move_left": {
+      "description": "Move left",
+      "bindings": [
+        { "type": "key", "code": "KeyA" },
+        { "type": "key", "code": "ArrowLeft" }
+      ]
+    },
+    "move_right": {
+      "description": "Move right",
+      "bindings": [
+        { "type": "key", "code": "KeyD" },
+        { "type": "key", "code": "ArrowRight" }
+      ]
+    },
+    "move_up": {
+      "description": "Move up",
+      "bindings": [
+        { "type": "key", "code": "KeyW" },
+        { "type": "key", "code": "ArrowUp" }
+      ]
+    },
+    "move_down": {
+      "description": "Move down",
+      "bindings": [
+        { "type": "key", "code": "KeyS" },
+        { "type": "key", "code": "ArrowDown" }
+      ]
+    }
+  }
+}

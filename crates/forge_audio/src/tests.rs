@@ -4,6 +4,7 @@ mod tests {
     use std::io::Write;
     use std::path::Path;
 
+    use bevy_ecs::system::RunSystemOnce;
     use forge_core::components::{AudioBus, AudioListener, AudioSource, Transform2D, Vec2};
     use forge_core::World;
     use tempfile::tempdir;

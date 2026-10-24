@@ -524,3 +524,37 @@ pub struct AudioSetBusVolumeResult {
     pub bus: String,
     pub volume: f64,
 }
+
+// -----------------------------------------------------------------------------
+// script.api & script error
+// -----------------------------------------------------------------------------
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ScriptErrorEvent {
+    pub entity_id: String,
+    pub script_path: String,
+    pub message: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub stack: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub file: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub line: Option<i64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub column: Option<i64>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ScriptEntityTransform {
+    pub position: [f32; 2],
+    pub rotation: f32,
+    pub scale: [f32; 2],
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ScriptRaycastHit {
+    pub entity_id: String,
+    pub point: [f64; 2],
+    pub normal: [f64; 2],
+    pub fraction: f64,
+}

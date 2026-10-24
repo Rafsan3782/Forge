@@ -696,7 +696,7 @@ impl Default for Collider2D {
 }
 
 /// Target audio channel / mixing bus.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum AudioBus {
     /// Master bus affecting all playback.
@@ -704,13 +704,8 @@ pub enum AudioBus {
     /// Music bus with fade support.
     Music,
     /// Sound effects bus.
+    #[default]
     Sfx,
-}
-
-impl Default for AudioBus {
-    fn default() -> Self {
-        Self::Sfx
-    }
 }
 
 impl std::str::FromStr for AudioBus {
@@ -839,5 +834,35 @@ pub struct AudioListener {
 impl Default for AudioListener {
     fn default() -> Self {
         Self { is_active: true }
+    }
+}
+
+/// Script component referencing a TypeScript script file executed via QuickJS.
+#[derive(Component, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Script {
+    /// Relative or project path to the `.ts` script file.
+    pub path: String,
+    /// Whether the script is currently enabled.
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+}
+
+impl Script {
+    /// Creates a new `Script` component from a path.
+    pub fn new(path: impl Into<String>) -> Self {
+        Self {
+            path: path.into(),
+            enabled: true,
+        }
+    }
+
+    /// Disables execution for this script.
+    pub fn disable(&mut self) {
+        self.enabled = false;
+    }
+
+    /// Enables execution for this script.
+    pub fn enable(&mut self) {
+        self.enabled = true;
     }
 }

@@ -5,14 +5,49 @@ on:
     branches: ["main"]
   pull_request:
     branches: ["main"]
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
+  changes:
+    name: Detect Changed Paths
+    runs-on: ubuntu-latest
+    outputs:
+      rust: ${{ steps.filter.outputs.rust }}
+      typescript: ${{ steps.filter.outputs.typescript }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Path Filter
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            rust:
+              - 'crates/**'
+              - 'templates/**'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+              - '.github/workflows/ci.yml'
+            typescript:
+              - 'packages/**'
+              - 'apps/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - '.github/workflows/ci.yml'
   rust:
     name: Rust (Check, Lint & Test)
+    needs: [changes]
+    if: ${{ github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || needs.changes.outputs.rust == 'true' }}
     runs-on: windows-latest
     steps:
       - name: Checkout code
@@ -25,6 +60,8 @@ jobs:
 
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
 
       - name: Install cargo-nextest
         uses: taiki-e/install-action@nextest
@@ -62,6 +99,8 @@ jobs:
 
   typescript:
     name: TypeScript (Lint, Typecheck & Test)
+    needs: [changes]
+    if: ${{ github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || needs.changes.outputs.typescript == 'true' }}
     runs-on: windows-latest
     steps:
       - name: Checkout code
@@ -99,14 +138,17 @@ jobs:
 
   ci:
     name: CI Status (Aggregator)
-    needs: [rust, typescript]
+    needs: [changes, rust, typescript]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Check required workflow results
         run: |
-          if [ "${{ needs.rust.result }}" != "success" ] || [ "${{ needs.typescript.result }}" != "success" ]; then
-            echo "::error::One or more upstream CI jobs failed (Rust: ${{ needs.rust.result }}, TypeScript: ${{ needs.typescript.result }})."
+          rust_res="${{ needs.rust.result }}"
+          ts_res="${{ needs.typescript.result }}"
+
+          if [ "$rust_res" = "failure" ] || [ "$rust_res" = "cancelled" ] || [ "$ts_res" = "failure" ] || [ "$ts_res" = "cancelled" ]; then
+            echo "::error::One or more upstream CI jobs failed (Rust: $rust_res, TypeScript: $ts_res)."
             exit 1
           fi
-          echo "All upstream CI jobs completed successfully."
+          echo "All required CI jobs completed successfully (Rust: $rust_res, TypeScript: $ts_res)."

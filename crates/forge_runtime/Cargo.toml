@@ -15,6 +15,7 @@ forge_input = { path = "../forge_input" }
 forge_physics = { path = "../forge_physics" }
 forge_protocol = { path = "../forge_protocol" }
 forge_render = { path = "../forge_render" }
+forge_script = { path = "../forge_script" }
 image = { version = "0.25", default-features = false, features = ["png"] }
 pollster = "0.4"
 thiserror = "2.0"

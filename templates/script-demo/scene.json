@@ -1,0 +1,59 @@
+{
+  "name": "Script Demo",
+  "entities": [
+    {
+      "id": "camera",
+      "name": "Main Camera",
+      "components": {
+        "Transform2D": {
+          "position": [0.0, 0.0],
+          "rotation": 0.0,
+          "scale": [1.0, 1.0]
+        },
+        "Camera2D": {
+          "zoom": 1.0,
+          "is_active": true
+        }
+      }
+    },
+    {
+      "id": "player",
+      "name": "Player Hero",
+      "components": {
+        "Transform2D": {
+          "position": [0.0, 0.0],
+          "rotation": 0.0,
+          "scale": [1.0, 1.0]
+        },
+        "Sprite": {
+          "asset_id": "player_sprite",
+          "size": {
+            "x": 32.0,
+            "y": 32.0
+          },
+          "color_tint": [0.2, 0.8, 0.2, 1.0],
+          "z_order": 1
+        },
+        "Script": {
+          "path": "templates/script-demo/scripts/player.ts",
+          "enabled": true
+        }
+      }
+    },
+    {
+      "id": "spawner",
+      "name": "Coin Spawner",
+      "components": {
+        "Transform2D": {
+          "position": [0.0, 50.0],
+          "rotation": 0.0,
+          "scale": [1.0, 1.0]
+        },
+        "Script": {
+          "path": "templates/script-demo/scripts/coin_spawner.ts",
+          "enabled": true
+        }
+      }
+    }
+  ]
+}

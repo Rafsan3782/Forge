@@ -552,6 +552,22 @@ fn apply_component_from_hashmap(
             world.entity_mut(entity).insert(listener);
             Ok(())
         }
+        "Script" => {
+            let mut script = world
+                .get::<crate::components::Script>(entity)
+                .cloned()
+                .unwrap_or_else(|| crate::components::Script::new(""));
+
+            if let Some(path) = data.get("path") {
+                script.path = path.clone();
+            }
+            if let Some(enabled_str) = data.get("enabled") {
+                script.enabled = enabled_str.parse::<bool>().unwrap_or(true);
+            }
+
+            world.entity_mut(entity).insert(script);
+            Ok(())
+        }
         other => Err(SceneError::UnknownComponent(other.to_string())),
     }
 }
