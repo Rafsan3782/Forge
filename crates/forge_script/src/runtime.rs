@@ -164,22 +164,30 @@ impl ScriptRuntime {
             .context
             .with(|ctx| -> Result<_, ScriptExecutionError> {
                 let module =
-                    Module::evaluate(ctx.clone(), module_name.clone(), transpiled.code.clone())
+                    Module::declare(ctx.clone(), module_name.clone(), transpiled.code.clone())
                         .map_err(|e| {
                             self.format_quickjs_error(ctx.clone(), path, "", &source_mapper, e)
                         })?;
 
-                let exports = module.finish::<Object>().map_err(|e| {
+                let (eval_module, promise) = module.eval().map_err(|e| {
                     self.format_quickjs_error(ctx.clone(), path, "", &source_mapper, e)
                 })?;
 
-                let has_start = exports.get::<_, Function>("onStart").is_ok();
-                let has_update = exports.get::<_, Function>("onUpdate").is_ok();
-                let has_fixed = exports.get::<_, Function>("onFixedUpdate").is_ok();
-                let has_col_enter = exports.get::<_, Function>("onCollisionEnter").is_ok();
-                let has_col_exit = exports.get::<_, Function>("onCollisionExit").is_ok();
-                let has_trig_enter = exports.get::<_, Function>("onTriggerEnter").is_ok();
-                let has_destroy = exports.get::<_, Function>("onDestroy").is_ok();
+                promise.finish::<()>().map_err(|e| {
+                    self.format_quickjs_error(ctx.clone(), path, "", &source_mapper, e)
+                })?;
+
+                let ns = eval_module.namespace().map_err(|e| {
+                    self.format_quickjs_error(ctx.clone(), path, "", &source_mapper, e)
+                })?;
+
+                let has_start = ns.get::<_, Function>("onStart").is_ok();
+                let has_update = ns.get::<_, Function>("onUpdate").is_ok();
+                let has_fixed = ns.get::<_, Function>("onFixedUpdate").is_ok();
+                let has_col_enter = ns.get::<_, Function>("onCollisionEnter").is_ok();
+                let has_col_exit = ns.get::<_, Function>("onCollisionExit").is_ok();
+                let has_trig_enter = ns.get::<_, Function>("onTriggerEnter").is_ok();
+                let has_destroy = ns.get::<_, Function>("onDestroy").is_ok();
 
                 Ok((
                     has_start,
@@ -223,7 +231,7 @@ impl ScriptRuntime {
             .start_execution(self.config.max_duration_per_frame);
 
         let result = self.context.with(|ctx| {
-            let module = Module::evaluate(
+            let module = Module::declare(
                 ctx.clone(),
                 script.module_name.clone(),
                 script.transpiled_code.clone(),
@@ -238,7 +246,7 @@ impl ScriptRuntime {
                 )
             })?;
 
-            let exports = module.finish::<Object>().map_err(|e| {
+            let (eval_module, promise) = module.eval().map_err(|e| {
                 self.format_quickjs_error(
                     ctx.clone(),
                     &script.script_path,
@@ -248,7 +256,27 @@ impl ScriptRuntime {
                 )
             })?;
 
-            let func: Function = exports.get(fn_name).map_err(|e| {
+            promise.finish::<()>().map_err(|e| {
+                self.format_quickjs_error(
+                    ctx.clone(),
+                    &script.script_path,
+                    entity_id,
+                    &script.source_mapper,
+                    e,
+                )
+            })?;
+
+            let ns = eval_module.namespace().map_err(|e| {
+                self.format_quickjs_error(
+                    ctx.clone(),
+                    &script.script_path,
+                    entity_id,
+                    &script.source_mapper,
+                    e,
+                )
+            })?;
+
+            let func: Function = ns.get(fn_name).map_err(|e| {
                 self.format_quickjs_error(
                     ctx.clone(),
                     &script.script_path,
