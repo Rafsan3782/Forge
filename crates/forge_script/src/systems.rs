@@ -159,7 +159,7 @@ impl ScriptServer {
                 // If old module had serialize, serialize its state
                 let state_val: Option<serde_json::Value> = if let Some(ref old) = old_loaded {
                     if old.has_serialize {
-                        let mut rt = self.runtime.0.lock().unwrap();
+                        let rt = self.runtime.0.lock().unwrap();
                         let serialized = rt.context().with(|ctx| -> Option<serde_json::Value> {
                             let module = rquickjs::Module::declare(
                                 ctx.clone(),
@@ -206,7 +206,7 @@ impl ScriptServer {
 
                 if new_loaded.has_deserialize {
                     if let Some(state) = self.entity_script_states.get(entity) {
-                        let mut rt = self.runtime.0.lock().unwrap();
+                        let rt = self.runtime.0.lock().unwrap();
                         let state_json = state.to_string();
                         let _ = rt
                             .context()
