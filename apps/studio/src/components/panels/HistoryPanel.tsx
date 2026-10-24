@@ -88,9 +88,13 @@ export const HistoryPanel: React.FC = () => {
                   <div className="flex items-center gap-2 overflow-hidden flex-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#3DD68C] shrink-0" />
                     {isAgent ? (
-                      <Bot className="w-3.5 h-3.5 text-[#7C5CFF] shrink-0" title="Agent Action" />
+                      <span title="Agent Action">
+                        <Bot className="w-3.5 h-3.5 text-[#7C5CFF] shrink-0" />
+                      </span>
                     ) : (
-                      <User className="w-3.5 h-3.5 text-[#FF6A2B] shrink-0" title="User Action" />
+                      <span title="User Action">
+                        <User className="w-3.5 h-3.5 text-[#FF6A2B] shrink-0" />
+                      </span>
                     )}
                     <span className="font-medium text-[11px] truncate">{entry.description}</span>
                   </div>

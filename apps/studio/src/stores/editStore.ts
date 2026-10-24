@@ -57,8 +57,8 @@ export const useEditStore = create<EditStoreState>((set, get) => ({
     try {
       const res = await bridge.getDirty();
       set({
-        isDirty: res.dirty,
-        scenePath: res.scene_path ?? null,
+        isDirty: res.is_dirty,
+        scenePath: res.current_scene_path ?? null,
       });
     } catch (err) {
       console.error("Failed to fetch dirty state:", err);
@@ -147,7 +147,7 @@ export const useEditStore = create<EditStoreState>((set, get) => ({
     try {
       const res = await bridge.saveScene();
       if (res.success) {
-        set({ isDirty: false, scenePath: res.saved_path });
+        set({ isDirty: false, scenePath: res.path });
         await get().fetchHistory();
       }
     } catch (err) {

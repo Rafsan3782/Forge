@@ -259,8 +259,8 @@ export const InspectorPanel: React.FC = () => {
           <ScrubbableNumberInput
             value={num}
             step={hint?.step ?? 0.1}
-            min={hint?.min}
-            max={hint?.max}
+            min={hint?.min ?? undefined}
+            max={hint?.max ?? undefined}
             onChange={(v) => handleFieldChange(compName, field.name, v)}
             onCommit={(v) => commitFieldChange(compName, field.name, v)}
           />
@@ -275,8 +275,8 @@ export const InspectorPanel: React.FC = () => {
               label="X"
               value={vec[0] ?? 0}
               step={hint?.step ?? 0.5}
-              min={hint?.min}
-              max={hint?.max}
+              min={hint?.min ?? undefined}
+              max={hint?.max ?? undefined}
               onChange={(x) => handleFieldChange(compName, field.name, [x, vec[1] ?? 0])}
               onCommit={(x) => commitFieldChange(compName, field.name, [x, vec[1] ?? 0])}
             />
@@ -284,8 +284,8 @@ export const InspectorPanel: React.FC = () => {
               label="Y"
               value={vec[1] ?? 0}
               step={hint?.step ?? 0.5}
-              min={hint?.min}
-              max={hint?.max}
+              min={hint?.min ?? undefined}
+              max={hint?.max ?? undefined}
               onChange={(y) => handleFieldChange(compName, field.name, [vec[0] ?? 0, y])}
               onCommit={(y) => commitFieldChange(compName, field.name, [vec[0] ?? 0, y])}
             />
