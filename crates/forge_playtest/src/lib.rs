@@ -1,6 +1,5 @@
 //! Headless playtesting, test harnesses, and telemetry collection.
 
-use forge_protocol::PlaytestReport;
 use forge_script::{LogEntry, LogRingBuffer};
 use std::sync::Arc;
 
