@@ -76,6 +76,8 @@ pub struct ScriptExecutionContext {
     // Entity hierarchy snapshot: entity_id -> (name, Option<parent_id>, children_ids)
     pub entity_hierarchy:
         Arc<Mutex<std::collections::HashMap<String, (String, Option<String>, Vec<String>)>>>,
+    // Log ring buffer for streamed logs and playtest recorder
+    pub log_buffer: Arc<crate::log_stream::LogRingBuffer>,
 }
 
 impl ScriptExecutionContext {
@@ -94,6 +96,7 @@ impl ScriptExecutionContext {
             tile_cache: Arc::new(Mutex::new(std::collections::HashMap::new())),
             transform_cache: Arc::new(Mutex::new(std::collections::HashMap::new())),
             entity_hierarchy: Arc::new(Mutex::new(std::collections::HashMap::new())),
+            log_buffer: Arc::new(crate::log_stream::LogRingBuffer::new(1000)),
         }
     }
 
@@ -548,36 +551,57 @@ pub fn bind_forge_api(context: &Context, exec_ctx: ScriptExecutionContext) -> Re
 
             // 10. forge.log
             let log_obj = Object::new(ctx.clone())?;
-            log_obj.set(
-                "info",
-                Function::new(ctx.clone(), |msg: Value<'_>| {
-                    let text = msg
-                        .as_string()
-                        .and_then(|s| s.to_string().ok())
-                        .unwrap_or_else(|| format!("{:?}", msg));
-                    tracing::info!("[script] {}", text);
-                })?,
-            )?;
-            log_obj.set(
-                "warn",
-                Function::new(ctx.clone(), |msg: Value<'_>| {
-                    let text = msg
-                        .as_string()
-                        .and_then(|s| s.to_string().ok())
-                        .unwrap_or_else(|| format!("{:?}", msg));
-                    tracing::warn!("[script] {}", text);
-                })?,
-            )?;
-            log_obj.set(
-                "error",
-                Function::new(ctx.clone(), |msg: Value<'_>| {
-                    let text = msg
-                        .as_string()
-                        .and_then(|s| s.to_string().ok())
-                        .unwrap_or_else(|| format!("{:?}", msg));
-                    tracing::error!("[script] {}", text);
-                })?,
-            )?;
+            {
+                let ec = exec_ctx.clone();
+                log_obj.set(
+                    "info",
+                    Function::new(ctx.clone(), move |msg: Value<'_>| {
+                        let text = msg
+                            .as_string()
+                            .and_then(|s| s.to_string().ok())
+                            .unwrap_or_else(|| format!("{:?}", msg));
+                        tracing::info!("[script] {}", text);
+                        let entity = ec.current_entity_id.lock().unwrap().clone();
+                        let frame = ec.frame_count.load(std::sync::atomic::Ordering::Relaxed);
+                        let loc = if !entity.is_empty() { Some(format!("entity:{}", entity)) } else { None };
+                        ec.log_buffer.push("info", &text, loc, frame);
+                    })?,
+                )?;
+            }
+            {
+                let ec = exec_ctx.clone();
+                log_obj.set(
+                    "warn",
+                    Function::new(ctx.clone(), move |msg: Value<'_>| {
+                        let text = msg
+                            .as_string()
+                            .and_then(|s| s.to_string().ok())
+                            .unwrap_or_else(|| format!("{:?}", msg));
+                        tracing::warn!("[script] {}", text);
+                        let entity = ec.current_entity_id.lock().unwrap().clone();
+                        let frame = ec.frame_count.load(std::sync::atomic::Ordering::Relaxed);
+                        let loc = if !entity.is_empty() { Some(format!("entity:{}", entity)) } else { None };
+                        ec.log_buffer.push("warn", &text, loc, frame);
+                    })?,
+                )?;
+            }
+            {
+                let ec = exec_ctx.clone();
+                log_obj.set(
+                    "error",
+                    Function::new(ctx.clone(), move |msg: Value<'_>| {
+                        let text = msg
+                            .as_string()
+                            .and_then(|s| s.to_string().ok())
+                            .unwrap_or_else(|| format!("{:?}", msg));
+                        tracing::error!("[script] {}", text);
+                        let entity = ec.current_entity_id.lock().unwrap().clone();
+                        let frame = ec.frame_count.load(std::sync::atomic::Ordering::Relaxed);
+                        let loc = if !entity.is_empty() { Some(format!("entity:{}", entity)) } else { None };
+                        ec.log_buffer.push("error", &text, loc, frame);
+                    })?,
+                )?;
+            }
             forge.set("log", log_obj)?;
 
             global.set("forge", forge)?;

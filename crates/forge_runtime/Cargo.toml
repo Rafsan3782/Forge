@@ -16,6 +16,7 @@ forge_physics = { path = "../forge_physics" }
 forge_protocol = { path = "../forge_protocol" }
 forge_render = { path = "../forge_render" }
 forge_script = { path = "../forge_script" }
+forge_cli = { path = "../forge_cli" }
 image = { version = "0.25", default-features = false, features = ["png"] }
 pollster = "0.4"
 thiserror = "2.0"

@@ -152,6 +152,91 @@ pub fn process_bridge_commands(
                 let res = handle_audio_set_bus_volume(world, &params);
                 let _ = responder.send(res);
             }
+
+            BridgeCommand::ScriptCheck { params, responder } => {
+                let (success, diagnostics) =
+                    forge_cli::run_typecheck(params.project_path.as_deref())
+                        .map_err(|e| e.to_string())
+                        .unwrap_or_else(|e| {
+                            (
+                                false,
+                                vec![forge_protocol::ScriptDiagnostic {
+                                    file: String::new(),
+                                    line: 0,
+                                    column: 0,
+                                    code: String::new(),
+                                    message: e,
+                                    severity: "error".to_string(),
+                                }],
+                            )
+                        });
+                let _ = responder.send(Ok(forge_protocol::ScriptCheckResult {
+                    success,
+                    diagnostics,
+                }));
+            }
+
+            BridgeCommand::ScriptList { params, responder } => {
+                let root = params.project_path.unwrap_or_else(|| ".".to_string());
+                let scripts_dir = std::path::Path::new(&root).join("scripts");
+                let mut scripts = Vec::new();
+                if scripts_dir.exists() {
+                    if let Ok(entries) = std::fs::read_dir(&scripts_dir) {
+                        for entry in entries.flatten() {
+                            let path = entry.path();
+                            if path.extension().and_then(|e| e.to_str()) == Some("ts") {
+                                scripts.push(path.to_string_lossy().replace('\\', "/"));
+                            }
+                        }
+                    }
+                }
+                let _ = responder.send(Ok(forge_protocol::ScriptListResult { scripts }));
+            }
+
+            BridgeCommand::ScriptRead { params, responder } => {
+                match std::fs::read_to_string(&params.path) {
+                    Ok(content) => {
+                        let _ = responder.send(Ok(forge_protocol::ScriptReadResult {
+                            path: params.path,
+                            content,
+                        }));
+                    }
+                    Err(e) => {
+                        let _ = responder
+                            .send(Err(format!("Failed to read script {}: {}", params.path, e)));
+                    }
+                }
+            }
+
+            BridgeCommand::ScriptWrite { params, responder } => {
+                match forge_script::transpile_typescript(&params.path, &params.content) {
+                    Ok(_) => {
+                        if let Some(parent) = std::path::Path::new(&params.path).parent() {
+                            let _ = std::fs::create_dir_all(parent);
+                        }
+                        match std::fs::write(&params.path, &params.content) {
+                            Ok(_) => {
+                                let _ = responder.send(Ok(forge_protocol::ScriptWriteResult {
+                                    success: true,
+                                    diagnostics: None,
+                                }));
+                            }
+                            Err(e) => {
+                                let _ = responder.send(Err(format!(
+                                    "Failed to write script {}: {}",
+                                    params.path, e
+                                )));
+                            }
+                        }
+                    }
+                    Err(syntax_err) => {
+                        let _ = responder.send(Ok(forge_protocol::ScriptWriteResult {
+                            success: false,
+                            diagnostics: Some(vec![syntax_err]),
+                        }));
+                    }
+                }
+            }
         }
     }
 }

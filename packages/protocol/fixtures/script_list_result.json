@@ -1,0 +1,3 @@
+{
+  "scripts": ["templates/script-demo/scripts/player.ts", "templates/script-demo/scripts/coin_spawner.ts"]
+}

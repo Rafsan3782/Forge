@@ -1,0 +1,4 @@
+{
+  "path": "scripts/player.ts",
+  "content": "export function onStart(): void {}"
+}

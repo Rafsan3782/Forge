@@ -540,6 +540,76 @@ export const ScriptRaycastHitSchema = z.object({
 });
 export type ScriptRaycastHit = z.infer<typeof ScriptRaycastHitSchema>;
 
+export const ScriptDiagnosticSchema = z.object({
+  file: z.string(),
+  line: z.number().int(),
+  column: z.number().int(),
+  code: z.string(),
+  message: z.string(),
+  severity: z.enum(["error", "warning", "info"]),
+});
+export type ScriptDiagnostic = z.infer<typeof ScriptDiagnosticSchema>;
+
+export const ScriptCheckParamsSchema = z.object({
+  project_path: z.string().optional(),
+});
+export type ScriptCheckParams = z.infer<typeof ScriptCheckParamsSchema>;
+
+export const ScriptCheckResultSchema = z.object({
+  success: z.boolean(),
+  diagnostics: z.array(ScriptDiagnosticSchema),
+});
+export type ScriptCheckResult = z.infer<typeof ScriptCheckResultSchema>;
+
+export const ScriptListParamsSchema = z.object({
+  project_path: z.string().optional(),
+});
+export type ScriptListParams = z.infer<typeof ScriptListParamsSchema>;
+
+export const ScriptListResultSchema = z.object({
+  scripts: z.array(z.string()),
+});
+export type ScriptListResult = z.infer<typeof ScriptListResultSchema>;
+
+export const ScriptReadParamsSchema = z.object({
+  path: z.string(),
+});
+export type ScriptReadParams = z.infer<typeof ScriptReadParamsSchema>;
+
+export const ScriptReadResultSchema = z.object({
+  path: z.string(),
+  content: z.string(),
+});
+export type ScriptReadResult = z.infer<typeof ScriptReadResultSchema>;
+
+export const ScriptWriteParamsSchema = z.object({
+  path: z.string(),
+  content: z.string(),
+});
+export type ScriptWriteParams = z.infer<typeof ScriptWriteParamsSchema>;
+
+export const ScriptWriteResultSchema = z.object({
+  success: z.boolean(),
+  diagnostics: z.array(z.string()).optional(),
+});
+export type ScriptWriteResult = z.infer<typeof ScriptWriteResultSchema>;
+
+export const GameLogNotificationSchema = z.object({
+  level: z.enum(["trace", "debug", "info", "warn", "error"]),
+  message: z.string(),
+  source_location: z.string().optional(),
+  frame: z.number().int(),
+});
+export type GameLogNotification = z.infer<typeof GameLogNotificationSchema>;
+
+export const GameErrorNotificationSchema = z.object({
+  level: z.literal("error"),
+  message: z.string(),
+  source_location: z.string().optional(),
+  frame: z.number().int(),
+});
+export type GameErrorNotification = z.infer<typeof GameErrorNotificationSchema>;
+
 /**
  * Global Forge scripting API contract exposed to quickjs scripts.
  */
@@ -1158,6 +1228,80 @@ pub struct ScriptRaycastHit {
     pub normal: [f64; 2],
     pub fraction: f64,
 }
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ScriptDiagnostic {
+    pub file: String,
+    pub line: i64,
+    pub column: i64,
+    pub code: String,
+    pub message: String,
+    pub severity: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct ScriptCheckParams {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub project_path: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ScriptCheckResult {
+    pub success: bool,
+    pub diagnostics: Vec<ScriptDiagnostic>,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct ScriptListParams {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub project_path: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ScriptListResult {
+    pub scripts: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ScriptReadParams {
+    pub path: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ScriptReadResult {
+    pub path: String,
+    pub content: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ScriptWriteParams {
+    pub path: String,
+    pub content: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ScriptWriteResult {
+    pub success: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub diagnostics: Option<Vec<String>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct GameLogNotification {
+    pub level: String,
+    pub message: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_location: Option<String>,
+    pub frame: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct GameErrorNotification {
+    pub level: String,
+    pub message: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_location: Option<String>,
+    pub frame: u64,
+}
 `;
 
 fs.writeFileSync(TS_OUT_FILE, tsCode.trimEnd() + "\n", "utf-8");
@@ -1166,3 +1310,144 @@ fs.writeFileSync(RUST_OUT_FILE, rustCode.trimEnd() + "\n", "utf-8");
 console.log("Successfully generated protocol definitions:");
 console.log(` - TypeScript: ${TS_OUT_FILE}`);
 console.log(` - Rust:       ${RUST_OUT_FILE}`);
+
+// -----------------------------------------------------------------------------
+// Generate forge.d.ts declaration content
+// -----------------------------------------------------------------------------
+const FORGE_DTS_CONTENT = `/**
+ * THIS FILE IS AUTOMATICALLY GENERATED. DO NOT EDIT.
+ * Generated by @forge/protocol codegen from JSON Schema definitions in packages/protocol/schemas.
+ */
+
+export interface ScriptEntityTransform {
+  position: [number, number];
+  rotation: number;
+  scale: [number, number];
+}
+
+export interface ScriptRaycastHit {
+  entity_id: string;
+  point: [number, number];
+  normal: [number, number];
+  fraction: number;
+}
+
+export interface ForgeScriptApi {
+  entity: {
+    getId(): string;
+    getName(): string;
+    getParent(): string | null;
+    getChildren(): string[];
+    getTransform(): ScriptEntityTransform;
+    setTransform(transform: Partial<ScriptEntityTransform>): void;
+    getComponent<T = unknown>(name: string): T | null;
+    setComponent<T = unknown>(name: string, data: T): void;
+  };
+  spawn(name: string, components?: Record<string, unknown>, parent?: string): string;
+  destroy(entityId: string): void;
+  scene: {
+    load(scenePath: string): void;
+  };
+  input: {
+    isActionPressed(action: string): boolean;
+    isActionJustPressed(action: string): boolean;
+    isActionJustReleased(action: string): boolean;
+    getAxis(axis: string): number;
+    getMousePosition(): [number, number];
+  };
+  time: {
+    deltaTime(): number;
+    elapsedTime(): number;
+    frameCount(): number;
+  };
+  physics: {
+    raycast(origin: [number, number], direction: [number, number], maxDistance: number): ScriptRaycastHit | null;
+    overlapCircle(center: [number, number], radius: number): string[];
+  };
+  audio: {
+    play(assetId: string, options?: { bus?: "master" | "music" | "sfx"; volume?: number; pitch?: number; loop?: boolean }): string;
+    stop(playbackId?: string, bus?: "master" | "music" | "sfx"): void;
+    setBusVolume(bus: "master" | "music" | "sfx", volume: number): void;
+  };
+  animation: {
+    play(clipName: string, entityId?: string): void;
+  };
+  tilemap: {
+    getTile(entityId: string, layer: string, x: number, y: number): number;
+    setTile(entityId: string, layer: string, x: number, y: number, tileId: number): void;
+  };
+  log: {
+    info(...args: unknown[]): void;
+    warn(...args: unknown[]): void;
+    error(...args: unknown[]): void;
+  };
+}
+
+declare global {
+  const forge: ForgeScriptApi;
+
+  // Optional script lifecycle callbacks
+  function onStart(): void;
+  function onUpdate(dt: number): void;
+  function onFixedUpdate(dt: number): void;
+  function onCollisionEnter(otherEntityId: string): void;
+  function onCollisionExit(otherEntityId: string): void;
+  function onTriggerEnter(otherEntityId: string): void;
+  function onDestroy(): void;
+
+  // Optional state transfer lifecycle hooks for hot reloading
+  function serialize(): unknown;
+  function deserialize(state: unknown): void;
+}
+
+export {};
+`;
+
+const TSCONFIG_CONTENT = JSON.stringify(
+  {
+    compilerOptions: {
+      target: "ES2020",
+      module: "ESNext",
+      moduleResolution: "node",
+      strict: true,
+      noEmit: true,
+      skipLibCheck: true,
+      types: []
+    },
+    include: ["scripts/**/*"]
+  },
+  null,
+  2
+) + "\n";
+
+// Function to generate project declarations into a project folder
+export function generateProjectDeclarations(projectPath) {
+  const scriptsDir = path.join(projectPath, "scripts");
+  if (!fs.existsSync(scriptsDir)) {
+    fs.mkdirSync(scriptsDir, { recursive: true });
+  }
+
+  const forgeDtsPath = path.join(scriptsDir, "forge.d.ts");
+  const tsconfigPath = path.join(projectPath, "tsconfig.json");
+
+  fs.writeFileSync(forgeDtsPath, FORGE_DTS_CONTENT.trimEnd() + "\n", "utf-8");
+  console.log(` - Generated:  ${forgeDtsPath}`);
+
+  // Write tsconfig.json if not existing or ensure strict tsconfig
+  fs.writeFileSync(tsconfigPath, TSCONFIG_CONTENT, "utf-8");
+  console.log(` - Generated:  ${tsconfigPath}`);
+}
+
+// Generate into templates that have scripts or should have scripts (e.g. templates/script-demo)
+const templatesDir = path.join(WORKSPACE_ROOT, "templates");
+if (fs.existsSync(templatesDir)) {
+  const templateEntries = fs.readdirSync(templatesDir, { withFileTypes: true });
+  for (const entry of templateEntries) {
+    if (entry.isDirectory()) {
+      const templatePath = path.join(templatesDir, entry.name);
+      if (fs.existsSync(path.join(templatePath, "scripts"))) {
+        generateProjectDeclarations(templatePath);
+      }
+    }
+  }
+}

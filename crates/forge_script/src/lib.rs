@@ -7,6 +7,7 @@
 
 pub mod bindings;
 pub mod error;
+pub mod log_stream;
 pub mod runtime;
 pub mod sourcemap;
 pub mod systems;
@@ -14,6 +15,7 @@ pub mod transpiler;
 
 pub use bindings::{bind_forge_api, ScriptCommand, ScriptExecutionContext};
 pub use error::ScriptExecutionError;
+pub use log_stream::{LogEntry, LogRingBuffer};
 pub use runtime::{LoadedScript, SandboxConfig, ScriptRuntime};
 pub use sourcemap::{ScriptSourceMapper, SourceLocation};
 pub use systems::{

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/game.log.json",
+  "title": "GameLog",
+  "description": "Log and error notifications streamed from game runtime and scripts",
+  "definitions": {
+    "GameLogNotification": {
+      "type": "object",
+      "required": ["level", "message", "frame"],
+      "properties": {
+        "level": { "type": "string", "enum": ["trace", "debug", "info", "warn", "error"] },
+        "message": { "type": "string" },
+        "source_location": { "type": "string" },
+        "frame": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "GameErrorNotification": {
+      "type": "object",
+      "required": ["level", "message", "frame"],
+      "properties": {
+        "level": { "type": "string", "enum": ["error"] },
+        "message": { "type": "string" },
+        "source_location": { "type": "string" },
+        "frame": { "type": "integer" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

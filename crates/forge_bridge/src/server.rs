@@ -46,6 +46,7 @@ pub struct BridgeServer {
     /// Exact socket address (127.0.0.1:port).
     pub addr: SocketAddr,
     shutdown: Arc<AtomicBool>,
+    broadcast_tx: tokio::sync::broadcast::Sender<String>,
 }
 
 impl BridgeServer {
@@ -57,6 +58,8 @@ impl BridgeServer {
         let (ready_tx, ready_rx) = std::sync::mpsc::channel();
         let shutdown = Arc::new(AtomicBool::new(false));
         let shutdown_clone = shutdown.clone();
+        let (broadcast_tx, _) = tokio::sync::broadcast::channel::<String>(256);
+        let broadcast_tx_clone = broadcast_tx.clone();
 
         std::thread::Builder::new()
             .name("forge-bridge-server".to_string())
@@ -112,10 +115,16 @@ impl BridgeServer {
                                 tracing::debug!("Incoming bridge connection from {}", client_addr);
                                 let expected_token = token_arc.clone();
                                 let cmd_sender = command_sender.clone();
+                                let notif_rx = broadcast_tx_clone.subscribe();
 
                                 tokio::spawn(async move {
-                                    if let Err(e) =
-                                        handle_connection(stream, expected_token, cmd_sender).await
+                                    if let Err(e) = handle_connection(
+                                        stream,
+                                        expected_token,
+                                        cmd_sender,
+                                        notif_rx,
+                                    )
+                                    .await
                                     {
                                         tracing::debug!("Bridge connection closed: {:?}", e);
                                     }
@@ -139,7 +148,25 @@ impl BridgeServer {
             token,
             addr,
             shutdown,
+            broadcast_tx,
         })
+    }
+
+    /// Broadcasts a JSON-RPC notification (such as game.log or game.error) to all connected clients.
+    pub fn broadcast_notification(&self, method: &str, params: Value) {
+        let msg = json!({
+            "jsonrpc": "2.0",
+            "method": method,
+            "params": params,
+        });
+        let _ = self.broadcast_tx.send(msg.to_string());
+    }
+
+    /// Returns a broadcaster handle that can send notifications from anywhere.
+    pub fn broadcaster(&self) -> BridgeBroadcaster {
+        BridgeBroadcaster {
+            tx: self.broadcast_tx.clone(),
+        }
     }
 
     /// Stops the bridge server.
@@ -154,11 +181,29 @@ impl Drop for BridgeServer {
     }
 }
 
+/// Cloneable handle to broadcast bridge notifications to all connected clients.
+#[derive(Clone)]
+pub struct BridgeBroadcaster {
+    tx: tokio::sync::broadcast::Sender<String>,
+}
+
+impl BridgeBroadcaster {
+    pub fn broadcast(&self, method: &str, params: Value) {
+        let msg = json!({
+            "jsonrpc": "2.0",
+            "method": method,
+            "params": params,
+        });
+        let _ = self.tx.send(msg.to_string());
+    }
+}
+
 /// Handles a single incoming TCP stream, validating WebSocket authentication and serving RPC requests.
 async fn handle_connection(
     stream: TcpStream,
     expected_token: Arc<String>,
     command_sender: BridgeCommandSender,
+    mut notif_rx: tokio::sync::broadcast::Receiver<String>,
 ) -> Result<(), BridgeError> {
     // Perform WebSocket handshake with authentication verification
     let callback = |req: &Request, resp: Response| {
@@ -211,32 +256,49 @@ async fn handle_connection(
     let ws_stream = tokio_tungstenite::accept_hdr_async(stream, callback).await?;
     let (mut write, mut read) = ws_stream.split();
 
-    while let Some(msg) = read.next().await {
-        let msg = match msg {
-            Ok(m) => m,
-            Err(e) => {
-                tracing::debug!("WebSocket stream error: {:?}", e);
-                break;
-            }
-        };
-
-        match msg {
-            Message::Text(text) => {
-                let response_text = process_json_rpc_message(&text, &command_sender).await;
-                if let Some(reply) = response_text {
-                    if let Err(e) = write.send(Message::Text(reply.into())).await {
-                        tracing::debug!("Failed to send WebSocket reply: {:?}", e);
-                        break;
+    loop {
+        tokio::select! {
+            notif = notif_rx.recv() => {
+                match notif {
+                    Ok(text) => {
+                        if let Err(e) = write.send(Message::Text(text.into())).await {
+                            tracing::debug!("Failed to send notification: {:?}", e);
+                            break;
+                        }
                     }
+                    Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => {}
+                    Err(tokio::sync::broadcast::error::RecvError::Closed) => break,
                 }
             }
-            Message::Ping(data) => {
-                let _ = write.send(Message::Pong(data)).await;
+            msg = read.next() => {
+                let msg = match msg {
+                    Some(Ok(m)) => m,
+                    Some(Err(e)) => {
+                        tracing::debug!("WebSocket stream error: {:?}", e);
+                        break;
+                    }
+                    None => break,
+                };
+
+                match msg {
+                    Message::Text(text) => {
+                        let response_text = process_json_rpc_message(&text, &command_sender).await;
+                        if let Some(reply) = response_text {
+                            if let Err(e) = write.send(Message::Text(reply.into())).await {
+                                tracing::debug!("Failed to send WebSocket reply: {:?}", e);
+                                break;
+                            }
+                        }
+                    }
+                    Message::Ping(data) => {
+                        let _ = write.send(Message::Pong(data)).await;
+                    }
+                    Message::Close(_) => {
+                        break;
+                    }
+                    _ => {}
+                }
             }
-            Message::Close(_) => {
-                break;
-            }
-            _ => {}
         }
     }
 

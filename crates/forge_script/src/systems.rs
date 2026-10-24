@@ -20,10 +20,12 @@ unsafe impl Sync for ThreadSafeRuntime {}
 /// Resource storing the ScriptRuntime and compiled script cache.
 #[derive(Resource)]
 pub struct ScriptServer {
-    pub runtime: ThreadSafeRuntime,
-    pub exec_context: ScriptExecutionContext,
     pub loaded_scripts: HashMap<String, LoadedScript>,
+    pub exec_context: ScriptExecutionContext,
+    pub runtime: ThreadSafeRuntime,
     pub initialized_entities: HashSet<Entity>,
+    pub script_mtimes: HashMap<String, std::time::SystemTime>,
+    pub entity_script_states: HashMap<Entity, serde_json::Value>,
 }
 
 impl ScriptServer {
@@ -34,10 +36,12 @@ impl ScriptServer {
         bind_forge_api(runtime.context(), exec_context.clone())?;
 
         Ok(Self {
-            runtime: ThreadSafeRuntime(Arc::new(Mutex::new(runtime))),
-            exec_context,
             loaded_scripts: HashMap::new(),
+            exec_context,
+            runtime: ThreadSafeRuntime(Arc::new(Mutex::new(runtime))),
             initialized_entities: HashSet::new(),
+            script_mtimes: HashMap::new(),
+            entity_script_states: HashMap::new(),
         })
     }
 
@@ -58,6 +62,12 @@ impl ScriptServer {
                     column: None,
                 })?;
 
+            if let Ok(meta) = std::fs::metadata(script_path) {
+                if let Ok(mtime) = meta.modified() {
+                    self.script_mtimes.insert(script_path.to_string(), mtime);
+                }
+            }
+
             let loaded = {
                 let mut rt = self.runtime.0.lock().unwrap();
                 rt.load_typescript_module(script_path, &source_ts)?
@@ -66,6 +76,186 @@ impl ScriptServer {
         }
 
         Ok(self.loaded_scripts.get(script_path).unwrap())
+    }
+
+    /// Checks if any loaded scripts have been modified on disk, recompiling and reloading them.
+    /// If serialize() and deserialize(state) are exported, state is preserved across the reload.
+    /// A syntax error keeps the previous working version running and reports the error.
+    pub fn check_and_reload_scripts(
+        &mut self,
+        entities: &[(Entity, String, String)], // (Entity, entity_id, script_path)
+    ) -> Vec<ScriptExecutionError> {
+        let mut errors = Vec::new();
+        let paths: Vec<String> = self.loaded_scripts.keys().cloned().collect();
+
+        for script_path in paths {
+            let mtime = match std::fs::metadata(&script_path).and_then(|m| m.modified()) {
+                Ok(t) => t,
+                Err(_) => continue,
+            };
+
+            let last_mtime = self.script_mtimes.get(&script_path).copied();
+            if last_mtime.is_some() && last_mtime == Some(mtime) {
+                continue;
+            }
+
+            let source_ts = match std::fs::read_to_string(&script_path) {
+                Ok(s) => s,
+                Err(e) => {
+                    errors.push(ScriptExecutionError {
+                        entity_id: String::new(),
+                        script_path: script_path.clone(),
+                        message: format!(
+                            "Failed to read modified script file {}: {}",
+                            script_path, e
+                        ),
+                        stack: None,
+                        file: Some(script_path.clone()),
+                        line: None,
+                        column: None,
+                    });
+                    continue;
+                }
+            };
+
+            let old_loaded = self.loaded_scripts.get(&script_path).cloned();
+
+            // Find all entities running this script and serialize state from old version if supported
+            for (entity, id_str, path) in entities {
+                if path != &script_path {
+                    continue;
+                }
+
+                self.exec_context.set_current_entity(id_str);
+
+                // If old module had serialize, serialize its state
+                let state_val: Option<serde_json::Value> = if let Some(ref old) = old_loaded {
+                    if old.has_serialize {
+                        let rt = self.runtime.0.lock().unwrap();
+                        let serialized = rt.context().with(|ctx| -> Option<serde_json::Value> {
+                            let ns: rquickjs::Object = old.namespace.clone().restore(&ctx).ok()?;
+                            let func: rquickjs::Function = ns.get("serialize").ok()?;
+                            let val: rquickjs::Value = func.call(()).ok()?;
+                            let opt_str: Option<rquickjs::String> =
+                                ctx.json_stringify(val).ok().flatten();
+                            let s = opt_str?;
+                            let json_str: String = s.to_string().ok()?;
+                            serde_json::from_str(&json_str).ok()
+                        });
+                        serialized
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                };
+
+                // Store or transfer state
+                if let Some(state) = state_val {
+                    self.entity_script_states.insert(*entity, state);
+                }
+            }
+
+            // Attempt to load & compile the new version
+            let new_loaded = {
+                let mut rt = self.runtime.0.lock().unwrap();
+                rt.load_typescript_module(&script_path, &source_ts)
+            };
+
+            let new_loaded = match new_loaded {
+                Ok(l) => l,
+                Err(e) => {
+                    // Syntax or compilation error: keep previous working version running and report error
+                    let frame = self
+                        .exec_context
+                        .frame_count
+                        .load(std::sync::atomic::Ordering::Relaxed);
+                    self.exec_context.log_buffer.push(
+                        "error",
+                        &format!("Hot reload syntax error in {}: {}", script_path, e.message),
+                        Some(script_path.clone()),
+                        frame,
+                    );
+                    errors.push(e);
+                    continue;
+                }
+            };
+
+            // Script successfully compiled! Update last modified time
+            self.script_mtimes.insert(script_path.clone(), mtime);
+            // Swap loaded script in cache
+            self.loaded_scripts
+                .insert(script_path.clone(), new_loaded.clone());
+
+            // Post-reload: call deserialize(state) or onStart()
+            for (entity, id_str, path) in entities {
+                if path != &script_path {
+                    continue;
+                }
+
+                self.exec_context.set_current_entity(id_str);
+
+                if new_loaded.has_deserialize {
+                    if let Some(state) = self.entity_script_states.get(entity) {
+                        let rt = self.runtime.0.lock().unwrap();
+                        let state_json = state.to_string();
+                        let _ = rt
+                            .context()
+                            .with(|ctx| -> Result<(), ScriptExecutionError> {
+                                let ns: rquickjs::Object =
+                                    new_loaded.namespace.clone().restore(&ctx).map_err(|e| {
+                                        rt.format_quickjs_error(
+                                            ctx.clone(),
+                                            &new_loaded.script_path,
+                                            id_str,
+                                            &new_loaded.source_mapper,
+                                            e,
+                                        )
+                                    })?;
+                                let func: rquickjs::Function =
+                                    ns.get("deserialize").map_err(|e| {
+                                        rt.format_quickjs_error(
+                                            ctx.clone(),
+                                            &new_loaded.script_path,
+                                            id_str,
+                                            &new_loaded.source_mapper,
+                                            e,
+                                        )
+                                    })?;
+                                let parsed: rquickjs::Value =
+                                    ctx.json_parse(state_json).map_err(|e| {
+                                        rt.format_quickjs_error(
+                                            ctx.clone(),
+                                            &new_loaded.script_path,
+                                            id_str,
+                                            &new_loaded.source_mapper,
+                                            e,
+                                        )
+                                    })?;
+                                let _ = func.call::<_, ()>((parsed,));
+                                Ok(())
+                            });
+                    }
+                } else if new_loaded.has_on_start {
+                    // Restart script instance by calling onStart
+                    let mut rt = self.runtime.0.lock().unwrap();
+                    let _ = rt.invoke_function::<(), ()>(id_str, &new_loaded, "onStart", ());
+                }
+            }
+
+            let frame = self
+                .exec_context
+                .frame_count
+                .load(std::sync::atomic::Ordering::Relaxed);
+            self.exec_context.log_buffer.push(
+                "info",
+                &format!("Hot reloaded script: {}", script_path),
+                Some(script_path.clone()),
+                frame,
+            );
+        }
+
+        errors
     }
 }
 
@@ -211,6 +401,26 @@ pub fn script_update_system(
     mut query: Query<(Entity, Option<&EntityId>, &mut Script)>,
 ) {
     let Some(ref mut server) = server else { return };
+
+    // Check for hot reloading modified scripts on disk
+    let active_entities: Vec<(Entity, String, String)> = query
+        .iter()
+        .filter(|(_, _, s)| s.enabled)
+        .map(|(e, id, s)| {
+            let id_str = id
+                .map(|i| i.0.clone())
+                .unwrap_or_else(|| format!("{:?}", e));
+            (e, id_str, s.path.clone())
+        })
+        .collect();
+
+    let reload_errors = server.check_and_reload_scripts(&active_entities);
+    for err in reload_errors {
+        if let Some(ref mut bus) = event_bus {
+            bus.send(err.to_event());
+        }
+    }
+
     let dt = time.map(|t| t.delta_seconds).unwrap_or(0.016);
     let mut to_run = Vec::new();
     let mut to_disable = Vec::new();
@@ -369,5 +579,11 @@ pub fn script_apply_commands_system(
             }
             _ => {}
         }
+    }
+}
+
+impl Drop for ScriptServer {
+    fn drop(&mut self) {
+        self.loaded_scripts.clear();
     }
 }

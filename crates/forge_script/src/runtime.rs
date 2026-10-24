@@ -3,7 +3,7 @@
 use crate::error::ScriptExecutionError;
 use crate::sourcemap::ScriptSourceMapper;
 use crate::transpiler::transpile_typescript;
-use rquickjs::{Context, Function, Module, Runtime};
+use rquickjs::{Context, Function, Module, Object, Persistent, Runtime};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -33,6 +33,7 @@ pub struct LoadedScript {
     pub source_mapper: ScriptSourceMapper,
     pub module_name: String,
     pub transpiled_code: String,
+    pub namespace: Persistent<Object<'static>>,
     pub has_on_start: bool,
     pub has_on_update: bool,
     pub has_on_fixed_update: bool,
@@ -40,7 +41,13 @@ pub struct LoadedScript {
     pub has_on_collision_exit: bool,
     pub has_on_trigger_enter: bool,
     pub has_on_destroy: bool,
+    pub has_serialize: bool,
+    pub has_deserialize: bool,
 }
+
+// SAFETY: LoadedScript's persistent namespace is only accessed within a locked ScriptRuntime context.
+unsafe impl Send for LoadedScript {}
+unsafe impl Sync for LoadedScript {}
 
 /// Execution controller for interrupting scripts that run past frame time limits.
 #[derive(Clone)]
@@ -149,10 +156,14 @@ impl ScriptRuntime {
                 column: None,
             })?;
 
+        static SCRIPT_RELOAD_COUNTER: std::sync::atomic::AtomicU64 =
+            std::sync::atomic::AtomicU64::new(1);
+        let version = SCRIPT_RELOAD_COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         let source_mapper = ScriptSourceMapper::new(path, transpiled.source_map_json.as_deref());
-        let module_name = path.replace('\\', "/");
+        let module_name = format!("{}_{}", path.replace('\\', "/"), version);
 
         let (
+            ns_persistent,
             has_start,
             has_update,
             has_fixed,
@@ -160,6 +171,8 @@ impl ScriptRuntime {
             has_col_exit,
             has_trig_enter,
             has_destroy,
+            has_serialize,
+            has_deserialize,
         ) = self
             .context
             .with(|ctx| -> Result<_, ScriptExecutionError> {
@@ -188,8 +201,12 @@ impl ScriptRuntime {
                 let has_col_exit = ns.get::<_, Function>("onCollisionExit").is_ok();
                 let has_trig_enter = ns.get::<_, Function>("onTriggerEnter").is_ok();
                 let has_destroy = ns.get::<_, Function>("onDestroy").is_ok();
+                let has_serialize = ns.get::<_, Function>("serialize").is_ok();
+                let has_deserialize = ns.get::<_, Function>("deserialize").is_ok();
+                let ns_persistent = Persistent::save(&ctx, ns);
 
                 Ok((
+                    ns_persistent,
                     has_start,
                     has_update,
                     has_fixed,
@@ -197,6 +214,8 @@ impl ScriptRuntime {
                     has_col_exit,
                     has_trig_enter,
                     has_destroy,
+                    has_serialize,
+                    has_deserialize,
                 ))
             })?;
 
@@ -205,6 +224,7 @@ impl ScriptRuntime {
             source_mapper,
             module_name,
             transpiled_code: transpiled.code,
+            namespace: ns_persistent,
             has_on_start: has_start,
             has_on_update: has_update,
             has_on_fixed_update: has_fixed,
@@ -212,6 +232,8 @@ impl ScriptRuntime {
             has_on_collision_exit: has_col_exit,
             has_on_trigger_enter: has_trig_enter,
             has_on_destroy: has_destroy,
+            has_serialize,
+            has_deserialize,
         })
     }
 
@@ -231,42 +253,7 @@ impl ScriptRuntime {
             .start_execution(self.config.max_duration_per_frame);
 
         let result = self.context.with(|ctx| {
-            let module = Module::declare(
-                ctx.clone(),
-                script.module_name.clone(),
-                script.transpiled_code.clone(),
-            )
-            .map_err(|e| {
-                self.format_quickjs_error(
-                    ctx.clone(),
-                    &script.script_path,
-                    entity_id,
-                    &script.source_mapper,
-                    e,
-                )
-            })?;
-
-            let (eval_module, promise) = module.eval().map_err(|e| {
-                self.format_quickjs_error(
-                    ctx.clone(),
-                    &script.script_path,
-                    entity_id,
-                    &script.source_mapper,
-                    e,
-                )
-            })?;
-
-            promise.finish::<()>().map_err(|e| {
-                self.format_quickjs_error(
-                    ctx.clone(),
-                    &script.script_path,
-                    entity_id,
-                    &script.source_mapper,
-                    e,
-                )
-            })?;
-
-            let ns = eval_module.namespace().map_err(|e| {
+            let ns: Object = script.namespace.clone().restore(&ctx).map_err(|e| {
                 self.format_quickjs_error(
                     ctx.clone(),
                     &script.script_path,

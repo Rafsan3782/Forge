@@ -59,6 +59,16 @@ enum Commands {
         #[arg(long)]
         port: Option<u16>,
     },
+
+    /// Runs TypeScript type checking on a project's scripts folder
+    Check {
+        /// Project directory containing scripts/ and tsconfig.json (defaults to current dir)
+        project: Option<String>,
+
+        /// Print diagnostics as structured JSON for autonomous agents
+        #[arg(long)]
+        json: bool,
+    },
 }
 
 #[tokio::main]
@@ -78,7 +88,37 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             headless,
             port,
         } => run_runtime(scene, headless, port),
+
+        Commands::Check { project, json } => run_check(project.as_deref(), json),
     }
+}
+
+fn run_check(
+    project_path: Option<&str>,
+    json_output: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let (success, diagnostics) =
+        forge_cli::run_typecheck(project_path).map_err(|e| format!("Typecheck error: {}", e))?;
+
+    if json_output {
+        let json_result = serde_json::to_string_pretty(&diagnostics)?;
+        println!("{}", json_result);
+    } else if diagnostics.is_empty() {
+        println!("All scripts passed TypeScript typecheck cleanly.");
+    } else {
+        for diag in &diagnostics {
+            eprintln!(
+                "{}({},{}): {} {}: {}",
+                diag.file, diag.line, diag.column, diag.severity, diag.code, diag.message
+            );
+        }
+    }
+
+    if !success {
+        std::process::exit(1);
+    }
+
+    Ok(())
 }
 
 async fn run_call(
