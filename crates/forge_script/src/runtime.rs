@@ -33,7 +33,7 @@ pub struct LoadedScript {
     pub source_mapper: ScriptSourceMapper,
     pub module_name: String,
     pub transpiled_code: String,
-    pub namespace: Persistent<Object>,
+    pub namespace: Persistent<Object<'static>>,
     pub has_on_start: bool,
     pub has_on_update: bool,
     pub has_on_fixed_update: bool,
