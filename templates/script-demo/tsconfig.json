@@ -8,5 +8,7 @@
     "skipLibCheck": true,
     "types": []
   },
-  "include": ["scripts/**/*"]
+  "include": [
+    "scripts/**/*"
+  ]
 }
