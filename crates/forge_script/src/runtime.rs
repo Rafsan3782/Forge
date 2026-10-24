@@ -45,6 +45,10 @@ pub struct LoadedScript {
     pub has_deserialize: bool,
 }
 
+// SAFETY: LoadedScript's persistent namespace is only accessed within a locked ScriptRuntime context.
+unsafe impl Send for LoadedScript {}
+unsafe impl Sync for LoadedScript {}
+
 /// Execution controller for interrupting scripts that run past frame time limits.
 #[derive(Clone)]
 pub struct InterruptController {
