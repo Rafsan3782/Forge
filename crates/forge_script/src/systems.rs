@@ -133,15 +133,7 @@ impl ScriptServer {
                     if old.has_serialize {
                         let rt = self.runtime.0.lock().unwrap();
                         let serialized = rt.context().with(|ctx| -> Option<serde_json::Value> {
-                            let module = rquickjs::Module::declare(
-                                ctx.clone(),
-                                old.module_name.clone(),
-                                old.transpiled_code.clone(),
-                            )
-                            .ok()?;
-                            let (eval_module, promise) = module.eval().ok()?;
-                            let _ = promise.finish::<()>();
-                            let ns = eval_module.namespace().ok()?;
+                            let ns: rquickjs::Object = old.namespace.clone().restore(&ctx).ok()?;
                             let func: rquickjs::Function = ns.get("serialize").ok()?;
                             let val: rquickjs::Value = func.call(()).ok()?;
                             let opt_str: Option<rquickjs::String> =
@@ -210,39 +202,16 @@ impl ScriptServer {
                         let _ = rt
                             .context()
                             .with(|ctx| -> Result<(), ScriptExecutionError> {
-                                let module = rquickjs::Module::declare(
-                                    ctx.clone(),
-                                    new_loaded.module_name.clone(),
-                                    new_loaded.transpiled_code.clone(),
-                                )
-                                .map_err(|e| {
-                                    rt.format_quickjs_error(
-                                        ctx.clone(),
-                                        &new_loaded.script_path,
-                                        id_str,
-                                        &new_loaded.source_mapper,
-                                        e,
-                                    )
-                                })?;
-                                let (eval_module, promise) = module.eval().map_err(|e| {
-                                    rt.format_quickjs_error(
-                                        ctx.clone(),
-                                        &new_loaded.script_path,
-                                        id_str,
-                                        &new_loaded.source_mapper,
-                                        e,
-                                    )
-                                })?;
-                                let _ = promise.finish::<()>();
-                                let ns = eval_module.namespace().map_err(|e| {
-                                    rt.format_quickjs_error(
-                                        ctx.clone(),
-                                        &new_loaded.script_path,
-                                        id_str,
-                                        &new_loaded.source_mapper,
-                                        e,
-                                    )
-                                })?;
+                                let ns: rquickjs::Object =
+                                    new_loaded.namespace.clone().restore(&ctx).map_err(|e| {
+                                        rt.format_quickjs_error(
+                                            ctx.clone(),
+                                            &new_loaded.script_path,
+                                            id_str,
+                                            &new_loaded.source_mapper,
+                                            e,
+                                        )
+                                    })?;
                                 let func: rquickjs::Function =
                                     ns.get("deserialize").map_err(|e| {
                                         rt.format_quickjs_error(
