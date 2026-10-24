@@ -22,6 +22,10 @@ pub enum SceneError {
         message: String,
     },
 
+    /// The specified component was not found on the entity.
+    #[error("Component not found: {0}")]
+    ComponentNotFound(String),
+
     /// The specified component name is unrecognized.
     #[error("Unknown component: {0}")]
     UnknownComponent(String),

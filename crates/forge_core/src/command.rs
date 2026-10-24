@@ -1,12 +1,11 @@
 //! Command pattern, undo/redo stack, and history for scene and tilemap edits.
 
-use crate::ecs::{Entity, World};
+use crate::ecs::World;
 use crate::error::SceneError;
 use crate::scene_ops::find_entity_by_id;
 use crate::tilemap::Tilemap;
 use forge_protocol::{
-    ComponentFieldSchema, ComponentSchema, EditGetHistoryResult, EditUndoResult, FieldEditorHint,
-    HistoryEntry,
+    ComponentFieldSchema, ComponentSchema, EditGetHistoryResult, FieldEditorHint, HistoryEntry,
 };
 use std::collections::HashMap;
 
