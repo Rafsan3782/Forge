@@ -118,37 +118,9 @@ impl ScriptServer {
                 }
             };
 
-            // Attempt to load & compile the new version
-            let new_loaded = {
-                let mut rt = self.runtime.0.lock().unwrap();
-                rt.load_typescript_module(&script_path, &source_ts)
-            };
-
-            let new_loaded = match new_loaded {
-                Ok(l) => l,
-                Err(e) => {
-                    // Syntax or compilation error: keep previous working version running and report error
-                    let frame = self
-                        .exec_context
-                        .frame_count
-                        .load(std::sync::atomic::Ordering::Relaxed);
-                    self.exec_context.log_buffer.push(
-                        "error",
-                        &format!("Hot reload syntax error in {}: {}", script_path, e.message),
-                        Some(script_path.clone()),
-                        frame,
-                    );
-                    errors.push(e);
-                    continue;
-                }
-            };
-
-            // Script successfully compiled! Update last modified time
-            self.script_mtimes.insert(script_path.clone(), mtime);
-
             let old_loaded = self.loaded_scripts.get(&script_path).cloned();
 
-            // Find all entities running this script
+            // Find all entities running this script and serialize state from old version if supported
             for (entity, id_str, path) in entities {
                 if path != &script_path {
                     continue;
@@ -192,6 +164,33 @@ impl ScriptServer {
                 }
             }
 
+            // Attempt to load & compile the new version
+            let new_loaded = {
+                let mut rt = self.runtime.0.lock().unwrap();
+                rt.load_typescript_module(&script_path, &source_ts)
+            };
+
+            let new_loaded = match new_loaded {
+                Ok(l) => l,
+                Err(e) => {
+                    // Syntax or compilation error: keep previous working version running and report error
+                    let frame = self
+                        .exec_context
+                        .frame_count
+                        .load(std::sync::atomic::Ordering::Relaxed);
+                    self.exec_context.log_buffer.push(
+                        "error",
+                        &format!("Hot reload syntax error in {}: {}", script_path, e.message),
+                        Some(script_path.clone()),
+                        frame,
+                    );
+                    errors.push(e);
+                    continue;
+                }
+            };
+
+            // Script successfully compiled! Update last modified time
+            self.script_mtimes.insert(script_path.clone(), mtime);
             // Swap loaded script in cache
             self.loaded_scripts
                 .insert(script_path.clone(), new_loaded.clone());

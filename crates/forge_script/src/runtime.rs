@@ -151,8 +151,11 @@ impl ScriptRuntime {
                 column: None,
             })?;
 
+        static SCRIPT_RELOAD_COUNTER: std::sync::atomic::AtomicU64 =
+            std::sync::atomic::AtomicU64::new(1);
+        let version = SCRIPT_RELOAD_COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         let source_mapper = ScriptSourceMapper::new(path, transpiled.source_map_json.as_deref());
-        let module_name = path.replace('\\', "/");
+        let module_name = format!("{}_{}", path.replace('\\', "/"), version);
 
         let (
             has_start,
