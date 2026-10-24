@@ -1,8 +1,6 @@
 name: CI
 
 on:
-  push:
-    branches: ["main"]
   pull_request:
     branches: ["main"]
   workflow_dispatch:
@@ -44,11 +42,15 @@ jobs:
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
               - '.github/workflows/ci.yml'
+
   rust:
     name: Rust (Check, Lint & Test)
     needs: [changes]
-    if: ${{ github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || needs.changes.outputs.rust == 'true' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.rust == 'true' }}
     runs-on: windows-latest
+    env:
+      CARGO_TERM_COLOR: always
+      RUST_BACKTRACE: 1
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -72,35 +74,28 @@ jobs:
       - name: Rust clippy lint
         run: cargo clippy --workspace -- -D warnings
 
-      - name: Rust nextest
-        run: cargo nextest run
+      - name: Rust nextest run
+        run: cargo nextest run --workspace
 
-      - name: Generate headless screenshot
-        run: cargo run -p forge_runtime -- --headless --frames 5 --screenshot hello_screenshot.png --scene templates/hello/scene.json
+      - name: Build and generate headless screenshots
+        run: |
+          cargo run -p forge_runtime -- --headless --frames 5 --screenshot hello_screenshot.png --scene templates/hello/scene.json
+          cargo run -p forge_runtime -- --headless --frames 5 --screenshot tilemap_screenshot.png --scene templates/tilemap-demo/scene.json
 
-      - name: Upload headless screenshot artifact
+      - name: Upload headless screenshots artifact
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: hello-screenshot
-          path: hello_screenshot.png
-          if-no-files-found: warn
-
-      - name: Generate tilemap headless screenshot
-        run: cargo run -p forge_runtime -- --headless --frames 5 --screenshot tilemap_screenshot.png --scene templates/tilemap-demo/scene.json
-
-      - name: Upload tilemap screenshot artifact
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: tilemap-screenshot
-          path: tilemap_screenshot.png
+          name: headless-screenshots
+          path: |
+            hello_screenshot.png
+            tilemap_screenshot.png
           if-no-files-found: warn
 
   typescript:
     name: TypeScript (Lint, Typecheck & Test)
     needs: [changes]
-    if: ${{ github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || needs.changes.outputs.typescript == 'true' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.typescript == 'true' }}
     runs-on: windows-latest
     steps:
       - name: Checkout code

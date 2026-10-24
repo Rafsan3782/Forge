@@ -1,4 +1,5 @@
 #[cfg(test)]
+#[allow(clippy::module_inception)]
 mod tests {
     use std::fs::File;
     use std::io::Write;
@@ -104,7 +105,7 @@ mod tests {
         // Play looping music sound
         let music_res = server.play("ping.wav", AudioBus::Music, 0.7, 1.0, true, 0.0);
         assert!(music_res.is_ok());
-        let music_id = music_res.unwrap();
+        let _music_id = music_res.unwrap();
         assert_eq!(server.active_sound_count(), 2);
 
         // Stop specific sound
@@ -165,7 +166,7 @@ mod tests {
         ));
 
         // Spawn entity with AudioSource
-        let source_entity = world.spawn((
+        let _source_entity = world.spawn((
             AudioSource {
                 asset: "spatial.wav".to_string(),
                 volume: 1.0,
@@ -185,7 +186,7 @@ mod tests {
         ));
 
         // Run audio_source_start_system
-        world.run_system_once(audio_source_start_system);
+        let _ = world.run_system_once(audio_source_start_system);
 
         let count = world
             .get_resource::<AudioServer>()
@@ -194,7 +195,7 @@ mod tests {
         assert_eq!(count, 1);
 
         // Run audio_spatial_update_system
-        world.run_system_once(audio_spatial_update_system);
+        let _ = world.run_system_once(audio_spatial_update_system);
 
         let count_after = world
             .get_resource::<AudioServer>()

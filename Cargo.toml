@@ -17,3 +17,11 @@ members = [
 exclude = [
     "apps/studio/src-tauri",
 ]
+
+[profile.dev]
+# Faster linking and reduced IO by writing line tables only
+debug = 1
+
+[profile.test]
+debug = 1
+
