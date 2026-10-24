@@ -17,7 +17,7 @@ import {
 import { useSceneStore } from "../../stores/sceneStore";
 import { useEditStore } from "../../stores/editStore";
 import { useRuntimeStore } from "../../stores/runtimeStore";
-import type { ComponentSchema, ComponentFieldSchema } from "@forge/protocol";
+import type { ComponentFieldSchema } from "@forge/protocol";
 
 // Drag-to-scrub number input component
 export const ScrubbableNumberInput: React.FC<{
@@ -110,7 +110,7 @@ export const ScrubbableNumberInput: React.FC<{
 
 export const InspectorPanel: React.FC = () => {
   const { selectedEntity, fetchSceneTree } = useSceneStore();
-  const { componentSchemas, fetchComponentSchemas, saveScene } = useEditStore();
+  const { componentSchemas, fetchComponentSchemas } = useEditStore();
   const { bridgeClient } = useRuntimeStore();
 
   const [expandedComponents, setExpandedComponents] = useState<Record<string, boolean>>({});

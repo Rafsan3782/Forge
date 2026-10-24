@@ -10,7 +10,7 @@ interface TitleBarProps {
 export const TitleBar: React.FC<TitleBarProps> = ({ projectName = "templates/hello" }) => {
   const [isMaximized, setIsMaximized] = useState(false);
   const openCommandPalette = useCommandStore((s) => s.open);
-  const { isDirty, saveScene } = useEditStore();
+  const { isDirty } = useEditStore();
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -132,6 +132,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({ projectName = "templates/hel
       </div>
 
       {/* Center: Project Name & Quick Search */}
+      <div data-tauri-drag-region className="flex items-center gap-2 pointer-events-auto">
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#121418] border border-[#23262D] text-[#8B919C] text-xs">
           <span className="text-[#E8EAED] font-medium">{projectName}</span>
           <span className="text-[#23262D]">/</span>
