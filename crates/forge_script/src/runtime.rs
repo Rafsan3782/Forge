@@ -3,7 +3,7 @@
 use crate::error::ScriptExecutionError;
 use crate::sourcemap::ScriptSourceMapper;
 use crate::transpiler::transpile_typescript;
-use rquickjs::{Context, Function, Module, Object, Runtime};
+use rquickjs::{Context, Function, Module, Runtime};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
