@@ -1,8 +1,6 @@
 name: CI
 
 on:
-  push:
-    branches: ["main"]
   pull_request:
     branches: ["main"]
   workflow_dispatch:
@@ -44,11 +42,15 @@ jobs:
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
               - '.github/workflows/ci.yml'
+
   rust:
     name: Rust (Check, Lint & Test)
     needs: [changes]
-    if: ${{ github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || needs.changes.outputs.rust == 'true' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.rust == 'true' }}
     runs-on: windows-latest
+    env:
+      CARGO_TERM_COLOR: always
+      RUST_BACKTRACE: 1
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -70,10 +72,10 @@ jobs:
         run: cargo fmt --check
 
       - name: Rust clippy lint
-        run: cargo clippy --workspace -- -D warnings
+        run: cargo clippy --workspace --all-targets -- -D warnings
 
-      - name: Rust nextest
-        run: cargo nextest run
+      - name: Rust nextest run
+        run: cargo nextest run --workspace --all-targets
 
       - name: Generate headless screenshot
         run: cargo run -p forge_runtime -- --headless --frames 5 --screenshot hello_screenshot.png --scene templates/hello/scene.json
@@ -100,7 +102,7 @@ jobs:
   typescript:
     name: TypeScript (Lint, Typecheck & Test)
     needs: [changes]
-    if: ${{ github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || needs.changes.outputs.typescript == 'true' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.typescript == 'true' }}
     runs-on: windows-latest
     steps:
       - name: Checkout code
