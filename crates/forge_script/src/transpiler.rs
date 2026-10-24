@@ -33,13 +33,16 @@ pub fn transpile_typescript(filename: &str, source_code: &str) -> Result<Transpi
         swc_ecma_parser::TsSyntax::default(),
     ));
 
-    match compiler.process_js_file(fm, &handler, &options) {
-        Ok(output) => Ok(TranspiledScript {
-            code: output.code,
-            source_map_json: output.map,
-        }),
-        Err(err) => Err(format!("SWC transpilation error in {}: {}", filename, err)),
-    }
+    let globals = swc_common::Globals::new();
+    swc_common::GLOBALS.set(&globals, || {
+        match compiler.process_js_file(fm, &handler, &options) {
+            Ok(output) => Ok(TranspiledScript {
+                code: output.code,
+                source_map_json: output.map,
+            }),
+            Err(err) => Err(format!("SWC transpilation error in {}: {}", filename, err)),
+        }
+    })
 }
 
 #[cfg(test)]
