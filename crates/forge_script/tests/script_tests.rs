@@ -34,6 +34,8 @@ fn test_lifecycle_order_and_ecs_mutation() {
     "#;
 
     let mut runtime = ScriptRuntime::new(SandboxConfig::default()).expect("runtime init");
+    let exec_context = forge_script::ScriptExecutionContext::new();
+    forge_script::bind_forge_api(runtime.context(), exec_context).expect("bind api");
     let loaded = runtime
         .load_typescript_module("lifecycle.ts", script_source)
         .expect("load module");
