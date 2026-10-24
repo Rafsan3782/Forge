@@ -172,10 +172,10 @@ impl ScriptServer {
                             let ns = eval_module.namespace().ok()?;
                             let func: rquickjs::Function = ns.get("serialize").ok()?;
                             let val: rquickjs::Value = func.call(()).ok()?;
-                            let json_str: String = ctx
-                                .json_stringify(val)
-                                .ok()?
-                                .and_then(|s| s?.to_string().ok())?;
+                            let opt_str: Option<rquickjs::String> =
+                                ctx.json_stringify(val).ok().flatten();
+                            let s = opt_str?;
+                            let json_str: String = s.to_string().ok()?;
                             serde_json::from_str(&json_str).ok()
                         });
                         serialized
