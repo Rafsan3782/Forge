@@ -21,7 +21,10 @@ exclude = [
 [profile.dev]
 # Faster linking and reduced IO by writing line tables only
 debug = 1
+codegen-units = 16
 
 [profile.test]
 debug = 1
+codegen-units = 16
+
 

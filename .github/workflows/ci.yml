@@ -1,6 +1,8 @@
 name: CI
 
 on:
+  push:
+    branches: ["main"]
   pull_request:
     branches: ["main"]
   workflow_dispatch:
@@ -46,11 +48,12 @@ jobs:
   rust:
     name: Rust (Check, Lint & Test)
     needs: [changes]
-    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.rust == 'true' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || needs.changes.outputs.rust == 'true' }}
     runs-on: windows-latest
     env:
       CARGO_TERM_COLOR: always
       RUST_BACKTRACE: 1
+      RUSTFLAGS: "-C link-arg=-fuse-ld=lld"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -95,7 +98,7 @@ jobs:
   typescript:
     name: TypeScript (Lint, Typecheck & Test)
     needs: [changes]
-    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.typescript == 'true' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || needs.changes.outputs.typescript == 'true' }}
     runs-on: windows-latest
     steps:
       - name: Checkout code
