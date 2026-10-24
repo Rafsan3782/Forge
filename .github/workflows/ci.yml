@@ -60,9 +60,18 @@ jobs:
 
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
 
-      - name: Install cargo-nextest
-        uses: taiki-e/install-action@nextest
+      - name: Install sccache and cargo-nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: sccache,cargo-nextest
+
+      - name: Configure sccache
+        run: |
+          echo "RUSTC_WRAPPER=sccache" >> $env:GITHUB_ENV
+          echo "SCCACHE_GHA_ENABLED=true" >> $env:GITHUB_ENV
 
       - name: Rust format check
         run: cargo fmt --check

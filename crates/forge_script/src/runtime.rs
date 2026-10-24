@@ -32,6 +32,7 @@ pub struct LoadedScript {
     pub script_path: String,
     pub source_mapper: ScriptSourceMapper,
     pub module_name: String,
+    pub transpiled_code: String,
     pub has_on_start: bool,
     pub has_on_update: bool,
     pub has_on_fixed_update: bool,
@@ -195,6 +196,7 @@ impl ScriptRuntime {
             script_path: path.to_string(),
             source_mapper,
             module_name,
+            transpiled_code: transpiled.code,
             has_on_start: has_start,
             has_on_update: has_update,
             has_on_fixed_update: has_fixed,
@@ -221,16 +223,20 @@ impl ScriptRuntime {
             .start_execution(self.config.max_duration_per_frame);
 
         let result = self.context.with(|ctx| {
-            let module =
-                Module::evaluate(ctx.clone(), script.module_name.clone(), "").map_err(|e| {
-                    self.format_quickjs_error(
-                        ctx.clone(),
-                        &script.script_path,
-                        entity_id,
-                        &script.source_mapper,
-                        e,
-                    )
-                })?;
+            let module = Module::evaluate(
+                ctx.clone(),
+                script.module_name.clone(),
+                script.transpiled_code.clone(),
+            )
+            .map_err(|e| {
+                self.format_quickjs_error(
+                    ctx.clone(),
+                    &script.script_path,
+                    entity_id,
+                    &script.source_mapper,
+                    e,
+                )
+            })?;
 
             let exports = module.finish::<Object>().map_err(|e| {
                 self.format_quickjs_error(
