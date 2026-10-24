@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/script.ops.json",
+  "title": "ScriptOps",
+  "description": "Script filesystem inspection and authoring tools",
+  "definitions": {
+    "ScriptListParams": {
+      "type": "object",
+      "properties": {
+        "project_path": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "ScriptListResult": {
+      "type": "object",
+      "required": ["scripts"],
+      "properties": {
+        "scripts": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "ScriptReadParams": {
+      "type": "object",
+      "required": ["path"],
+      "properties": {
+        "path": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "ScriptReadResult": {
+      "type": "object",
+      "required": ["path", "content"],
+      "properties": {
+        "path": { "type": "string" },
+        "content": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "ScriptWriteParams": {
+      "type": "object",
+      "required": ["path", "content"],
+      "properties": {
+        "path": { "type": "string" },
+        "content": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "ScriptWriteResult": {
+      "type": "object",
+      "required": ["success"],
+      "properties": {
+        "success": { "type": "boolean" },
+        "diagnostics": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -150,3 +150,38 @@ fn test_playtest_report() {
     assert_eq!(report.user_notes.len(), 1);
     assert_eq!(report.severity, PlaytestSeverity::Medium);
 }
+
+#[test]
+fn test_script_tools_fixtures() {
+    let check_params: ScriptCheckParams = roundtrip("script_check_params.json");
+    assert_eq!(
+        check_params.project_path,
+        Some("templates/script-demo".to_string())
+    );
+
+    let check_result: ScriptCheckResult = roundtrip("script_check_result.json");
+    assert!(check_result.success);
+    assert_eq!(check_result.diagnostics.len(), 1);
+    assert_eq!(check_result.diagnostics[0].code, "TS2322");
+
+    let list_params: ScriptListParams = roundtrip("script_list_params.json");
+    assert_eq!(
+        list_params.project_path,
+        Some("templates/script-demo".to_string())
+    );
+
+    let list_result: ScriptListResult = roundtrip("script_list_result.json");
+    assert_eq!(list_result.scripts.len(), 2);
+
+    let read_params: ScriptReadParams = roundtrip("script_read_params.json");
+    assert_eq!(read_params.path, "scripts/player.ts");
+
+    let read_result: ScriptReadResult = roundtrip("script_read_result.json");
+    assert_eq!(read_result.path, "scripts/player.ts");
+
+    let write_params: ScriptWriteParams = roundtrip("script_write_params.json");
+    assert_eq!(write_params.path, "scripts/player.ts");
+
+    let write_result: ScriptWriteResult = roundtrip("script_write_result.json");
+    assert!(write_result.success);
+}

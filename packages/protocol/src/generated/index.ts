@@ -506,6 +506,76 @@ export const ScriptRaycastHitSchema = z.object({
 });
 export type ScriptRaycastHit = z.infer<typeof ScriptRaycastHitSchema>;
 
+export const ScriptDiagnosticSchema = z.object({
+  file: z.string(),
+  line: z.number().int(),
+  column: z.number().int(),
+  code: z.string(),
+  message: z.string(),
+  severity: z.enum(["error", "warning", "info"]),
+});
+export type ScriptDiagnostic = z.infer<typeof ScriptDiagnosticSchema>;
+
+export const ScriptCheckParamsSchema = z.object({
+  project_path: z.string().optional(),
+});
+export type ScriptCheckParams = z.infer<typeof ScriptCheckParamsSchema>;
+
+export const ScriptCheckResultSchema = z.object({
+  success: z.boolean(),
+  diagnostics: z.array(ScriptDiagnosticSchema),
+});
+export type ScriptCheckResult = z.infer<typeof ScriptCheckResultSchema>;
+
+export const ScriptListParamsSchema = z.object({
+  project_path: z.string().optional(),
+});
+export type ScriptListParams = z.infer<typeof ScriptListParamsSchema>;
+
+export const ScriptListResultSchema = z.object({
+  scripts: z.array(z.string()),
+});
+export type ScriptListResult = z.infer<typeof ScriptListResultSchema>;
+
+export const ScriptReadParamsSchema = z.object({
+  path: z.string(),
+});
+export type ScriptReadParams = z.infer<typeof ScriptReadParamsSchema>;
+
+export const ScriptReadResultSchema = z.object({
+  path: z.string(),
+  content: z.string(),
+});
+export type ScriptReadResult = z.infer<typeof ScriptReadResultSchema>;
+
+export const ScriptWriteParamsSchema = z.object({
+  path: z.string(),
+  content: z.string(),
+});
+export type ScriptWriteParams = z.infer<typeof ScriptWriteParamsSchema>;
+
+export const ScriptWriteResultSchema = z.object({
+  success: z.boolean(),
+  diagnostics: z.array(z.string()).optional(),
+});
+export type ScriptWriteResult = z.infer<typeof ScriptWriteResultSchema>;
+
+export const GameLogNotificationSchema = z.object({
+  level: z.enum(["trace", "debug", "info", "warn", "error"]),
+  message: z.string(),
+  source_location: z.string().optional(),
+  frame: z.number().int(),
+});
+export type GameLogNotification = z.infer<typeof GameLogNotificationSchema>;
+
+export const GameErrorNotificationSchema = z.object({
+  level: z.literal("error"),
+  message: z.string(),
+  source_location: z.string().optional(),
+  frame: z.number().int(),
+});
+export type GameErrorNotification = z.infer<typeof GameErrorNotificationSchema>;
+
 /**
  * Global Forge scripting API contract exposed to quickjs scripts.
  */

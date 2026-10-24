@@ -63,6 +63,18 @@ jobs:
         with:
           components: rustfmt, clippy
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install pnpm dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
         with:
