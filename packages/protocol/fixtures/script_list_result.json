@@ -1,3 +1,6 @@
 {
-  "scripts": ["templates/script-demo/scripts/player.ts", "templates/script-demo/scripts/coin_spawner.ts"]
+  "scripts": [
+    "templates/script-demo/scripts/player.ts",
+    "templates/script-demo/scripts/coin_spawner.ts"
+  ]
 }

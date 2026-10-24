@@ -576,6 +576,155 @@ export const GameErrorNotificationSchema = z.object({
 });
 export type GameErrorNotification = z.infer<typeof GameErrorNotificationSchema>;
 
+// -----------------------------------------------------------------------------
+// edit.undo / edit.redo / edit.get_history / edit.jump_history
+// -----------------------------------------------------------------------------
+
+export const EditUndoParamsSchema = z.object({});
+export type EditUndoParams = z.infer<typeof EditUndoParamsSchema>;
+
+export const EditUndoResultSchema = z.object({
+  success: z.boolean(),
+  undone_command: z.string().nullable().optional(),
+  can_undo: z.boolean(),
+  can_redo: z.boolean(),
+});
+export type EditUndoResult = z.infer<typeof EditUndoResultSchema>;
+
+export const EditRedoParamsSchema = z.object({});
+export type EditRedoParams = z.infer<typeof EditRedoParamsSchema>;
+
+export const EditRedoResultSchema = z.object({
+  success: z.boolean(),
+  redone_command: z.string().nullable().optional(),
+  can_undo: z.boolean(),
+  can_redo: z.boolean(),
+});
+export type EditRedoResult = z.infer<typeof EditRedoResultSchema>;
+
+export const HistoryEntrySchema = z.object({
+  id: z.string(),
+  description: z.string(),
+  author: z.enum(["user", "agent"]),
+  timestamp: z.number(),
+});
+export type HistoryEntry = z.infer<typeof HistoryEntrySchema>;
+
+export const EditGetHistoryParamsSchema = z.object({});
+export type EditGetHistoryParams = z.infer<typeof EditGetHistoryParamsSchema>;
+
+export const EditGetHistoryResultSchema = z.object({
+  undo_stack: z.array(HistoryEntrySchema),
+  redo_stack: z.array(HistoryEntrySchema),
+  can_undo: z.boolean(),
+  can_redo: z.boolean(),
+});
+export type EditGetHistoryResult = z.infer<typeof EditGetHistoryResultSchema>;
+
+export const EditJumpHistoryParamsSchema = z.object({
+  target_id: z.string(),
+});
+export type EditJumpHistoryParams = z.infer<typeof EditJumpHistoryParamsSchema>;
+
+export const EditJumpHistoryResultSchema = z.object({
+  success: z.boolean(),
+  can_undo: z.boolean(),
+  can_redo: z.boolean(),
+});
+export type EditJumpHistoryResult = z.infer<typeof EditJumpHistoryResultSchema>;
+
+// -----------------------------------------------------------------------------
+// scene.get_component_schemas / scene.save / scene.get_dirty / scene operations
+// -----------------------------------------------------------------------------
+
+export const FieldEditorHintSchema = z.object({
+  widget: z.enum(["number", "vector2", "bool", "enum", "color", "text", "asset"]),
+  min: z.number().nullable().optional(),
+  max: z.number().nullable().optional(),
+  step: z.number().nullable().optional(),
+  asset_type: z.string().nullable().optional(),
+  options: z.array(z.string()).nullable().optional(),
+});
+export type FieldEditorHint = z.infer<typeof FieldEditorHintSchema>;
+
+export const ComponentFieldSchemaSchema = z.object({
+  name: z.string(),
+  field_type: z.string(),
+  default_value: z.unknown().optional(),
+  hint: FieldEditorHintSchema.optional(),
+});
+export type ComponentFieldSchema = z.infer<typeof ComponentFieldSchemaSchema>;
+
+export const ComponentSchemaSchema = z.object({
+  name: z.string(),
+  display_name: z.string().optional(),
+  category: z.string().optional(),
+  fields: z.array(ComponentFieldSchemaSchema),
+});
+export type ComponentSchema = z.infer<typeof ComponentSchemaSchema>;
+
+export const SceneGetComponentSchemasParamsSchema = z.object({});
+export type SceneGetComponentSchemasParams = z.infer<typeof SceneGetComponentSchemasParamsSchema>;
+
+export const SceneGetComponentSchemasResultSchema = z.object({
+  schemas: z.array(ComponentSchemaSchema),
+});
+export type SceneGetComponentSchemasResult = z.infer<typeof SceneGetComponentSchemasResultSchema>;
+
+export const SceneSaveParamsSchema = z.object({
+  path: z.string().nullable().optional(),
+});
+export type SceneSaveParams = z.infer<typeof SceneSaveParamsSchema>;
+
+export const SceneSaveResultSchema = z.object({
+  success: z.boolean(),
+  path: z.string(),
+});
+export type SceneSaveResult = z.infer<typeof SceneSaveResultSchema>;
+
+export const SceneGetDirtyParamsSchema = z.object({});
+export type SceneGetDirtyParams = z.infer<typeof SceneGetDirtyParamsSchema>;
+
+export const SceneGetDirtyResultSchema = z.object({
+  is_dirty: z.boolean(),
+  undo_count: z.number().optional(),
+  current_scene_path: z.string().nullable().optional(),
+});
+export type SceneGetDirtyResult = z.infer<typeof SceneGetDirtyResultSchema>;
+
+export const SceneReparentEntityParamsSchema = z.object({
+  entity_id: z.string(),
+  new_parent_id: z.string().nullable().optional(),
+});
+export type SceneReparentEntityParams = z.infer<typeof SceneReparentEntityParamsSchema>;
+
+export const SceneReparentEntityResultSchema = z.object({
+  success: z.boolean(),
+});
+export type SceneReparentEntityResult = z.infer<typeof SceneReparentEntityResultSchema>;
+
+export const SceneDuplicateEntityParamsSchema = z.object({
+  entity_id: z.string(),
+});
+export type SceneDuplicateEntityParams = z.infer<typeof SceneDuplicateEntityParamsSchema>;
+
+export const SceneDuplicateEntityResultSchema = z.object({
+  success: z.boolean(),
+  new_entity_id: z.string(),
+});
+export type SceneDuplicateEntityResult = z.infer<typeof SceneDuplicateEntityResultSchema>;
+
+export const SceneRemoveComponentParamsSchema = z.object({
+  entity_id: z.string(),
+  component_name: z.string(),
+});
+export type SceneRemoveComponentParams = z.infer<typeof SceneRemoveComponentParamsSchema>;
+
+export const SceneRemoveComponentResultSchema = z.object({
+  success: z.boolean(),
+});
+export type SceneRemoveComponentResult = z.infer<typeof SceneRemoveComponentResultSchema>;
+
 /**
  * Global Forge scripting API contract exposed to quickjs scripts.
  */

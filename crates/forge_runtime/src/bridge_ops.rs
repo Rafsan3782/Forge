@@ -237,6 +237,125 @@ pub fn process_bridge_commands(
                     }
                 }
             }
+
+            BridgeCommand::EditUndo {
+                params: _,
+                responder,
+            } => {
+                let res =
+                    if let Some(mut stack) = world.get_resource_mut::<forge_core::CommandStack>() {
+                        let desc = stack.undo(world).map_err(|e| e.to_string())?;
+                        let can_undo = stack.get_history().can_undo;
+                        let can_redo = stack.get_history().can_redo;
+                        Ok(forge_protocol::EditUndoResult {
+                            success: true,
+                            undone_command: desc,
+                            can_undo,
+                            can_redo,
+                        })
+                    } else {
+                        Err("CommandStack resource not found in world".to_string())
+                    };
+                let _ = responder.send(res);
+            }
+
+            BridgeCommand::EditRedo {
+                params: _,
+                responder,
+            } => {
+                let res =
+                    if let Some(mut stack) = world.get_resource_mut::<forge_core::CommandStack>() {
+                        let desc = stack.redo(world).map_err(|e| e.to_string())?;
+                        let can_undo = stack.get_history().can_undo;
+                        let can_redo = stack.get_history().can_redo;
+                        Ok(forge_protocol::EditRedoResult {
+                            success: true,
+                            redone_command: desc,
+                            can_undo,
+                            can_redo,
+                        })
+                    } else {
+                        Err("CommandStack resource not found in world".to_string())
+                    };
+                let _ = responder.send(res);
+            }
+
+            BridgeCommand::EditGetHistory {
+                params: _,
+                responder,
+            } => {
+                let res = if let Some(stack) = world.get_resource::<forge_core::CommandStack>() {
+                    Ok(stack.get_history())
+                } else {
+                    Err("CommandStack resource not found in world".to_string())
+                };
+                let _ = responder.send(res);
+            }
+
+            BridgeCommand::EditJumpHistory { params, responder } => {
+                let res =
+                    if let Some(mut stack) = world.get_resource_mut::<forge_core::CommandStack>() {
+                        let success = stack
+                            .jump_to(world, &params.target_id)
+                            .map_err(|e| e.to_string())?;
+                        let can_undo = stack.get_history().can_undo;
+                        let can_redo = stack.get_history().can_redo;
+                        Ok(forge_protocol::EditJumpHistoryResult {
+                            success,
+                            can_undo,
+                            can_redo,
+                        })
+                    } else {
+                        Err("CommandStack resource not found in world".to_string())
+                    };
+                let _ = responder.send(res);
+            }
+
+            BridgeCommand::SceneGetComponentSchemas {
+                params: _,
+                responder,
+            } => {
+                let schemas = forge_core::get_builtin_component_schemas();
+                let _ = responder.send(Ok(forge_protocol::SceneGetComponentSchemasResult {
+                    schemas,
+                }));
+            }
+
+            BridgeCommand::SceneSave { params, responder } => {
+                let res = handle_scene_save(world, &params);
+                let _ = responder.send(res);
+            }
+
+            BridgeCommand::SceneGetDirty {
+                params: _,
+                responder,
+            } => {
+                let (dirty, scene_path) =
+                    if let Some(stack) = world.get_resource::<forge_core::CommandStack>() {
+                        (stack.is_dirty(), stack.current_scene_path.clone())
+                    } else {
+                        (false, None)
+                    };
+                let _ = responder.send(Ok(forge_protocol::SceneGetDirtyResult {
+                    dirty,
+                    scene_path,
+                }));
+            }
+
+            BridgeCommand::SceneReparentEntity { params, responder } => {
+                let res = handle_scene_reparent(world, &params);
+                let _ = responder.send(res);
+            }
+
+            BridgeCommand::SceneDuplicateEntity { params, responder } => {
+                let res = handle_scene_duplicate(world, &params);
+                let _ = responder.send(res);
+            }
+
+            BridgeCommand::SceneRemoveComponent { params, responder } => {
+                let res = handle_scene_remove_component(world, &params);
+                let _ = responder.send(res);
+            }
         }
     }
 }
@@ -773,4 +892,212 @@ fn handle_audio_set_bus_volume(
         bus: params.bus.clone(),
         volume: params.volume,
     })
+}
+
+fn handle_scene_save(
+    world: &mut World,
+    params: &forge_protocol::SceneSaveParams,
+) -> Result<forge_protocol::SceneSaveResult, String> {
+    let save_path = if let Some(ref p) = params.path {
+        p.clone()
+    } else if let Some(stack) = world.get_resource::<forge_core::CommandStack>() {
+        stack
+            .current_scene_path
+            .clone()
+            .unwrap_or_else(|| "scene.json".to_string())
+    } else {
+        "scene.json".to_string()
+    };
+
+    let scene_name = std::path::Path::new(&save_path)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("scene");
+
+    let scene = forge_core::Scene::from_world(world, scene_name).map_err(|e| e.to_string())?;
+    scene.save_to_file(&save_path).map_err(|e| e.to_string())?;
+
+    if let Some(mut stack) = world.get_resource_mut::<forge_core::CommandStack>() {
+        stack.mark_clean(Some(save_path.clone()));
+    }
+
+    Ok(forge_protocol::SceneSaveResult {
+        success: true,
+        saved_path: save_path,
+    })
+}
+
+fn handle_scene_reparent(
+    world: &mut World,
+    params: &forge_protocol::SceneReparentEntityParams,
+) -> Result<forge_protocol::SceneReparentEntityResult, String> {
+    let old_parent_id = {
+        let entity = forge_core::find_entity_by_id(world, &params.entity_id)
+            .ok_or_else(|| format!("Entity '{}' not found", params.entity_id))?;
+        world
+            .get::<forge_core::Parent>(entity)
+            .and_then(|p| world.get_entity(p.entity()).ok())
+            .and_then(|parent_ref| {
+                parent_ref
+                    .get::<forge_core::EntityId>()
+                    .map(|id| id.as_str().to_string())
+            })
+    };
+
+    let cmd = forge_core::SceneCommand::ReparentEntity {
+        entity_id: params.entity_id.clone(),
+        new_parent_id: params.new_parent_id.clone(),
+        old_parent_id,
+    };
+
+    if let Some(mut stack) = world.get_resource_mut::<forge_core::CommandStack>() {
+        stack
+            .execute(world, cmd, forge_core::CommandAuthor::User)
+            .map_err(|e| e.to_string())?;
+    } else {
+        forge_core::scene_ops::raw_reparent_entity(
+            world,
+            &params.entity_id,
+            params.new_parent_id.as_deref(),
+        )
+        .map_err(|e| e.to_string())?;
+    }
+
+    Ok(forge_protocol::SceneReparentEntityResult { success: true })
+}
+
+fn handle_scene_duplicate(
+    world: &mut World,
+    params: &forge_protocol::SceneDuplicateEntityParams,
+) -> Result<forge_protocol::SceneDuplicateEntityResult, String> {
+    let source_entity = forge_core::find_entity_by_id(world, &params.entity_id)
+        .ok_or_else(|| format!("Entity '{}' not found", params.entity_id))?;
+
+    let new_id = params
+        .new_entity_id
+        .clone()
+        .unwrap_or_else(|| format!("{}_copy", params.entity_id));
+
+    let mut scene = forge_core::Scene::from_world(world, "snapshot").map_err(|e| e.to_string())?;
+    let source_se = scene
+        .entities
+        .into_iter()
+        .find(|e| e.id == params.entity_id)
+        .ok_or_else(|| {
+            format!(
+                "Entity '{}' not found in serialized snapshot",
+                params.entity_id
+            )
+        })?;
+
+    let name = format!(
+        "{}_copy",
+        world
+            .get::<forge_core::Name>(source_entity)
+            .map(|n| n.as_str())
+            .unwrap_or("Entity")
+    );
+
+    let mut comps_map = std::collections::HashMap::new();
+    for (cname, cval) in &source_se.components {
+        if cname != "Name" {
+            comps_map.insert(cname.clone(), cval.to_string());
+        }
+    }
+
+    let cmd = forge_core::SceneCommand::CreateEntity {
+        entity_id: new_id.clone(),
+        name,
+        parent_id: source_se.parent.clone(),
+        components: Some(comps_map),
+    };
+
+    if let Some(mut stack) = world.get_resource_mut::<forge_core::CommandStack>() {
+        stack
+            .execute(world, cmd, forge_core::CommandAuthor::User)
+            .map_err(|e| e.to_string())?;
+    } else {
+        forge_core::scene_ops::raw_create_entity(
+            world,
+            &new_id,
+            &format!("{}_copy", params.entity_id),
+            source_se.parent.as_deref(),
+            None,
+        )
+        .map_err(|e| e.to_string())?;
+    }
+
+    Ok(forge_protocol::SceneDuplicateEntityResult {
+        new_entity_id: new_id,
+    })
+}
+
+fn handle_scene_remove_component(
+    world: &mut World,
+    params: &forge_protocol::SceneRemoveComponentParams,
+) -> Result<forge_protocol::SceneRemoveComponentResult, String> {
+    let prev_data = {
+        let entity = forge_core::find_entity_by_id(world, &params.entity_id)
+            .ok_or_else(|| format!("Entity '{}' not found", params.entity_id))?;
+
+        let mut map = std::collections::HashMap::new();
+        match params.component_name.as_str() {
+            "Transform2D" | "Transform" => {
+                if let Some(t) = world.get::<forge_core::Transform2D>(entity) {
+                    map.insert(
+                        "position".to_string(),
+                        serde_json::json!([t.position.x, t.position.y]).to_string(),
+                    );
+                    map.insert("rotation".to_string(), t.rotation.to_string());
+                    map.insert(
+                        "scale".to_string(),
+                        serde_json::json!([t.scale.x, t.scale.y]).to_string(),
+                    );
+                }
+            }
+            "Sprite" => {
+                if let Some(s) = world.get::<forge_core::Sprite>(entity) {
+                    map.insert("asset_id".to_string(), s.asset_id.clone());
+                    map.insert(
+                        "size".to_string(),
+                        serde_json::json!([s.size.x, s.size.y]).to_string(),
+                    );
+                    map.insert(
+                        "color_tint".to_string(),
+                        serde_json::json!(s.color_tint).to_string(),
+                    );
+                    map.insert("z_order".to_string(), s.z_order.to_string());
+                }
+            }
+            "Camera2D" | "Camera" => {
+                if let Some(c) = world.get::<forge_core::Camera2D>(entity) {
+                    map.insert("zoom".to_string(), c.zoom.to_string());
+                    map.insert("active".to_string(), c.is_active.to_string());
+                }
+            }
+            _ => {}
+        }
+        if map.is_empty() {
+            None
+        } else {
+            Some(map)
+        }
+    };
+
+    let cmd = forge_core::SceneCommand::SetComponent {
+        entity_id: params.entity_id.clone(),
+        component_name: params.component_name.clone(),
+        new_data: std::collections::HashMap::new(),
+        prev_data,
+    };
+
+    forge_core::scene_ops::raw_remove_component(world, &params.entity_id, &params.component_name)
+        .map_err(|e| e.to_string())?;
+
+    if let Some(mut stack) = world.get_resource_mut::<forge_core::CommandStack>() {
+        // Record on stack for undo
+        let _ = stack.execute(world, cmd, forge_core::CommandAuthor::User);
+    }
+
+    Ok(forge_protocol::SceneRemoveComponentResult { success: true })
 }

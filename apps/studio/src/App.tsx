@@ -16,8 +16,10 @@ import { AgentChatPanel } from "./components/panels/AgentChatPanel";
 import { ConsolePanel } from "./components/panels/ConsolePanel";
 import { TerminalPanel } from "./components/panels/TerminalPanel";
 import { PlaytestPanel } from "./components/panels/PlaytestPanel";
+import { HistoryPanel } from "./components/panels/HistoryPanel";
 import { useLayoutStore } from "./stores/layoutStore";
 import { useRuntimeStore } from "./stores/runtimeStore";
+import { useEditStore } from "./stores/editStore";
 
 // Dockview Component Wrapper Map
 const components = {
@@ -29,6 +31,7 @@ const components = {
   console: (_props: IDockviewPanelProps) => <ConsolePanel />,
   terminal: (_props: IDockviewPanelProps) => <TerminalPanel />,
   playtest: (_props: IDockviewPanelProps) => <PlaytestPanel />,
+  history: (_props: IDockviewPanelProps) => <HistoryPanel />,
 };
 
 export const App: React.FC = () => {
@@ -63,7 +66,7 @@ export const App: React.FC = () => {
       initialWidth: 260,
     });
 
-    // 4. Right: Inspector & Agent Chat (tabbed)
+    // 4. Right: Inspector, Agent Chat, & History (tabbed)
     const inspectorPanel = api.addPanel({
       id: "inspector",
       component: "inspector",
@@ -76,6 +79,13 @@ export const App: React.FC = () => {
       id: "agent_chat",
       component: "agent_chat",
       title: "Agent Chat",
+      position: { referencePanel: inspectorPanel, direction: "within" },
+    });
+
+    api.addPanel({
+      id: "history",
+      component: "history",
+      title: "History",
       position: { referencePanel: inspectorPanel, direction: "within" },
     });
 
@@ -173,8 +183,35 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     const unlisten = useRuntimeStore.getState().initListeners();
+
+    const handleGlobalShortcuts = (e: KeyboardEvent) => {
+      // Check if user is typing in an active text input or textarea
+      const target = e.target as HTMLElement;
+      const isInput =
+        target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
+
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
+        if (e.shiftKey) {
+          e.preventDefault();
+          useEditStore.getState().redo();
+        } else if (!isInput) {
+          e.preventDefault();
+          useEditStore.getState().undo();
+        }
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y" && !isInput) {
+        e.preventDefault();
+        useEditStore.getState().redo();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        useEditStore.getState().saveScene();
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalShortcuts);
+
     return () => {
       unlisten();
+      window.removeEventListener("keydown", handleGlobalShortcuts);
     };
   }, []);
 

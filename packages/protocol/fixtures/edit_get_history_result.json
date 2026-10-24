@@ -1,0 +1,13 @@
+{
+  "undo_stack": [
+    {
+      "id": "cmd_1",
+      "description": "Create entity Enemy",
+      "author": "agent",
+      "timestamp": 1700000000.0
+    }
+  ],
+  "redo_stack": [],
+  "can_undo": true,
+  "can_redo": false
+}

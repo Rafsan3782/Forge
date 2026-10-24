@@ -173,6 +173,76 @@ pub enum BridgeCommand {
         /// Channel to return write result.
         responder: oneshot::Sender<Result<forge_protocol::ScriptWriteResult, String>>,
     },
+    /// Undo the most recent scene command.
+    EditUndo {
+        /// Undo parameters.
+        params: forge_protocol::EditUndoParams,
+        /// Channel to return undo result.
+        responder: oneshot::Sender<Result<forge_protocol::EditUndoResult, String>>,
+    },
+    /// Redo the previously undone scene command.
+    EditRedo {
+        /// Redo parameters.
+        params: forge_protocol::EditRedoParams,
+        /// Channel to return redo result.
+        responder: oneshot::Sender<Result<forge_protocol::EditRedoResult, String>>,
+    },
+    /// Get the history of scene commands.
+    EditGetHistory {
+        /// History query parameters.
+        params: forge_protocol::EditGetHistoryParams,
+        /// Channel to return history result.
+        responder: oneshot::Sender<Result<forge_protocol::EditGetHistoryResult, String>>,
+    },
+    /// Jump to a specific point in the command history stack.
+    EditJumpHistory {
+        /// Target history ID.
+        params: forge_protocol::EditJumpHistoryParams,
+        /// Channel to return jump result.
+        responder: oneshot::Sender<Result<forge_protocol::EditJumpHistoryResult, String>>,
+    },
+    /// Get dynamic component schemas with editor hints for the inspector.
+    SceneGetComponentSchemas {
+        /// Schema query parameters.
+        params: forge_protocol::SceneGetComponentSchemasParams,
+        /// Channel to return component schemas.
+        responder: oneshot::Sender<Result<forge_protocol::SceneGetComponentSchemasResult, String>>,
+    },
+    /// Save the active scene to disk.
+    SceneSave {
+        /// Scene save parameters.
+        params: forge_protocol::SceneSaveParams,
+        /// Channel to return save result.
+        responder: oneshot::Sender<Result<forge_protocol::SceneSaveResult, String>>,
+    },
+    /// Check whether the active scene has unsaved changes.
+    SceneGetDirty {
+        /// Dirty query parameters.
+        params: forge_protocol::SceneGetDirtyParams,
+        /// Channel to return dirty state.
+        responder: oneshot::Sender<Result<forge_protocol::SceneGetDirtyResult, String>>,
+    },
+    /// Reparent an entity to a new parent or root.
+    SceneReparentEntity {
+        /// Reparent parameters.
+        params: forge_protocol::SceneReparentEntityParams,
+        /// Channel to return reparent result.
+        responder: oneshot::Sender<Result<forge_protocol::SceneReparentEntityResult, String>>,
+    },
+    /// Duplicate an existing entity and its components.
+    SceneDuplicateEntity {
+        /// Duplicate parameters.
+        params: forge_protocol::SceneDuplicateEntityParams,
+        /// Channel to return duplicated entity info.
+        responder: oneshot::Sender<Result<forge_protocol::SceneDuplicateEntityResult, String>>,
+    },
+    /// Remove a component from an entity.
+    SceneRemoveComponent {
+        /// Remove component parameters.
+        params: forge_protocol::SceneRemoveComponentParams,
+        /// Channel to return remove result.
+        responder: oneshot::Sender<Result<forge_protocol::SceneRemoveComponentResult, String>>,
+    },
 }
 
 /// Sender side held by the bridge server to dispatch commands to the engine loop.
