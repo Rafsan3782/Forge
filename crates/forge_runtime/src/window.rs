@@ -185,6 +185,9 @@ impl WindowApp {
             .with_inner_size(winit::dpi::LogicalSize::new(args.width, args.height));
 
         #[cfg(windows)]
+        let mut target_parent_hwnd = None;
+
+        #[cfg(windows)]
         if let Some(parent_str) = &args.embed_parent {
             let parent_hwnd: Result<isize, _> = if let Some(stripped) = parent_str
                 .strip_prefix("0x")
@@ -197,6 +200,7 @@ impl WindowApp {
 
             if let Ok(hwnd) = parent_hwnd {
                 if let Some(non_zero) = std::num::NonZeroIsize::new(hwnd) {
+                    target_parent_hwnd = Some(hwnd);
                     use winit::raw_window_handle::{RawWindowHandle, Win32WindowHandle};
                     let handle = Win32WindowHandle::new(non_zero);
                     let rwh = RawWindowHandle::Win32(handle);
@@ -206,7 +210,26 @@ impl WindowApp {
             }
         }
 
-        let window = Arc::new(event_loop.create_window(window_attrs)?);
+        let window = match event_loop.create_window(window_attrs.clone()) {
+            Ok(w) => Arc::new(w),
+            Err(err) => {
+                #[cfg(windows)]
+                if target_parent_hwnd.is_some() {
+                    tracing::warn!(
+                        "Direct child window creation failed ({err}); falling back to top-level creation and post-reparenting"
+                    );
+                    let fallback_attrs = Window::default_attributes()
+                        .with_title("Forge Engine")
+                        .with_inner_size(winit::dpi::LogicalSize::new(args.width, args.height))
+                        .with_decorations(false);
+                    Arc::new(event_loop.create_window(fallback_attrs)?)
+                } else {
+                    return Err(Box::new(err));
+                }
+                #[cfg(not(windows))]
+                return Err(Box::new(err));
+            }
+        };
 
         #[cfg(windows)]
         {
@@ -215,6 +238,34 @@ impl WindowApp {
             if let Ok(wh) = window.window_handle() {
                 if let RawWindowHandle::Win32(h) = wh.as_raw() {
                     let child_hwnd = h.hwnd.get();
+
+                    if let Some(parent) = target_parent_hwnd {
+                        // Ensure window styles are configured for child embedding:
+                        // WS_CHILD (0x40000000), remove WS_POPUP (0x80000000)
+                        extern "system" {
+                            fn SetParent(
+                                hWndChild: *mut std::ffi::c_void,
+                                hWndNewParent: *mut std::ffi::c_void,
+                            ) -> *mut std::ffi::c_void;
+                            fn GetWindowLongPtrW(hWnd: *mut std::ffi::c_void, nIndex: i32)
+                                -> isize;
+                            fn SetWindowLongPtrW(
+                                hWnd: *mut std::ffi::c_void,
+                                nIndex: i32,
+                                dwNewLong: isize,
+                            ) -> isize;
+                        }
+                        unsafe {
+                            const GWL_STYLE: i32 = -16;
+                            const WS_CHILD: isize = 0x40000000;
+                            const WS_POPUP: isize = 0x80000000;
+                            let style = GetWindowLongPtrW(child_hwnd as *mut _, GWL_STYLE);
+                            let new_style = (style & !WS_POPUP) | WS_CHILD;
+                            SetWindowLongPtrW(child_hwnd as *mut _, GWL_STYLE, new_style);
+                            SetParent(child_hwnd as *mut _, parent as *mut _);
+                        }
+                    }
+
                     println!("FORGE_WINDOW_READY {{\"hwnd\":{}}}", child_hwnd);
                     let _ = std::io::stdout().flush();
                 }
