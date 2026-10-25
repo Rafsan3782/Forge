@@ -69,8 +69,7 @@ fn test_command_stack_tilemap_edits() {
     let mut stack = CommandStack::new();
 
     // Create Tilemap entity
-    let mut tm = forge_core::Tilemap::new("tileset_1", forge_core::Vec2::new(16.0, 16.0), 16);
-    tm.add_layer("main");
+    let mut tm = forge_core::Tilemap::new("tileset_1", forge_core::Vec2::new(16.0, 16.0));
     tm.set_tile("main", 5, 5, 1);
 
     world.spawn((
