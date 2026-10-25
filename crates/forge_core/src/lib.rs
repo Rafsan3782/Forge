@@ -6,6 +6,7 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod command;
 pub mod components;
 pub mod ecs;
 pub mod error;
@@ -44,6 +45,11 @@ pub use scene::{Scene, SceneEntity};
 pub use scene_ops::{
     build_entity_node, find_entity_by_id, scene_create_entity, scene_delete_entity, scene_get_tree,
     scene_set_component, WorldSceneExt,
+};
+
+// Re-export command system and component schemas
+pub use command::{
+    get_builtin_component_schemas, CommandAuthor, CommandEntry, CommandStack, SceneCommand,
 };
 
 #[cfg(test)]

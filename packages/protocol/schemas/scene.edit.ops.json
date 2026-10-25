@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/scene.edit.ops.json",
+  "title": "SceneEditOps",
+  "description": "Component schemas, scene save, and dirty status operations",
+  "definitions": {
+    "FieldEditorHint": {
+      "type": "object",
+      "properties": {
+        "widget": {
+          "type": "string",
+          "enum": ["number", "vector2", "bool", "enum", "color", "text", "asset"]
+        },
+        "min": { "type": ["number", "null"] },
+        "max": { "type": ["number", "null"] },
+        "step": { "type": ["number", "null"] },
+        "asset_type": { "type": ["string", "null"] },
+        "options": {
+          "type": ["array", "null"],
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "ComponentFieldSchema": {
+      "type": "object",
+      "required": ["name", "field_type"],
+      "properties": {
+        "name": { "type": "string" },
+        "field_type": { "type": "string" },
+        "default_value": {},
+        "hint": { "$ref": "#/definitions/FieldEditorHint" }
+      },
+      "additionalProperties": false
+    },
+    "ComponentSchema": {
+      "type": "object",
+      "required": ["name", "fields"],
+      "properties": {
+        "name": { "type": "string" },
+        "display_name": { "type": "string" },
+        "category": { "type": "string" },
+        "fields": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/ComponentFieldSchema" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "SceneGetComponentSchemasParams": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "SceneGetComponentSchemasResult": {
+      "type": "object",
+      "required": ["schemas"],
+      "properties": {
+        "schemas": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/ComponentSchema" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "SceneSaveParams": {
+      "type": "object",
+      "properties": {
+        "path": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "SceneSaveResult": {
+      "type": "object",
+      "required": ["success", "path"],
+      "properties": {
+        "success": { "type": "boolean" },
+        "path": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "SceneGetDirtyParams": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "SceneGetDirtyResult": {
+      "type": "object",
+      "required": ["is_dirty"],
+      "properties": {
+        "is_dirty": { "type": "boolean" },
+        "undo_count": { "type": "number" },
+        "current_scene_path": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "SceneReparentEntityParams": {
+      "type": "object",
+      "required": ["entity_id"],
+      "properties": {
+        "entity_id": { "type": "string" },
+        "new_parent_id": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "SceneReparentEntityResult": {
+      "type": "object",
+      "required": ["success"],
+      "properties": {
+        "success": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "SceneDuplicateEntityParams": {
+      "type": "object",
+      "required": ["entity_id"],
+      "properties": {
+        "entity_id": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "SceneDuplicateEntityResult": {
+      "type": "object",
+      "required": ["success", "new_entity_id"],
+      "properties": {
+        "success": { "type": "boolean" },
+        "new_entity_id": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "SceneRemoveComponentParams": {
+      "type": "object",
+      "required": ["entity_id", "component_name"],
+      "properties": {
+        "entity_id": { "type": "string" },
+        "component_name": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "SceneRemoveComponentResult": {
+      "type": "object",
+      "required": ["success"],
+      "properties": {
+        "success": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

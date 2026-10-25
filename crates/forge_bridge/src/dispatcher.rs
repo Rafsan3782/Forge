@@ -564,6 +564,234 @@ pub async fn dispatch_direct_tool(
             }
         }
 
+        "edit.undo" => {
+            let undo_params: forge_protocol::EditUndoParams = if params.is_null() {
+                forge_protocol::EditUndoParams::default()
+            } else {
+                serde_json::from_value(params)
+                    .map_err(|e| BridgeError::InvalidParams(e.to_string()))?
+            };
+
+            let (tx, rx) = oneshot::channel();
+            command_sender
+                .send(BridgeCommand::EditUndo {
+                    params: undo_params,
+                    responder: tx,
+                })
+                .map_err(|_| BridgeError::ChannelClosed)?;
+
+            let result = rx
+                .await
+                .map_err(|_| BridgeError::ChannelClosed)?
+                .map_err(BridgeError::Engine)?;
+
+            Ok(serde_json::to_value(result)?)
+        }
+
+        "edit.redo" => {
+            let redo_params: forge_protocol::EditRedoParams = if params.is_null() {
+                forge_protocol::EditRedoParams::default()
+            } else {
+                serde_json::from_value(params)
+                    .map_err(|e| BridgeError::InvalidParams(e.to_string()))?
+            };
+
+            let (tx, rx) = oneshot::channel();
+            command_sender
+                .send(BridgeCommand::EditRedo {
+                    params: redo_params,
+                    responder: tx,
+                })
+                .map_err(|_| BridgeError::ChannelClosed)?;
+
+            let result = rx
+                .await
+                .map_err(|_| BridgeError::ChannelClosed)?
+                .map_err(BridgeError::Engine)?;
+
+            Ok(serde_json::to_value(result)?)
+        }
+
+        "edit.get_history" => {
+            let hist_params: forge_protocol::EditGetHistoryParams = if params.is_null() {
+                forge_protocol::EditGetHistoryParams::default()
+            } else {
+                serde_json::from_value(params)
+                    .map_err(|e| BridgeError::InvalidParams(e.to_string()))?
+            };
+
+            let (tx, rx) = oneshot::channel();
+            command_sender
+                .send(BridgeCommand::EditGetHistory {
+                    params: hist_params,
+                    responder: tx,
+                })
+                .map_err(|_| BridgeError::ChannelClosed)?;
+
+            let result = rx
+                .await
+                .map_err(|_| BridgeError::ChannelClosed)?
+                .map_err(BridgeError::Engine)?;
+
+            Ok(serde_json::to_value(result)?)
+        }
+
+        "edit.jump_history" => {
+            let jump_params: forge_protocol::EditJumpHistoryParams = serde_json::from_value(params)
+                .map_err(|e| BridgeError::InvalidParams(e.to_string()))?;
+
+            let (tx, rx) = oneshot::channel();
+            command_sender
+                .send(BridgeCommand::EditJumpHistory {
+                    params: jump_params,
+                    responder: tx,
+                })
+                .map_err(|_| BridgeError::ChannelClosed)?;
+
+            let result = rx
+                .await
+                .map_err(|_| BridgeError::ChannelClosed)?
+                .map_err(BridgeError::Engine)?;
+
+            Ok(serde_json::to_value(result)?)
+        }
+
+        "scene.get_component_schemas" => {
+            let schema_params: forge_protocol::SceneGetComponentSchemasParams = if params.is_null()
+            {
+                forge_protocol::SceneGetComponentSchemasParams::default()
+            } else {
+                serde_json::from_value(params)
+                    .map_err(|e| BridgeError::InvalidParams(e.to_string()))?
+            };
+
+            let (tx, rx) = oneshot::channel();
+            command_sender
+                .send(BridgeCommand::SceneGetComponentSchemas {
+                    params: schema_params,
+                    responder: tx,
+                })
+                .map_err(|_| BridgeError::ChannelClosed)?;
+
+            let result = rx
+                .await
+                .map_err(|_| BridgeError::ChannelClosed)?
+                .map_err(BridgeError::Engine)?;
+
+            Ok(serde_json::to_value(result)?)
+        }
+
+        "scene.save" => {
+            let save_params: forge_protocol::SceneSaveParams = if params.is_null() {
+                forge_protocol::SceneSaveParams::default()
+            } else {
+                serde_json::from_value(params)
+                    .map_err(|e| BridgeError::InvalidParams(e.to_string()))?
+            };
+
+            let (tx, rx) = oneshot::channel();
+            command_sender
+                .send(BridgeCommand::SceneSave {
+                    params: save_params,
+                    responder: tx,
+                })
+                .map_err(|_| BridgeError::ChannelClosed)?;
+
+            let result = rx
+                .await
+                .map_err(|_| BridgeError::ChannelClosed)?
+                .map_err(BridgeError::Engine)?;
+
+            Ok(serde_json::to_value(result)?)
+        }
+
+        "scene.get_dirty" => {
+            let dirty_params: forge_protocol::SceneGetDirtyParams = if params.is_null() {
+                forge_protocol::SceneGetDirtyParams::default()
+            } else {
+                serde_json::from_value(params)
+                    .map_err(|e| BridgeError::InvalidParams(e.to_string()))?
+            };
+
+            let (tx, rx) = oneshot::channel();
+            command_sender
+                .send(BridgeCommand::SceneGetDirty {
+                    params: dirty_params,
+                    responder: tx,
+                })
+                .map_err(|_| BridgeError::ChannelClosed)?;
+
+            let result = rx
+                .await
+                .map_err(|_| BridgeError::ChannelClosed)?
+                .map_err(BridgeError::Engine)?;
+
+            Ok(serde_json::to_value(result)?)
+        }
+
+        "scene.reparent_entity" => {
+            let reparent_params: forge_protocol::SceneReparentEntityParams =
+                serde_json::from_value(params)
+                    .map_err(|e| BridgeError::InvalidParams(e.to_string()))?;
+
+            let (tx, rx) = oneshot::channel();
+            command_sender
+                .send(BridgeCommand::SceneReparentEntity {
+                    params: reparent_params,
+                    responder: tx,
+                })
+                .map_err(|_| BridgeError::ChannelClosed)?;
+
+            let result = rx
+                .await
+                .map_err(|_| BridgeError::ChannelClosed)?
+                .map_err(BridgeError::Engine)?;
+
+            Ok(serde_json::to_value(result)?)
+        }
+
+        "scene.duplicate_entity" => {
+            let dup_params: forge_protocol::SceneDuplicateEntityParams =
+                serde_json::from_value(params)
+                    .map_err(|e| BridgeError::InvalidParams(e.to_string()))?;
+
+            let (tx, rx) = oneshot::channel();
+            command_sender
+                .send(BridgeCommand::SceneDuplicateEntity {
+                    params: dup_params,
+                    responder: tx,
+                })
+                .map_err(|_| BridgeError::ChannelClosed)?;
+
+            let result = rx
+                .await
+                .map_err(|_| BridgeError::ChannelClosed)?
+                .map_err(BridgeError::Engine)?;
+
+            Ok(serde_json::to_value(result)?)
+        }
+
+        "scene.remove_component" => {
+            let rem_params: forge_protocol::SceneRemoveComponentParams =
+                serde_json::from_value(params)
+                    .map_err(|e| BridgeError::InvalidParams(e.to_string()))?;
+
+            let (tx, rx) = oneshot::channel();
+            command_sender
+                .send(BridgeCommand::SceneRemoveComponent {
+                    params: rem_params,
+                    responder: tx,
+                })
+                .map_err(|_| BridgeError::ChannelClosed)?;
+
+            let result = rx
+                .await
+                .map_err(|_| BridgeError::ChannelClosed)?
+                .map_err(BridgeError::Engine)?;
+
+            Ok(serde_json::to_value(result)?)
+        }
+
         unknown => Err(BridgeError::MethodNotFound(unknown.to_string())),
     }
 }

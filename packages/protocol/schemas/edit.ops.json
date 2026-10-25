@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/edit.ops.json",
+  "title": "EditOps",
+  "description": "Undo, redo and history commands for scene and project editing",
+  "definitions": {
+    "EditUndoParams": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "EditUndoResult": {
+      "type": "object",
+      "required": ["success", "can_undo", "can_redo"],
+      "properties": {
+        "success": { "type": "boolean" },
+        "undone_command": { "type": ["string", "null"] },
+        "can_undo": { "type": "boolean" },
+        "can_redo": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "EditRedoParams": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "EditRedoResult": {
+      "type": "object",
+      "required": ["success", "can_undo", "can_redo"],
+      "properties": {
+        "success": { "type": "boolean" },
+        "redone_command": { "type": ["string", "null"] },
+        "can_undo": { "type": "boolean" },
+        "can_redo": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "HistoryEntry": {
+      "type": "object",
+      "required": ["id", "description", "author", "timestamp"],
+      "properties": {
+        "id": { "type": "string" },
+        "description": { "type": "string" },
+        "author": { "type": "string", "enum": ["user", "agent"] },
+        "timestamp": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "EditGetHistoryParams": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "EditGetHistoryResult": {
+      "type": "object",
+      "required": ["undo_stack", "redo_stack", "can_undo", "can_redo"],
+      "properties": {
+        "undo_stack": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/HistoryEntry" }
+        },
+        "redo_stack": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/HistoryEntry" }
+        },
+        "can_undo": { "type": "boolean" },
+        "can_redo": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "EditJumpHistoryParams": {
+      "type": "object",
+      "required": ["target_id"],
+      "properties": {
+        "target_id": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "EditJumpHistoryResult": {
+      "type": "object",
+      "required": ["success", "can_undo", "can_redo"],
+      "properties": {
+        "success": { "type": "boolean" },
+        "can_undo": { "type": "boolean" },
+        "can_redo": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

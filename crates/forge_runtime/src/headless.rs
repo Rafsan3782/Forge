@@ -119,6 +119,11 @@ pub fn run_headless(args: &CliArgs) -> Result<(), Box<dyn std::error::Error>> {
         world.insert_resource(script_server);
     }
 
+    // Insert CommandStack resource for undo/redo and scene history
+    let mut command_stack = forge_core::CommandStack::new();
+    command_stack.mark_clean(Some(args.scene.clone()));
+    world.insert_resource(command_stack);
+
     let mut game_loop = GameLoop::new();
     game_loop.add_pre_update_system(forge_input::fixed_input_tick_system);
     game_loop.add_pre_update_system(forge_script::script_prepare_frame_system);

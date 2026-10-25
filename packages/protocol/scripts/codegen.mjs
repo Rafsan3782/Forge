@@ -610,6 +610,155 @@ export const GameErrorNotificationSchema = z.object({
 });
 export type GameErrorNotification = z.infer<typeof GameErrorNotificationSchema>;
 
+// -----------------------------------------------------------------------------
+// edit.undo / edit.redo / edit.get_history / edit.jump_history
+// -----------------------------------------------------------------------------
+
+export const EditUndoParamsSchema = z.object({});
+export type EditUndoParams = z.infer<typeof EditUndoParamsSchema>;
+
+export const EditUndoResultSchema = z.object({
+  success: z.boolean(),
+  undone_command: z.string().nullable().optional(),
+  can_undo: z.boolean(),
+  can_redo: z.boolean(),
+});
+export type EditUndoResult = z.infer<typeof EditUndoResultSchema>;
+
+export const EditRedoParamsSchema = z.object({});
+export type EditRedoParams = z.infer<typeof EditRedoParamsSchema>;
+
+export const EditRedoResultSchema = z.object({
+  success: z.boolean(),
+  redone_command: z.string().nullable().optional(),
+  can_undo: z.boolean(),
+  can_redo: z.boolean(),
+});
+export type EditRedoResult = z.infer<typeof EditRedoResultSchema>;
+
+export const HistoryEntrySchema = z.object({
+  id: z.string(),
+  description: z.string(),
+  author: z.enum(["user", "agent"]),
+  timestamp: z.number(),
+});
+export type HistoryEntry = z.infer<typeof HistoryEntrySchema>;
+
+export const EditGetHistoryParamsSchema = z.object({});
+export type EditGetHistoryParams = z.infer<typeof EditGetHistoryParamsSchema>;
+
+export const EditGetHistoryResultSchema = z.object({
+  undo_stack: z.array(HistoryEntrySchema),
+  redo_stack: z.array(HistoryEntrySchema),
+  can_undo: z.boolean(),
+  can_redo: z.boolean(),
+});
+export type EditGetHistoryResult = z.infer<typeof EditGetHistoryResultSchema>;
+
+export const EditJumpHistoryParamsSchema = z.object({
+  target_id: z.string(),
+});
+export type EditJumpHistoryParams = z.infer<typeof EditJumpHistoryParamsSchema>;
+
+export const EditJumpHistoryResultSchema = z.object({
+  success: z.boolean(),
+  can_undo: z.boolean(),
+  can_redo: z.boolean(),
+});
+export type EditJumpHistoryResult = z.infer<typeof EditJumpHistoryResultSchema>;
+
+// -----------------------------------------------------------------------------
+// scene.get_component_schemas / scene.save / scene.get_dirty / scene operations
+// -----------------------------------------------------------------------------
+
+export const FieldEditorHintSchema = z.object({
+  widget: z.enum(["number", "vector2", "bool", "enum", "color", "text", "asset"]),
+  min: z.number().nullable().optional(),
+  max: z.number().nullable().optional(),
+  step: z.number().nullable().optional(),
+  asset_type: z.string().nullable().optional(),
+  options: z.array(z.string()).nullable().optional(),
+});
+export type FieldEditorHint = z.infer<typeof FieldEditorHintSchema>;
+
+export const ComponentFieldSchemaSchema = z.object({
+  name: z.string(),
+  field_type: z.string(),
+  default_value: z.unknown().optional(),
+  hint: FieldEditorHintSchema.optional(),
+});
+export type ComponentFieldSchema = z.infer<typeof ComponentFieldSchemaSchema>;
+
+export const ComponentSchemaSchema = z.object({
+  name: z.string(),
+  display_name: z.string().optional(),
+  category: z.string().optional(),
+  fields: z.array(ComponentFieldSchemaSchema),
+});
+export type ComponentSchema = z.infer<typeof ComponentSchemaSchema>;
+
+export const SceneGetComponentSchemasParamsSchema = z.object({});
+export type SceneGetComponentSchemasParams = z.infer<typeof SceneGetComponentSchemasParamsSchema>;
+
+export const SceneGetComponentSchemasResultSchema = z.object({
+  schemas: z.array(ComponentSchemaSchema),
+});
+export type SceneGetComponentSchemasResult = z.infer<typeof SceneGetComponentSchemasResultSchema>;
+
+export const SceneSaveParamsSchema = z.object({
+  path: z.string().nullable().optional(),
+});
+export type SceneSaveParams = z.infer<typeof SceneSaveParamsSchema>;
+
+export const SceneSaveResultSchema = z.object({
+  success: z.boolean(),
+  path: z.string(),
+});
+export type SceneSaveResult = z.infer<typeof SceneSaveResultSchema>;
+
+export const SceneGetDirtyParamsSchema = z.object({});
+export type SceneGetDirtyParams = z.infer<typeof SceneGetDirtyParamsSchema>;
+
+export const SceneGetDirtyResultSchema = z.object({
+  is_dirty: z.boolean(),
+  undo_count: z.number().optional(),
+  current_scene_path: z.string().nullable().optional(),
+});
+export type SceneGetDirtyResult = z.infer<typeof SceneGetDirtyResultSchema>;
+
+export const SceneReparentEntityParamsSchema = z.object({
+  entity_id: z.string(),
+  new_parent_id: z.string().nullable().optional(),
+});
+export type SceneReparentEntityParams = z.infer<typeof SceneReparentEntityParamsSchema>;
+
+export const SceneReparentEntityResultSchema = z.object({
+  success: z.boolean(),
+});
+export type SceneReparentEntityResult = z.infer<typeof SceneReparentEntityResultSchema>;
+
+export const SceneDuplicateEntityParamsSchema = z.object({
+  entity_id: z.string(),
+});
+export type SceneDuplicateEntityParams = z.infer<typeof SceneDuplicateEntityParamsSchema>;
+
+export const SceneDuplicateEntityResultSchema = z.object({
+  success: z.boolean(),
+  new_entity_id: z.string(),
+});
+export type SceneDuplicateEntityResult = z.infer<typeof SceneDuplicateEntityResultSchema>;
+
+export const SceneRemoveComponentParamsSchema = z.object({
+  entity_id: z.string(),
+  component_name: z.string(),
+});
+export type SceneRemoveComponentParams = z.infer<typeof SceneRemoveComponentParamsSchema>;
+
+export const SceneRemoveComponentResultSchema = z.object({
+  success: z.boolean(),
+});
+export type SceneRemoveComponentResult = z.infer<typeof SceneRemoveComponentResultSchema>;
+
 /**
  * Global Forge scripting API contract exposed to quickjs scripts.
  */
@@ -1302,6 +1451,170 @@ pub struct GameErrorNotification {
     pub source_location: Option<String>,
     pub frame: u64,
 }
+
+// -----------------------------------------------------------------------------
+// edit.undo / edit.redo / edit.get_history / edit.jump_history
+// -----------------------------------------------------------------------------
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct EditUndoParams {}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct EditUndoResult {
+    pub success: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub undone_command: Option<String>,
+    pub can_undo: bool,
+    pub can_redo: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct EditRedoParams {}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct EditRedoResult {
+    pub success: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub redone_command: Option<String>,
+    pub can_undo: bool,
+    pub can_redo: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct HistoryEntry {
+    pub id: String,
+    pub description: String,
+    pub author: String,
+    pub timestamp: f64,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct EditGetHistoryParams {}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct EditGetHistoryResult {
+    pub undo_stack: Vec<HistoryEntry>,
+    pub redo_stack: Vec<HistoryEntry>,
+    pub can_undo: bool,
+    pub can_redo: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct EditJumpHistoryParams {
+    pub target_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct EditJumpHistoryResult {
+    pub success: bool,
+    pub can_undo: bool,
+    pub can_redo: bool,
+}
+
+// -----------------------------------------------------------------------------
+// scene.get_component_schemas / scene.save / scene.get_dirty / scene operations
+// -----------------------------------------------------------------------------
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct FieldEditorHint {
+    pub widget: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub min: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub step: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub asset_type: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub options: Option<Vec<String>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ComponentFieldSchema {
+    pub name: String,
+    pub field_type: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub default_value: Option<serde_json::Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub hint: Option<FieldEditorHint>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ComponentSchema {
+    pub name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub display_name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub category: Option<String>,
+    pub fields: Vec<ComponentFieldSchema>,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct SceneGetComponentSchemasParams {}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SceneGetComponentSchemasResult {
+    pub schemas: Vec<ComponentSchema>,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct SceneSaveParams {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub path: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SceneSaveResult {
+    pub success: bool,
+    pub path: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct SceneGetDirtyParams {}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SceneGetDirtyResult {
+    pub is_dirty: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub undo_count: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub current_scene_path: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SceneReparentEntityParams {
+    pub entity_id: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub new_parent_id: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SceneReparentEntityResult {
+    pub success: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SceneDuplicateEntityParams {
+    pub entity_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SceneDuplicateEntityResult {
+    pub success: bool,
+    pub new_entity_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SceneRemoveComponentParams {
+    pub entity_id: String,
+    pub component_name: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SceneRemoveComponentResult {
+    pub success: bool,
+}
 `;
 
 fs.writeFileSync(TS_OUT_FILE, tsCode.trimEnd() + "\n", "utf-8");
@@ -1403,22 +1716,23 @@ declare global {
 export {};
 `;
 
-const TSCONFIG_CONTENT = JSON.stringify(
-  {
-    compilerOptions: {
-      target: "ES2020",
-      module: "ESNext",
-      moduleResolution: "node",
-      strict: true,
-      noEmit: true,
-      skipLibCheck: true,
-      types: []
+const TSCONFIG_CONTENT =
+  JSON.stringify(
+    {
+      compilerOptions: {
+        target: "ES2020",
+        module: "ESNext",
+        moduleResolution: "node",
+        strict: true,
+        noEmit: true,
+        skipLibCheck: true,
+        types: [],
+      },
+      include: ["scripts/**/*"],
     },
-    include: ["scripts/**/*"]
-  },
-  null,
-  2
-) + "\n";
+    null,
+    2,
+  ) + "\n";
 
 // Function to generate project declarations into a project folder
 export function generateProjectDeclarations(projectPath) {

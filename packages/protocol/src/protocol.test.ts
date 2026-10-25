@@ -60,6 +60,12 @@ import {
   ScriptWriteResultSchema,
   GameLogNotificationSchema,
   GameErrorNotificationSchema,
+  EditUndoParamsSchema,
+  EditUndoResultSchema,
+  EditGetHistoryResultSchema,
+  SceneGetComponentSchemasResultSchema,
+  SceneGetDirtyResultSchema,
+  SceneSaveResultSchema,
 } from "./generated/index.ts";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -431,38 +437,62 @@ test("script operations and errors serialize and deserialize", () => {
   // script.check fixtures
   const checkParams = loadFixture("script_check_params.json");
   const parsedCheckParams = ScriptCheckParamsSchema.parse(checkParams);
-  assert.deepStrictEqual(ScriptCheckParamsSchema.parse(JSON.parse(JSON.stringify(parsedCheckParams))), parsedCheckParams);
+  assert.deepStrictEqual(
+    ScriptCheckParamsSchema.parse(JSON.parse(JSON.stringify(parsedCheckParams))),
+    parsedCheckParams,
+  );
 
   const checkResult = loadFixture("script_check_result.json");
   const parsedCheckResult = ScriptCheckResultSchema.parse(checkResult);
-  assert.deepStrictEqual(ScriptCheckResultSchema.parse(JSON.parse(JSON.stringify(parsedCheckResult))), parsedCheckResult);
+  assert.deepStrictEqual(
+    ScriptCheckResultSchema.parse(JSON.parse(JSON.stringify(parsedCheckResult))),
+    parsedCheckResult,
+  );
 
   // script.list fixtures
   const listParams = loadFixture("script_list_params.json");
   const parsedListParams = ScriptListParamsSchema.parse(listParams);
-  assert.deepStrictEqual(ScriptListParamsSchema.parse(JSON.parse(JSON.stringify(parsedListParams))), parsedListParams);
+  assert.deepStrictEqual(
+    ScriptListParamsSchema.parse(JSON.parse(JSON.stringify(parsedListParams))),
+    parsedListParams,
+  );
 
   const listResult = loadFixture("script_list_result.json");
   const parsedListResult = ScriptListResultSchema.parse(listResult);
-  assert.deepStrictEqual(ScriptListResultSchema.parse(JSON.parse(JSON.stringify(parsedListResult))), parsedListResult);
+  assert.deepStrictEqual(
+    ScriptListResultSchema.parse(JSON.parse(JSON.stringify(parsedListResult))),
+    parsedListResult,
+  );
 
   // script.read fixtures
   const readParams = loadFixture("script_read_params.json");
   const parsedReadParams = ScriptReadParamsSchema.parse(readParams);
-  assert.deepStrictEqual(ScriptReadParamsSchema.parse(JSON.parse(JSON.stringify(parsedReadParams))), parsedReadParams);
+  assert.deepStrictEqual(
+    ScriptReadParamsSchema.parse(JSON.parse(JSON.stringify(parsedReadParams))),
+    parsedReadParams,
+  );
 
   const readResult = loadFixture("script_read_result.json");
   const parsedReadResult = ScriptReadResultSchema.parse(readResult);
-  assert.deepStrictEqual(ScriptReadResultSchema.parse(JSON.parse(JSON.stringify(parsedReadResult))), parsedReadResult);
+  assert.deepStrictEqual(
+    ScriptReadResultSchema.parse(JSON.parse(JSON.stringify(parsedReadResult))),
+    parsedReadResult,
+  );
 
   // script.write fixtures
   const writeParams = loadFixture("script_write_params.json");
   const parsedWriteParams = ScriptWriteParamsSchema.parse(writeParams);
-  assert.deepStrictEqual(ScriptWriteParamsSchema.parse(JSON.parse(JSON.stringify(parsedWriteParams))), parsedWriteParams);
+  assert.deepStrictEqual(
+    ScriptWriteParamsSchema.parse(JSON.parse(JSON.stringify(parsedWriteParams))),
+    parsedWriteParams,
+  );
 
   const writeResult = loadFixture("script_write_result.json");
   const parsedWriteResult = ScriptWriteResultSchema.parse(writeResult);
-  assert.deepStrictEqual(ScriptWriteResultSchema.parse(JSON.parse(JSON.stringify(parsedWriteResult))), parsedWriteResult);
+  assert.deepStrictEqual(
+    ScriptWriteResultSchema.parse(JSON.parse(JSON.stringify(parsedWriteResult))),
+    parsedWriteResult,
+  );
 
   // game.log and game.error schemas
   const logNotif = {
@@ -472,7 +502,10 @@ test("script operations and errors serialize and deserialize", () => {
     frame: 42,
   };
   const parsedLog = GameLogNotificationSchema.parse(logNotif);
-  assert.deepStrictEqual(GameLogNotificationSchema.parse(JSON.parse(JSON.stringify(parsedLog))), parsedLog);
+  assert.deepStrictEqual(
+    GameLogNotificationSchema.parse(JSON.parse(JSON.stringify(parsedLog))),
+    parsedLog,
+  );
 
   const errNotif = {
     level: "error",
@@ -481,7 +514,54 @@ test("script operations and errors serialize and deserialize", () => {
     frame: 99,
   };
   const parsedErr = GameErrorNotificationSchema.parse(errNotif);
-  assert.deepStrictEqual(GameErrorNotificationSchema.parse(JSON.parse(JSON.stringify(parsedErr))), parsedErr);
+  assert.deepStrictEqual(
+    GameErrorNotificationSchema.parse(JSON.parse(JSON.stringify(parsedErr))),
+    parsedErr,
+  );
+});
+
+test("edit.ops and scene.edit.ops serialize and deserialize against fixtures", () => {
+  const undoParams = loadFixture("edit_undo_params.json");
+  const parsedUndoParams = EditUndoParamsSchema.parse(undoParams);
+  assert.deepStrictEqual(
+    EditUndoParamsSchema.parse(JSON.parse(JSON.stringify(parsedUndoParams))),
+    parsedUndoParams,
+  );
+
+  const undoResult = loadFixture("edit_undo_result.json");
+  const parsedUndoResult = EditUndoResultSchema.parse(undoResult);
+  assert.deepStrictEqual(
+    EditUndoResultSchema.parse(JSON.parse(JSON.stringify(parsedUndoResult))),
+    parsedUndoResult,
+  );
+
+  const historyResult = loadFixture("edit_get_history_result.json");
+  const parsedHistory = EditGetHistoryResultSchema.parse(historyResult);
+  assert.deepStrictEqual(
+    EditGetHistoryResultSchema.parse(JSON.parse(JSON.stringify(parsedHistory))),
+    parsedHistory,
+  );
+
+  const schemasResult = loadFixture("scene_get_component_schemas_result.json");
+  const parsedSchemas = SceneGetComponentSchemasResultSchema.parse(schemasResult);
+  assert.deepStrictEqual(
+    SceneGetComponentSchemasResultSchema.parse(JSON.parse(JSON.stringify(parsedSchemas))),
+    parsedSchemas,
+  );
+
+  const dirtyResult = loadFixture("scene_get_dirty_result.json");
+  const parsedDirty = SceneGetDirtyResultSchema.parse(dirtyResult);
+  assert.deepStrictEqual(
+    SceneGetDirtyResultSchema.parse(JSON.parse(JSON.stringify(parsedDirty))),
+    parsedDirty,
+  );
+
+  const saveResult = loadFixture("scene_save_result.json");
+  const parsedSave = SceneSaveResultSchema.parse(saveResult);
+  assert.deepStrictEqual(
+    SceneSaveResultSchema.parse(JSON.parse(JSON.stringify(parsedSave))),
+    parsedSave,
+  );
 });
 
 test("generated forge.d.ts matches the schema and has DO NOT EDIT header", () => {

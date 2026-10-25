@@ -1,0 +1,38 @@
+{
+  "schemas": [
+    {
+      "name": "Transform2D",
+      "display_name": "Transform 2D",
+      "category": "Core",
+      "fields": [
+        {
+          "name": "position",
+          "field_type": "vector2",
+          "default_value": [0.0, 0.0],
+          "hint": {
+            "widget": "vector2",
+            "step": 0.5
+          }
+        },
+        {
+          "name": "rotation",
+          "field_type": "number",
+          "default_value": 0.0,
+          "hint": {
+            "widget": "number",
+            "step": 1.0
+          }
+        },
+        {
+          "name": "scale",
+          "field_type": "vector2",
+          "default_value": [1.0, 1.0],
+          "hint": {
+            "widget": "vector2",
+            "step": 0.1
+          }
+        }
+      ]
+    }
+  ]
+}

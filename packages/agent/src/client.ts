@@ -289,4 +289,62 @@ export class BridgeClient {
   public stop(): Promise<ProjectStopResult> {
     return this.call<ProjectStopResult>("project.stop", {});
   }
+
+  public undo(): Promise<import("@forge/protocol").EditUndoResult> {
+    return this.call("edit.undo", {});
+  }
+
+  public redo(): Promise<import("@forge/protocol").EditRedoResult> {
+    return this.call("edit.redo", {});
+  }
+
+  public getHistory(): Promise<import("@forge/protocol").EditGetHistoryResult> {
+    return this.call("edit.get_history", {});
+  }
+
+  public jumpHistory(targetId: string): Promise<import("@forge/protocol").EditJumpHistoryResult> {
+    return this.call("edit.jump_history", { target_id: targetId });
+  }
+
+  public getComponentSchemas(): Promise<import("@forge/protocol").SceneGetComponentSchemasResult> {
+    return this.call("scene.get_component_schemas", {});
+  }
+
+  public saveScene(path?: string): Promise<import("@forge/protocol").SceneSaveResult> {
+    return this.call("scene.save", path ? { path } : {});
+  }
+
+  public getDirty(): Promise<import("@forge/protocol").SceneGetDirtyResult> {
+    return this.call("scene.get_dirty", {});
+  }
+
+  public reparentEntity(
+    entityId: string,
+    newParentId: string | null = null,
+  ): Promise<import("@forge/protocol").SceneReparentEntityResult> {
+    return this.call("scene.reparent_entity", {
+      entity_id: entityId,
+      new_parent_id: newParentId,
+    });
+  }
+
+  public duplicateEntity(
+    entityId: string,
+    newEntityId?: string,
+  ): Promise<import("@forge/protocol").SceneDuplicateEntityResult> {
+    return this.call("scene.duplicate_entity", {
+      entity_id: entityId,
+      new_entity_id: newEntityId,
+    });
+  }
+
+  public removeComponent(
+    entityId: string,
+    componentName: string,
+  ): Promise<import("@forge/protocol").SceneRemoveComponentResult> {
+    return this.call("scene.remove_component", {
+      entity_id: entityId,
+      component_name: componentName,
+    });
+  }
 }

@@ -185,3 +185,29 @@ fn test_script_tools_fixtures() {
     let write_result: ScriptWriteResult = roundtrip("script_write_result.json");
     assert!(write_result.success);
 }
+
+#[test]
+fn test_edit_ops_fixtures() {
+    let _undo_params: EditUndoParams = roundtrip("edit_undo_params.json");
+    let undo_result: EditUndoResult = roundtrip("edit_undo_result.json");
+    assert!(undo_result.success);
+    assert_eq!(
+        undo_result.undone_command.as_deref(),
+        Some("Set Transform2D on player")
+    );
+
+    let history_result: EditGetHistoryResult = roundtrip("edit_get_history_result.json");
+    assert_eq!(history_result.undo_stack.len(), 1);
+    assert_eq!(history_result.undo_stack[0].author, "agent");
+
+    let schemas_result: SceneGetComponentSchemasResult =
+        roundtrip("scene_get_component_schemas_result.json");
+    assert_eq!(schemas_result.schemas.len(), 1);
+    assert_eq!(schemas_result.schemas[0].name, "Transform2D");
+
+    let dirty_result: SceneGetDirtyResult = roundtrip("scene_get_dirty_result.json");
+    assert!(dirty_result.is_dirty);
+
+    let save_result: SceneSaveResult = roundtrip("scene_save_result.json");
+    assert!(save_result.success);
+}

@@ -1274,11 +1274,14 @@ name = "forge_bridge"
 version = "0.1.0"
 dependencies = [
  "base64",
+ "forge_cli",
  "forge_core",
  "forge_protocol",
+ "forge_script",
  "futures-util",
  "serde",
  "serde_json",
+ "tempfile",
  "thiserror 2.0.21",
  "tokio",
  "tokio-tungstenite",
@@ -1344,6 +1347,12 @@ dependencies = [
 [[package]]
 name = "forge_playtest"
 version = "0.1.0"
+dependencies = [
+ "forge_protocol",
+ "forge_script",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "forge_protocol"
@@ -1375,6 +1384,7 @@ dependencies = [
  "forge_assets",
  "forge_audio",
  "forge_bridge",
+ "forge_cli",
  "forge_core",
  "forge_input",
  "forge_physics",

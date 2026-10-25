@@ -632,3 +632,167 @@ pub struct GameErrorNotification {
     pub source_location: Option<String>,
     pub frame: u64,
 }
+
+// -----------------------------------------------------------------------------
+// edit.undo / edit.redo / edit.get_history / edit.jump_history
+// -----------------------------------------------------------------------------
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct EditUndoParams {}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct EditUndoResult {
+    pub success: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub undone_command: Option<String>,
+    pub can_undo: bool,
+    pub can_redo: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct EditRedoParams {}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct EditRedoResult {
+    pub success: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub redone_command: Option<String>,
+    pub can_undo: bool,
+    pub can_redo: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct HistoryEntry {
+    pub id: String,
+    pub description: String,
+    pub author: String,
+    pub timestamp: f64,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct EditGetHistoryParams {}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct EditGetHistoryResult {
+    pub undo_stack: Vec<HistoryEntry>,
+    pub redo_stack: Vec<HistoryEntry>,
+    pub can_undo: bool,
+    pub can_redo: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct EditJumpHistoryParams {
+    pub target_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct EditJumpHistoryResult {
+    pub success: bool,
+    pub can_undo: bool,
+    pub can_redo: bool,
+}
+
+// -----------------------------------------------------------------------------
+// scene.get_component_schemas / scene.save / scene.get_dirty / scene operations
+// -----------------------------------------------------------------------------
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct FieldEditorHint {
+    pub widget: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub min: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub step: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub asset_type: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub options: Option<Vec<String>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ComponentFieldSchema {
+    pub name: String,
+    pub field_type: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub default_value: Option<serde_json::Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub hint: Option<FieldEditorHint>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ComponentSchema {
+    pub name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub display_name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub category: Option<String>,
+    pub fields: Vec<ComponentFieldSchema>,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct SceneGetComponentSchemasParams {}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SceneGetComponentSchemasResult {
+    pub schemas: Vec<ComponentSchema>,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct SceneSaveParams {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub path: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SceneSaveResult {
+    pub success: bool,
+    pub path: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct SceneGetDirtyParams {}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SceneGetDirtyResult {
+    pub is_dirty: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub undo_count: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub current_scene_path: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SceneReparentEntityParams {
+    pub entity_id: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub new_parent_id: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SceneReparentEntityResult {
+    pub success: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SceneDuplicateEntityParams {
+    pub entity_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SceneDuplicateEntityResult {
+    pub success: bool,
+    pub new_entity_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SceneRemoveComponentParams {
+    pub entity_id: String,
+    pub component_name: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SceneRemoveComponentResult {
+    pub success: bool,
+}

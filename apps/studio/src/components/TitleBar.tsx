@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Minus, Square, X, Copy, Command } from "lucide-react";
 import { useCommandStore } from "../stores/commandStore";
+import { useEditStore } from "../stores/editStore";
 
 interface TitleBarProps {
   projectName?: string;
@@ -9,6 +10,7 @@ interface TitleBarProps {
 export const TitleBar: React.FC<TitleBarProps> = ({ projectName = "templates/hello" }) => {
   const [isMaximized, setIsMaximized] = useState(false);
   const openCommandPalette = useCommandStore((s) => s.open);
+  const { isDirty } = useEditStore();
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -91,6 +93,12 @@ export const TitleBar: React.FC<TitleBarProps> = ({ projectName = "templates/hel
 
   const handleClose = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (isDirty) {
+      const confirmClose = window.confirm(
+        "You have unsaved changes in the scene. Do you want to close without saving?"
+      );
+      if (!confirmClose) return;
+    }
     try {
       const { invoke } = await import("@tauri-apps/api/core");
       await invoke("window_close");
@@ -129,6 +137,14 @@ export const TitleBar: React.FC<TitleBarProps> = ({ projectName = "templates/hel
           <span className="text-[#E8EAED] font-medium">{projectName}</span>
           <span className="text-[#23262D]">/</span>
           <span className="text-[#8B919C]">scene.json</span>
+          {isDirty && (
+            <span
+              className="text-[#FF6A2B] font-bold text-sm leading-none animate-pulse"
+              title="Unsaved changes (Ctrl+S to save)"
+            >
+              *
+            </span>
+          )}
         </div>
 
         <button

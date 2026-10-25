@@ -572,6 +572,256 @@ fn apply_component_from_hashmap(
     }
 }
 
+/// Raw create entity with explicit ID.
+pub fn raw_create_entity(
+    world: &mut World,
+    entity_id: &str,
+    name: &str,
+    parent_id: Option<&str>,
+    components: Option<&HashMap<String, String>>,
+) -> Result<Entity, SceneError> {
+    let parent_entity = if let Some(pid) = parent_id {
+        let parent = find_entity_by_id(world, pid)
+            .ok_or_else(|| SceneError::EntityNotFound(pid.to_string()))?;
+        Some(parent)
+    } else {
+        None
+    };
+
+    let mut entity_builder = world.spawn((EntityId::new(entity_id), Name::new(name)));
+    if let Some(parent) = parent_entity {
+        entity_builder.insert(Parent::new(parent));
+    }
+    let entity = entity_builder.id();
+
+    if let Some(parent) = parent_entity {
+        if let Some(mut children) = world.get_mut::<Children>(parent) {
+            children.add(entity);
+        } else {
+            let mut children = Children::new();
+            children.add(entity);
+            world.entity_mut(parent).insert(children);
+        }
+    }
+
+    if let Some(comps) = components {
+        for (comp_name, comp_data) in comps {
+            apply_component_from_str_or_json(world, entity, comp_name, comp_data)?;
+        }
+    }
+
+    Ok(entity)
+}
+
+/// Raw delete entity and its descendants.
+pub fn raw_delete_entity(world: &mut World, entity_id: &str) -> Result<(), SceneError> {
+    let entity = find_entity_by_id(world, entity_id)
+        .ok_or_else(|| SceneError::EntityNotFound(entity_id.to_string()))?;
+
+    let mut to_despawn = Vec::new();
+    collect_descendants(world, entity, &mut to_despawn);
+    to_despawn.push(entity);
+
+    if let Some(parent) = world.get::<Parent>(entity) {
+        let parent_entity = parent.entity();
+        if let Some(mut children) = world.get_mut::<Children>(parent_entity) {
+            children.remove(entity);
+        }
+    }
+
+    for e in to_despawn {
+        if world.get_entity(e).is_ok() {
+            world.despawn(e);
+        }
+    }
+
+    Ok(())
+}
+
+/// Raw set component.
+pub fn raw_set_component(
+    world: &mut World,
+    entity_id: &str,
+    component_name: &str,
+    data: &HashMap<String, String>,
+) -> Result<(), SceneError> {
+    let entity = find_entity_by_id(world, entity_id)
+        .ok_or_else(|| SceneError::EntityNotFound(entity_id.to_string()))?;
+    apply_component_from_hashmap(world, entity, component_name, data)
+}
+
+/// Raw remove component.
+pub fn raw_remove_component(
+    world: &mut World,
+    entity_id: &str,
+    component_name: &str,
+) -> Result<(), SceneError> {
+    let entity = find_entity_by_id(world, entity_id)
+        .ok_or_else(|| SceneError::EntityNotFound(entity_id.to_string()))?;
+
+    match component_name {
+        "Transform" | "Transform2D" => {
+            world.entity_mut(entity).remove::<Transform2D>();
+        }
+        "Sprite" => {
+            world.entity_mut(entity).remove::<Sprite>();
+        }
+        "Animator" => {
+            world
+                .entity_mut(entity)
+                .remove::<crate::components::Animator>();
+        }
+        "Camera" | "Camera2D" => {
+            world.entity_mut(entity).remove::<Camera2D>();
+        }
+        "RigidBody" | "RigidBody2D" => {
+            world
+                .entity_mut(entity)
+                .remove::<crate::components::RigidBody2D>();
+        }
+        "Collider" | "Collider2D" => {
+            world
+                .entity_mut(entity)
+                .remove::<crate::components::Collider2D>();
+        }
+        "AudioSource" => {
+            world
+                .entity_mut(entity)
+                .remove::<crate::components::AudioSource>();
+        }
+        "AudioListener" => {
+            world
+                .entity_mut(entity)
+                .remove::<crate::components::AudioListener>();
+        }
+        "Script" => {
+            world
+                .entity_mut(entity)
+                .remove::<crate::components::Script>();
+        }
+        "Tilemap" => {
+            world.entity_mut(entity).remove::<crate::tilemap::Tilemap>();
+        }
+        _ => {}
+    }
+    Ok(())
+}
+
+/// Raw reparent entity.
+pub fn raw_reparent_entity(
+    world: &mut World,
+    entity_id: &str,
+    new_parent_id: Option<&str>,
+) -> Result<(), SceneError> {
+    let entity = find_entity_by_id(world, entity_id)
+        .ok_or_else(|| SceneError::EntityNotFound(entity_id.to_string()))?;
+
+    // Remove from old parent
+    if let Some(old_parent) = world.get::<Parent>(entity) {
+        let old_parent_entity = old_parent.entity();
+        if let Some(mut children) = world.get_mut::<Children>(old_parent_entity) {
+            children.remove(entity);
+        }
+    }
+    world.entity_mut(entity).remove::<Parent>();
+
+    // Add to new parent if specified
+    if let Some(pid) = new_parent_id {
+        let new_parent_entity = find_entity_by_id(world, pid)
+            .ok_or_else(|| SceneError::EntityNotFound(pid.to_string()))?;
+
+        world
+            .entity_mut(entity)
+            .insert(Parent::new(new_parent_entity));
+        if let Some(mut children) = world.get_mut::<Children>(new_parent_entity) {
+            children.add(entity);
+        } else {
+            let mut children = Children::new();
+            children.add(entity);
+            world.entity_mut(new_parent_entity).insert(children);
+        }
+    }
+
+    Ok(())
+}
+
+/// Raw restore entity from serialized SceneEntity.
+pub fn raw_restore_entity(
+    world: &mut World,
+    se: &crate::scene::SceneEntity,
+) -> Result<Entity, SceneError> {
+    let mut entity_builder = world.spawn(EntityId::new(&se.id));
+
+    if let Some(val) = se.components.get("Name") {
+        if let Ok(name) = serde_json::from_value::<Name>(val.clone()) {
+            entity_builder.insert(name);
+        }
+    }
+    if let Some(val) = se.components.get("Transform2D") {
+        if let Ok(t) = serde_json::from_value::<Transform2D>(val.clone()) {
+            entity_builder.insert(t);
+        }
+    }
+    if let Some(val) = se.components.get("Sprite") {
+        if let Ok(s) = serde_json::from_value::<Sprite>(val.clone()) {
+            entity_builder.insert(s);
+        }
+    }
+    if let Some(val) = se.components.get("Camera2D") {
+        if let Ok(c) = serde_json::from_value::<Camera2D>(val.clone()) {
+            entity_builder.insert(c);
+        }
+    }
+    if let Some(val) = se.components.get("RigidBody2D") {
+        if let Ok(rb) = serde_json::from_value::<crate::components::RigidBody2D>(val.clone()) {
+            entity_builder.insert(rb);
+        }
+    }
+    if let Some(val) = se.components.get("Collider2D") {
+        if let Ok(col) = serde_json::from_value::<crate::components::Collider2D>(val.clone()) {
+            entity_builder.insert(col);
+        }
+    }
+    if let Some(val) = se.components.get("Tilemap") {
+        if let Ok(tm) = serde_json::from_value::<crate::tilemap::Tilemap>(val.clone()) {
+            entity_builder.insert(tm);
+        }
+    }
+    if let Some(val) = se.components.get("AudioSource") {
+        if let Ok(a) = serde_json::from_value::<crate::components::AudioSource>(val.clone()) {
+            entity_builder.insert(a);
+        }
+    }
+    if let Some(val) = se.components.get("AudioListener") {
+        if let Ok(l) = serde_json::from_value::<crate::components::AudioListener>(val.clone()) {
+            entity_builder.insert(l);
+        }
+    }
+    if let Some(val) = se.components.get("Script") {
+        if let Ok(s) = serde_json::from_value::<crate::components::Script>(val.clone()) {
+            entity_builder.insert(s);
+        }
+    }
+
+    let entity = entity_builder.id();
+
+    // Reattach parent if exists
+    if let Some(ref pid) = se.parent {
+        if let Some(parent_entity) = find_entity_by_id(world, pid) {
+            world.entity_mut(entity).insert(Parent::new(parent_entity));
+            if let Some(mut children) = world.get_mut::<Children>(parent_entity) {
+                children.add(entity);
+            } else {
+                let mut children = Children::new();
+                children.add(entity);
+                world.entity_mut(parent_entity).insert(children);
+            }
+        }
+    }
+
+    Ok(entity)
+}
+
 /// Extension trait providing scene protocol operations directly on the ECS `World`.
 pub trait WorldSceneExt {
     /// Retrieves the scene tree.
