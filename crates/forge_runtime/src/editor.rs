@@ -478,13 +478,14 @@ pub fn update_editor_interactions(world: &mut World, viewport_w: f32, viewport_h
         None => return,
     };
 
-    let mut editor = match world.get_resource_mut::<EditorState>() {
+    let mut editor = match world.remove_resource::<EditorState>() {
         Some(e) => e,
         None => return,
     };
 
     // If currently Playing (unpaused), editor interactions are disabled; input drives the game.
     if editor.play_state == EditorPlayState::Playing {
+        world.insert_resource(editor);
         return;
     }
 
@@ -749,4 +750,6 @@ pub fn update_editor_interactions(world: &mut World, viewport_w: f32, viewport_h
             }
         }
     }
+
+    world.insert_resource(editor);
 }
