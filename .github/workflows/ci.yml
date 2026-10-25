@@ -82,10 +82,16 @@ jobs:
 
       - name: Install cargo-nextest
         shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $release = Invoke-RestMethod -Uri "https://api.github.com/repos/nextest-rs/nextest/releases/latest"
+          $headers = @{}
+          if ($env:GITHUB_TOKEN) {
+            $headers["Authorization"] = "Bearer $env:GITHUB_TOKEN"
+          }
+          $release = Invoke-RestMethod -Uri "https://api.github.com/repos/nextest-rs/nextest/releases/latest" -Headers $headers
           $asset = $release.assets | Where-Object { $_.name -like "*x86_64-pc-windows-msvc.zip" } | Select-Object -First 1
-          Invoke-WebRequest -Uri $asset.browser_download_url -OutFile "$env:TEMP\nextest.zip"
+          Invoke-WebRequest -Uri $asset.browser_download_url -OutFile "$env:TEMP\nextest.zip" -Headers $headers
           Expand-Archive -Path "$env:TEMP\nextest.zip" -DestinationPath "$env:CARGO_HOME\bin" -Force
           cargo nextest --version
 

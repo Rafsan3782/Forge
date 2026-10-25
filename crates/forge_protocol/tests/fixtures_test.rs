@@ -210,4 +210,10 @@ fn test_edit_ops_fixtures() {
 
     let save_result: SceneSaveResult = roundtrip("scene_save_result.json");
     assert!(save_result.success);
+
+    let play_start: PlayStartResult = roundtrip("play_start_result.json");
+    assert_eq!(play_start.state, "playing");
+
+    let play_stop: PlayStopResult = roundtrip("play_stop_result.json");
+    assert_eq!(play_stop.state, "stopped");
 }

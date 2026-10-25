@@ -66,6 +66,8 @@ import {
   SceneGetComponentSchemasResultSchema,
   SceneGetDirtyResultSchema,
   SceneSaveResultSchema,
+  PlayStartResultSchema,
+  PlayStopResultSchema,
 } from "./generated/index.ts";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -562,6 +564,14 @@ test("edit.ops and scene.edit.ops serialize and deserialize against fixtures", (
     SceneSaveResultSchema.parse(JSON.parse(JSON.stringify(parsedSave))),
     parsedSave,
   );
+
+  const playStartResult = loadFixture("play_start_result.json");
+  const parsedPlayStart = PlayStartResultSchema.parse(playStartResult);
+  assert.strictEqual(parsedPlayStart.state, "playing");
+
+  const playStopResult = loadFixture("play_stop_result.json");
+  const parsedPlayStop = PlayStopResultSchema.parse(playStopResult);
+  assert.strictEqual(parsedPlayStop.state, "stopped");
 });
 
 test("generated forge.d.ts matches the schema and has DO NOT EDIT header", () => {

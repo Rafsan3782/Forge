@@ -233,6 +233,7 @@ export const SimulateInputTypeSchema = z.enum([
   "mouse_move",
   "mouse_down",
   "mouse_up",
+  "mouse_wheel",
 ]);
 export type SimulateInputType = z.infer<typeof SimulateInputTypeSchema>;
 
@@ -241,6 +242,9 @@ export const SimulateInputEventSchema = z.object({
   key: z.string().optional(),
   action: z.string().optional(),
   value: z.number().optional(),
+  position: z.tuple([z.number(), z.number()]).optional(),
+  delta: z.tuple([z.number(), z.number()]).optional(),
+  button: z.string().optional(),
   duration_frames: z.number().int().optional().default(1),
 });
 export type SimulateInputEvent = z.infer<typeof SimulateInputEventSchema>;
@@ -759,6 +763,44 @@ export const SceneRemoveComponentResultSchema = z.object({
 });
 export type SceneRemoveComponentResult = z.infer<typeof SceneRemoveComponentResultSchema>;
 
+export const PlayStartParamsSchema = z.object({});
+export type PlayStartParams = z.infer<typeof PlayStartParamsSchema>;
+
+export const PlayStartResultSchema = z.object({
+  success: z.boolean(),
+  state: z.enum(["playing", "paused", "stopped"]),
+});
+export type PlayStartResult = z.infer<typeof PlayStartResultSchema>;
+
+export const PlayPauseParamsSchema = z.object({});
+export type PlayPauseParams = z.infer<typeof PlayPauseParamsSchema>;
+
+export const PlayPauseResultSchema = z.object({
+  success: z.boolean(),
+  state: z.enum(["playing", "paused", "stopped"]),
+});
+export type PlayPauseResult = z.infer<typeof PlayPauseResultSchema>;
+
+export const PlayStepParamsSchema = z.object({
+  frames: z.number().int().optional(),
+});
+export type PlayStepParams = z.infer<typeof PlayStepParamsSchema>;
+
+export const PlayStepResultSchema = z.object({
+  success: z.boolean(),
+  frames_stepped: z.number().int(),
+});
+export type PlayStepResult = z.infer<typeof PlayStepResultSchema>;
+
+export const PlayStopParamsSchema = z.object({});
+export type PlayStopParams = z.infer<typeof PlayStopParamsSchema>;
+
+export const PlayStopResultSchema = z.object({
+  success: z.boolean(),
+  state: z.enum(["playing", "paused", "stopped"]),
+});
+export type PlayStopResult = z.infer<typeof PlayStopResultSchema>;
+
 /**
  * Global Forge scripting API contract exposed to quickjs scripts.
  */
@@ -1030,6 +1072,12 @@ pub struct SimulateInputEvent {
     pub action: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub value: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub position: Option<[f64; 2]>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub delta: Option<[f64; 2]>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub button: Option<String>,
     #[serde(default = "default_duration_frames")]
     pub duration_frames: u32,
 }
@@ -1614,6 +1662,49 @@ pub struct SceneRemoveComponentParams {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SceneRemoveComponentResult {
     pub success: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct PlayStartParams {}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PlayStartResult {
+    pub success: bool,
+    pub state: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct PlayPauseParams {}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PlayPauseResult {
+    pub success: bool,
+    pub state: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct PlayStepParams {
+    #[serde(default = "default_step_frames")]
+    pub frames: i64,
+}
+
+fn default_step_frames() -> i64 {
+    1
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PlayStepResult {
+    pub success: bool,
+    pub frames_stepped: i64,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct PlayStopParams {}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PlayStopResult {
+    pub success: bool,
+    pub state: String,
 }
 `;
 

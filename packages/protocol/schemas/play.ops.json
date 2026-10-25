@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/play.ops.json",
+  "title": "PlayOps",
+  "description": "Play mode controls: start, pause, step, and stop simulation in the engine",
+  "definitions": {
+    "PlayStartParams": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "PlayStartResult": {
+      "type": "object",
+      "required": ["success", "state"],
+      "properties": {
+        "success": { "type": "boolean" },
+        "state": { "type": "string", "enum": ["playing", "paused", "stopped"] }
+      },
+      "additionalProperties": false
+    },
+    "PlayPauseParams": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "PlayPauseResult": {
+      "type": "object",
+      "required": ["success", "state"],
+      "properties": {
+        "success": { "type": "boolean" },
+        "state": { "type": "string", "enum": ["playing", "paused", "stopped"] }
+      },
+      "additionalProperties": false
+    },
+    "PlayStepParams": {
+      "type": "object",
+      "properties": {
+        "frames": { "type": "integer", "default": 1 }
+      },
+      "additionalProperties": false
+    },
+    "PlayStepResult": {
+      "type": "object",
+      "required": ["success", "frames_stepped"],
+      "properties": {
+        "success": { "type": "boolean" },
+        "frames_stepped": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "PlayStopParams": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "PlayStopResult": {
+      "type": "object",
+      "required": ["success", "state"],
+      "properties": {
+        "success": { "type": "boolean" },
+        "state": { "type": "string", "enum": ["playing", "paused", "stopped"] }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -360,6 +360,84 @@ pub fn process_bridge_commands(
                 let res = handle_scene_remove_component(world, &params);
                 let _ = responder.send(res);
             }
+
+            BridgeCommand::PlayStart {
+                params: _,
+                responder,
+            } => {
+                let mut ed = world.remove_resource::<crate::editor::EditorState>();
+                let res = if let Some(ref mut editor) = ed {
+                    editor
+                        .start_play(world)
+                        .map(|_| forge_protocol::PlayStartResult {
+                            success: true,
+                            state: "playing".to_string(),
+                        })
+                } else {
+                    Err("EditorState resource not found".to_string())
+                };
+                if let Some(editor) = ed {
+                    world.insert_resource(editor);
+                }
+                let _ = responder.send(res);
+            }
+
+            BridgeCommand::PlayPause {
+                params: _,
+                responder,
+            } => {
+                let res =
+                    if let Some(mut ed) = world.get_resource_mut::<crate::editor::EditorState>() {
+                        ed.pause_play();
+                        let st = match ed.play_state {
+                            crate::editor::EditorPlayState::Edit => "stopped",
+                            crate::editor::EditorPlayState::Playing => "playing",
+                            crate::editor::EditorPlayState::Paused => "paused",
+                        };
+                        Ok(forge_protocol::PlayPauseResult {
+                            success: true,
+                            state: st.to_string(),
+                        })
+                    } else {
+                        Err("EditorState resource not found".to_string())
+                    };
+                let _ = responder.send(res);
+            }
+
+            BridgeCommand::PlayStep { params, responder } => {
+                let res =
+                    if let Some(mut ed) = world.get_resource_mut::<crate::editor::EditorState>() {
+                        ed.step_play(params.frames as u32);
+                        Ok(forge_protocol::PlayStepResult {
+                            success: true,
+                            frames_stepped: params.frames,
+                        })
+                    } else {
+                        Err("EditorState resource not found".to_string())
+                    };
+                let _ = responder.send(res);
+            }
+
+            BridgeCommand::PlayStop {
+                params: _,
+                responder,
+            } => {
+                let mut ed = world.remove_resource::<crate::editor::EditorState>();
+                let res = if let Some(ref mut editor) = ed {
+                    editor
+                        .stop_play(world)
+                        .map(|_| forge_protocol::PlayStopResult {
+                            success: true,
+                            state: "stopped".to_string(),
+                        })
+                } else {
+                    Err("EditorState resource not found".to_string())
+                };
+                if let Some(editor) = ed {
+                    world.insert_resource(editor);
+                }
+                let _ = responder.send(res);
+            }
         }
     }
 }
@@ -598,24 +676,48 @@ pub fn apply_simulated_input(
                     }
                 }
                 "mouse_move" => {
-                    let val = ev.value.unwrap_or(0.0) as f32;
-                    state.feed_mouse_move(forge_core::Vec2::new(val, val), None);
+                    let pos = if let Some(p) = ev.position {
+                        forge_core::Vec2::new(p[0] as f32, p[1] as f32)
+                    } else {
+                        let val = ev.value.unwrap_or(0.0) as f32;
+                        forge_core::Vec2::new(val, val)
+                    };
+                    state.feed_mouse_move(pos, None);
                 }
                 "mouse_down" => {
                     let btn = ev
-                        .key
+                        .button
                         .as_deref()
+                        .or(ev.key.as_deref())
                         .and_then(MouseButton::from_name)
                         .unwrap_or(MouseButton::Left);
+                    if let Some(p) = ev.position {
+                        state
+                            .feed_mouse_move(forge_core::Vec2::new(p[0] as f32, p[1] as f32), None);
+                    }
                     state.feed_mouse_button_press(btn, None);
                 }
                 "mouse_up" => {
                     let btn = ev
-                        .key
+                        .button
                         .as_deref()
+                        .or(ev.key.as_deref())
                         .and_then(MouseButton::from_name)
                         .unwrap_or(MouseButton::Left);
+                    if let Some(p) = ev.position {
+                        state
+                            .feed_mouse_move(forge_core::Vec2::new(p[0] as f32, p[1] as f32), None);
+                    }
                     state.feed_mouse_button_release(btn, None);
+                }
+                "mouse_wheel" => {
+                    let delta = if let Some(d) = ev.delta {
+                        forge_core::Vec2::new(d[0] as f32, d[1] as f32)
+                    } else {
+                        let val = ev.value.unwrap_or(0.0) as f32;
+                        forge_core::Vec2::new(0.0, val)
+                    };
+                    state.feed_mouse_wheel(delta, None);
                 }
                 _ => {}
             }

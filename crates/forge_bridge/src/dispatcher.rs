@@ -792,6 +792,102 @@ pub async fn dispatch_direct_tool(
             Ok(serde_json::to_value(result)?)
         }
 
+        "play.start" => {
+            let start_params: forge_protocol::PlayStartParams = if params.is_null() {
+                forge_protocol::PlayStartParams::default()
+            } else {
+                serde_json::from_value(params)
+                    .map_err(|e| BridgeError::InvalidParams(e.to_string()))?
+            };
+
+            let (tx, rx) = oneshot::channel();
+            command_sender
+                .send(BridgeCommand::PlayStart {
+                    params: start_params,
+                    responder: tx,
+                })
+                .map_err(|_| BridgeError::ChannelClosed)?;
+
+            let result = rx
+                .await
+                .map_err(|_| BridgeError::ChannelClosed)?
+                .map_err(BridgeError::Engine)?;
+
+            Ok(serde_json::to_value(result)?)
+        }
+
+        "play.pause" => {
+            let pause_params: forge_protocol::PlayPauseParams = if params.is_null() {
+                forge_protocol::PlayPauseParams::default()
+            } else {
+                serde_json::from_value(params)
+                    .map_err(|e| BridgeError::InvalidParams(e.to_string()))?
+            };
+
+            let (tx, rx) = oneshot::channel();
+            command_sender
+                .send(BridgeCommand::PlayPause {
+                    params: pause_params,
+                    responder: tx,
+                })
+                .map_err(|_| BridgeError::ChannelClosed)?;
+
+            let result = rx
+                .await
+                .map_err(|_| BridgeError::ChannelClosed)?
+                .map_err(BridgeError::Engine)?;
+
+            Ok(serde_json::to_value(result)?)
+        }
+
+        "play.step" => {
+            let step_params: forge_protocol::PlayStepParams = if params.is_null() {
+                forge_protocol::PlayStepParams::default()
+            } else {
+                serde_json::from_value(params)
+                    .map_err(|e| BridgeError::InvalidParams(e.to_string()))?
+            };
+
+            let (tx, rx) = oneshot::channel();
+            command_sender
+                .send(BridgeCommand::PlayStep {
+                    params: step_params,
+                    responder: tx,
+                })
+                .map_err(|_| BridgeError::ChannelClosed)?;
+
+            let result = rx
+                .await
+                .map_err(|_| BridgeError::ChannelClosed)?
+                .map_err(BridgeError::Engine)?;
+
+            Ok(serde_json::to_value(result)?)
+        }
+
+        "play.stop" => {
+            let stop_params: forge_protocol::PlayStopParams = if params.is_null() {
+                forge_protocol::PlayStopParams::default()
+            } else {
+                serde_json::from_value(params)
+                    .map_err(|e| BridgeError::InvalidParams(e.to_string()))?
+            };
+
+            let (tx, rx) = oneshot::channel();
+            command_sender
+                .send(BridgeCommand::PlayStop {
+                    params: stop_params,
+                    responder: tx,
+                })
+                .map_err(|_| BridgeError::ChannelClosed)?;
+
+            let result = rx
+                .await
+                .map_err(|_| BridgeError::ChannelClosed)?
+                .map_err(BridgeError::Engine)?;
+
+            Ok(serde_json::to_value(result)?)
+        }
+
         unknown => Err(BridgeError::MethodNotFound(unknown.to_string())),
     }
 }

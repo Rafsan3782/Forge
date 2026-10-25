@@ -347,4 +347,26 @@ export class BridgeClient {
       component_name: componentName,
     });
   }
+
+  public playStart(): Promise<import("@forge/protocol").PlayStartResult> {
+    return this.call("play.start", {});
+  }
+
+  public playPause(): Promise<import("@forge/protocol").PlayPauseResult> {
+    return this.call("play.pause", {});
+  }
+
+  public playStep(frames = 1): Promise<import("@forge/protocol").PlayStepResult> {
+    return this.call("play.step", { frames });
+  }
+
+  public playStop(): Promise<import("@forge/protocol").PlayStopResult> {
+    return this.call("play.stop", {});
+  }
+
+  public simulateInput(
+    events: import("@forge/protocol").SimulateInputEvent[],
+  ): Promise<import("@forge/protocol").GameSimulateInputResult> {
+    return this.call("game.simulate_input", { events });
+  }
 }

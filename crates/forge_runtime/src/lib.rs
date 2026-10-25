@@ -11,6 +11,7 @@
 pub mod bridge_ops;
 pub mod cli;
 pub mod demo_input;
+pub mod editor;
 pub mod headless;
 pub mod procedural;
 pub mod render_scene;
@@ -20,6 +21,7 @@ pub use cli::CliArgs;
 pub use demo_input::{
     demo_audio_keyboard_system, demo_character_controller_system, demo_hero_movement_system,
 };
+pub use editor::{EditorPlayState, EditorState, GizmoMode};
 pub use headless::run_headless;
 pub use procedural::{generate_audio_demo_assets, generate_hello_assets, generate_tilemap_assets};
 pub use render_scene::{render_world_scene, PhysicsDebugDraw, DEFAULT_CLEAR_COLOR};

@@ -126,6 +126,9 @@ impl WindowApp {
         command_stack.mark_clean(Some(args.scene.clone()));
         world.insert_resource(command_stack);
 
+        // Insert EditorState resource for editor camera, picking, gizmos, and play mode
+        world.insert_resource(crate::editor::EditorState::new());
+
         let mut game_loop = GameLoop::new();
         game_loop.add_pre_update_system(fixed_input_tick_system);
         game_loop.add_pre_update_system(forge_script::script_prepare_frame_system);
@@ -422,8 +425,37 @@ impl ApplicationHandler for WindowApp {
                 };
                 self.last_frame_instant = Some(now);
 
-                // Step simulation through fixed timestep loop
-                self.game_loop.step(&mut self.world, delta);
+                // Editor interactions (pan, zoom, picking, gizmos)
+                crate::editor::update_editor_interactions(
+                    &mut self.world,
+                    state.surface_config.width as f32,
+                    state.surface_config.height as f32,
+                );
+
+                // Check whether to step simulation (Edit mode does not run physics/scripts/audio)
+                let should_step = if let Some(mut ed) =
+                    self.world.get_resource_mut::<crate::editor::EditorState>()
+                {
+                    match ed.play_state {
+                        crate::editor::EditorPlayState::Playing => true,
+                        crate::editor::EditorPlayState::Paused => {
+                            if ed.step_frames_remaining > 0 {
+                                ed.step_frames_remaining -= 1;
+                                true
+                            } else {
+                                false
+                            }
+                        }
+                        crate::editor::EditorPlayState::Edit => false,
+                    }
+                } else {
+                    true
+                };
+
+                if should_step {
+                    // Step simulation through fixed timestep loop
+                    self.game_loop.step(&mut self.world, delta);
+                }
 
                 // Drain and log physics trigger and collision events
                 if let Some(mut event_bus) = self

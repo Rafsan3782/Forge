@@ -124,6 +124,13 @@ pub fn run_headless(args: &CliArgs) -> Result<(), Box<dyn std::error::Error>> {
     command_stack.mark_clean(Some(args.scene.clone()));
     world.insert_resource(command_stack);
 
+    // Insert EditorState resource
+    let mut editor_state = crate::editor::EditorState::new();
+    if args.screenshot.is_some() && !args.stay_open {
+        editor_state.play_state = crate::editor::EditorPlayState::Playing;
+    }
+    world.insert_resource(editor_state);
+
     let mut game_loop = GameLoop::new();
     game_loop.add_pre_update_system(forge_input::fixed_input_tick_system);
     game_loop.add_pre_update_system(forge_script::script_prepare_frame_system);
@@ -172,7 +179,36 @@ pub fn run_headless(args: &CliArgs) -> Result<(), Box<dyn std::error::Error>> {
             // Sync InputState + ActionMap -> FixedInput
             forge_input::sync_world_frame_input(&mut world);
 
-            game_loop.step(&mut world, frame_delta);
+            // Update editor interaction logic (camera, picking, gizmos, box select)
+            crate::editor::update_editor_interactions(
+                &mut world,
+                args.width as f32,
+                args.height as f32,
+            );
+
+            let should_step = {
+                let mut editor = world.get_resource_mut::<crate::editor::EditorState>();
+                if let Some(ref mut ed) = editor {
+                    match ed.play_state {
+                        crate::editor::EditorPlayState::Playing => true,
+                        crate::editor::EditorPlayState::Paused => {
+                            if ed.step_frames_remaining > 0 {
+                                ed.step_frames_remaining -= 1;
+                                true
+                            } else {
+                                false
+                            }
+                        }
+                        crate::editor::EditorPlayState::Edit => false,
+                    }
+                } else {
+                    true
+                }
+            };
+
+            if should_step {
+                game_loop.step(&mut world, frame_delta);
+            }
 
             if let Some(mut input_state) = world.get_resource_mut::<forge_input::InputState>() {
                 input_state.start_new_frame();
