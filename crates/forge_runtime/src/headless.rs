@@ -180,7 +180,11 @@ pub fn run_headless(args: &CliArgs) -> Result<(), Box<dyn std::error::Error>> {
             forge_input::sync_world_frame_input(&mut world);
 
             // Update editor interaction logic (camera, picking, gizmos, box select)
-            crate::editor::update_editor_interactions(&mut world, args.width as f32, args.height as f32);
+            crate::editor::update_editor_interactions(
+                &mut world,
+                args.width as f32,
+                args.height as f32,
+            );
 
             let should_step = {
                 let mut editor = world.get_resource_mut::<crate::editor::EditorState>();

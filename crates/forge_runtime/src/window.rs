@@ -433,7 +433,9 @@ impl ApplicationHandler for WindowApp {
                 );
 
                 // Check whether to step simulation (Edit mode does not run physics/scripts/audio)
-                let should_step = if let Some(mut ed) = self.world.get_resource_mut::<crate::editor::EditorState>() {
+                let should_step = if let Some(mut ed) =
+                    self.world.get_resource_mut::<crate::editor::EditorState>()
+                {
                     match ed.play_state {
                         crate::editor::EditorPlayState::Playing => true,
                         crate::editor::EditorPlayState::Paused => {

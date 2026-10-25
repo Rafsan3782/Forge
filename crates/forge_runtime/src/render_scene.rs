@@ -38,12 +38,17 @@ pub fn render_world_scene(
 ) -> Result<(), RenderError> {
     // 1. Locate Camera: if in Edit mode, use Editor camera; otherwise use active game Camera2D
     let editor_state = world.get_resource::<crate::editor::EditorState>();
-    let is_edit_mode = editor_state.map(|e| e.play_state == crate::editor::EditorPlayState::Edit).unwrap_or(false);
+    let is_edit_mode = editor_state
+        .map(|e| e.play_state == crate::editor::EditorPlayState::Edit)
+        .unwrap_or(false);
 
     let (active_camera, active_transform) = if is_edit_mode {
         if let Some(ed) = editor_state {
             (
-                Camera2D { zoom: ed.camera_zoom, is_active: true },
+                Camera2D {
+                    zoom: ed.camera_zoom,
+                    is_active: true,
+                },
                 Transform2D::from_position(ed.camera_position),
             )
         } else {
@@ -298,7 +303,14 @@ pub fn render_world_scene(
                 while x <= end_x as f32 {
                     let col = if x.abs() < 1e-4 { axis_col } else { grid_col };
                     let thick = if x.abs() < 1e-4 { 2.0 } else { 1.0 };
-                    renderer.draw_line([x, cam_min_y], [x, cam_max_y], thick, col, -100, default_white_tex.clone());
+                    renderer.draw_line(
+                        [x, cam_min_y],
+                        [x, cam_max_y],
+                        thick,
+                        col,
+                        -100,
+                        default_white_tex.clone(),
+                    );
                     x += gsize;
                 }
 
@@ -307,7 +319,14 @@ pub fn render_world_scene(
                 while y <= end_y as f32 {
                     let col = if y.abs() < 1e-4 { axis_col } else { grid_col };
                     let thick = if y.abs() < 1e-4 { 2.0 } else { 1.0 };
-                    renderer.draw_line([cam_min_x, y], [cam_max_x, y], thick, col, -100, default_white_tex.clone());
+                    renderer.draw_line(
+                        [cam_min_x, y],
+                        [cam_max_x, y],
+                        thick,
+                        col,
+                        -100,
+                        default_white_tex.clone(),
+                    );
                     y += gsize;
                 }
             }
@@ -315,7 +334,10 @@ pub fn render_world_scene(
             // 4b. Game Camera Frame
             if ed.show_game_camera_frame {
                 for entity_ref in world.iter_entities() {
-                    if let (Some(c), Some(t)) = (entity_ref.get::<Camera2D>(), entity_ref.get::<Transform2D>()) {
+                    if let (Some(c), Some(t)) = (
+                        entity_ref.get::<Camera2D>(),
+                        entity_ref.get::<Transform2D>(),
+                    ) {
                         let zoom = if c.zoom <= 0.0 { 1.0 } else { c.zoom };
                         let frame_w = viewport_width / zoom;
                         let frame_h = viewport_height / zoom;
@@ -349,7 +371,10 @@ pub fn render_world_scene(
                             let cos = tf.rotation.cos();
                             let sin = tf.rotation.sin();
                             let rot = |lx: f32, ly: f32| -> [f32; 2] {
-                                [tf.position.x + lx * cos - ly * sin, tf.position.y + lx * sin + ly * cos]
+                                [
+                                    tf.position.x + lx * cos - ly * sin,
+                                    tf.position.y + lx * sin + ly * cos,
+                                ]
                             };
 
                             let p0 = rot(-hw, -hh);
@@ -357,10 +382,38 @@ pub fn render_world_scene(
                             let p2 = rot(hw, hh);
                             let p3 = rot(-hw, hh);
 
-                            renderer.draw_line(p0, p1, 2.0, sel_col, z_overlay + 10, default_white_tex.clone());
-                            renderer.draw_line(p1, p2, 2.0, sel_col, z_overlay + 10, default_white_tex.clone());
-                            renderer.draw_line(p2, p3, 2.0, sel_col, z_overlay + 10, default_white_tex.clone());
-                            renderer.draw_line(p3, p0, 2.0, sel_col, z_overlay + 10, default_white_tex.clone());
+                            renderer.draw_line(
+                                p0,
+                                p1,
+                                2.0,
+                                sel_col,
+                                z_overlay + 10,
+                                default_white_tex.clone(),
+                            );
+                            renderer.draw_line(
+                                p1,
+                                p2,
+                                2.0,
+                                sel_col,
+                                z_overlay + 10,
+                                default_white_tex.clone(),
+                            );
+                            renderer.draw_line(
+                                p2,
+                                p3,
+                                2.0,
+                                sel_col,
+                                z_overlay + 10,
+                                default_white_tex.clone(),
+                            );
+                            renderer.draw_line(
+                                p3,
+                                p0,
+                                2.0,
+                                sel_col,
+                                z_overlay + 10,
+                                default_white_tex.clone(),
+                            );
                         }
 
                         // Draw collider outlines in Edit mode when body is selected
@@ -396,15 +449,57 @@ pub fn render_world_scene(
                         match ed.gizmo_mode {
                             crate::editor::GizmoMode::Translate => {
                                 // X arrow
-                                renderer.draw_line([center.x, center.y], [center.x + handle_size, center.y], 3.0, x_col, z_overlay + 50, default_white_tex.clone());
+                                renderer.draw_line(
+                                    [center.x, center.y],
+                                    [center.x + handle_size, center.y],
+                                    3.0,
+                                    x_col,
+                                    z_overlay + 50,
+                                    default_white_tex.clone(),
+                                );
                                 // Y arrow
-                                renderer.draw_line([center.x, center.y], [center.x, center.y + handle_size], 3.0, y_col, z_overlay + 50, default_white_tex.clone());
+                                renderer.draw_line(
+                                    [center.x, center.y],
+                                    [center.x, center.y + handle_size],
+                                    3.0,
+                                    y_col,
+                                    z_overlay + 50,
+                                    default_white_tex.clone(),
+                                );
                                 // Center square handle
                                 let cs = 8.0 / ed.camera_zoom.max(0.1);
-                                renderer.draw_line([center.x, center.y], [center.x + cs, center.y], 2.0, both_col, z_overlay + 51, default_white_tex.clone());
-                                renderer.draw_line([center.x + cs, center.y], [center.x + cs, center.y + cs], 2.0, both_col, z_overlay + 51, default_white_tex.clone());
-                                renderer.draw_line([center.x + cs, center.y + cs], [center.x, center.y + cs], 2.0, both_col, z_overlay + 51, default_white_tex.clone());
-                                renderer.draw_line([center.x, center.y + cs], [center.x, center.y], 2.0, both_col, z_overlay + 51, default_white_tex.clone());
+                                renderer.draw_line(
+                                    [center.x, center.y],
+                                    [center.x + cs, center.y],
+                                    2.0,
+                                    both_col,
+                                    z_overlay + 51,
+                                    default_white_tex.clone(),
+                                );
+                                renderer.draw_line(
+                                    [center.x + cs, center.y],
+                                    [center.x + cs, center.y + cs],
+                                    2.0,
+                                    both_col,
+                                    z_overlay + 51,
+                                    default_white_tex.clone(),
+                                );
+                                renderer.draw_line(
+                                    [center.x + cs, center.y + cs],
+                                    [center.x, center.y + cs],
+                                    2.0,
+                                    both_col,
+                                    z_overlay + 51,
+                                    default_white_tex.clone(),
+                                );
+                                renderer.draw_line(
+                                    [center.x, center.y + cs],
+                                    [center.x, center.y],
+                                    2.0,
+                                    both_col,
+                                    z_overlay + 51,
+                                    default_white_tex.clone(),
+                                );
                             }
                             crate::editor::GizmoMode::Rotate => {
                                 let radius = handle_size * 0.8;
@@ -414,18 +509,59 @@ pub fn render_world_scene(
                                 for i in 0..segments {
                                     let a1 = i as f32 * step;
                                     let a2 = (i + 1) as f32 * step;
-                                    let p1 = [center.x + radius * a1.cos(), center.y + radius * a1.sin()];
-                                    let p2 = [center.x + radius * a2.cos(), center.y + radius * a2.sin()];
-                                    renderer.draw_line(p1, p2, 2.5, rot_col, z_overlay + 50, default_white_tex.clone());
+                                    let p1 = [
+                                        center.x + radius * a1.cos(),
+                                        center.y + radius * a1.sin(),
+                                    ];
+                                    let p2 = [
+                                        center.x + radius * a2.cos(),
+                                        center.y + radius * a2.sin(),
+                                    ];
+                                    renderer.draw_line(
+                                        p1,
+                                        p2,
+                                        2.5,
+                                        rot_col,
+                                        z_overlay + 50,
+                                        default_white_tex.clone(),
+                                    );
                                 }
                             }
                             crate::editor::GizmoMode::Scale => {
-                                renderer.draw_line([center.x, center.y], [center.x + handle_size, center.y], 3.0, x_col, z_overlay + 50, default_white_tex.clone());
-                                renderer.draw_line([center.x, center.y], [center.x, center.y + handle_size], 3.0, y_col, z_overlay + 50, default_white_tex.clone());
+                                renderer.draw_line(
+                                    [center.x, center.y],
+                                    [center.x + handle_size, center.y],
+                                    3.0,
+                                    x_col,
+                                    z_overlay + 50,
+                                    default_white_tex.clone(),
+                                );
+                                renderer.draw_line(
+                                    [center.x, center.y],
+                                    [center.x, center.y + handle_size],
+                                    3.0,
+                                    y_col,
+                                    z_overlay + 50,
+                                    default_white_tex.clone(),
+                                );
                                 let bs = 6.0 / ed.camera_zoom.max(0.1);
                                 // Box at tips
-                                renderer.draw_line([center.x + handle_size - bs, center.y - bs], [center.x + handle_size + bs, center.y - bs], 2.0, x_col, z_overlay + 51, default_white_tex.clone());
-                                renderer.draw_line([center.x - bs, center.y + handle_size - bs], [center.x + bs, center.y + handle_size - bs], 2.0, y_col, z_overlay + 51, default_white_tex.clone());
+                                renderer.draw_line(
+                                    [center.x + handle_size - bs, center.y - bs],
+                                    [center.x + handle_size + bs, center.y - bs],
+                                    2.0,
+                                    x_col,
+                                    z_overlay + 51,
+                                    default_white_tex.clone(),
+                                );
+                                renderer.draw_line(
+                                    [center.x - bs, center.y + handle_size - bs],
+                                    [center.x + bs, center.y + handle_size - bs],
+                                    2.0,
+                                    y_col,
+                                    z_overlay + 51,
+                                    default_white_tex.clone(),
+                                );
                             }
                         }
                     }
@@ -436,10 +572,38 @@ pub fn render_world_scene(
             if let Some(rect) = ed.box_select_rect {
                 let [x0, y0, x1, y1] = rect;
                 let b_col = [0.4, 0.75, 1.0, 0.8];
-                renderer.draw_line([x0, y0], [x1, y0], 1.5, b_col, z_overlay + 100, default_white_tex.clone());
-                renderer.draw_line([x1, y0], [x1, y1], 1.5, b_col, z_overlay + 100, default_white_tex.clone());
-                renderer.draw_line([x1, y1], [x0, y1], 1.5, b_col, z_overlay + 100, default_white_tex.clone());
-                renderer.draw_line([x0, y1], [x0, y0], 1.5, b_col, z_overlay + 100, default_white_tex.clone());
+                renderer.draw_line(
+                    [x0, y0],
+                    [x1, y0],
+                    1.5,
+                    b_col,
+                    z_overlay + 100,
+                    default_white_tex.clone(),
+                );
+                renderer.draw_line(
+                    [x1, y0],
+                    [x1, y1],
+                    1.5,
+                    b_col,
+                    z_overlay + 100,
+                    default_white_tex.clone(),
+                );
+                renderer.draw_line(
+                    [x1, y1],
+                    [x0, y1],
+                    1.5,
+                    b_col,
+                    z_overlay + 100,
+                    default_white_tex.clone(),
+                );
+                renderer.draw_line(
+                    [x0, y1],
+                    [x0, y0],
+                    1.5,
+                    b_col,
+                    z_overlay + 100,
+                    default_white_tex.clone(),
+                );
             }
         }
     }

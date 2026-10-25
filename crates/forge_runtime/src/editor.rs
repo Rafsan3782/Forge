@@ -128,14 +128,26 @@ impl EditorState {
 
     /// Converts screen pixel coordinates to world coordinates using the Editor Camera.
     pub fn screen_to_world(&self, screen_pos: Vec2, viewport_w: f32, viewport_h: f32) -> Vec2 {
-        let vw = if viewport_w.abs() < 1e-4 { 800.0 } else { viewport_w };
-        let vh = if viewport_h.abs() < 1e-4 { 600.0 } else { viewport_h };
+        let vw = if viewport_w.abs() < 1e-4 {
+            800.0
+        } else {
+            viewport_w
+        };
+        let vh = if viewport_h.abs() < 1e-4 {
+            600.0
+        } else {
+            viewport_h
+        };
 
         // Normalize screen coordinates from [0..vw, 0..vh] to [-1..1, -1..1] (Cartesian Y up)
         let ndc_x = (screen_pos.x - vw * 0.5) / (vw * 0.5);
         let ndc_y = (vh * 0.5 - screen_pos.y) / (vh * 0.5);
 
-        let zoom = if self.camera_zoom <= 0.0 { 1.0 } else { self.camera_zoom };
+        let zoom = if self.camera_zoom <= 0.0 {
+            1.0
+        } else {
+            self.camera_zoom
+        };
         let half_w = (vw * 0.5) / zoom;
         let half_h = (vh * 0.5) / zoom;
 
@@ -147,10 +159,22 @@ impl EditorState {
 
     /// Converts world coordinates to screen pixel coordinates.
     pub fn world_to_screen(&self, world_pos: Vec2, viewport_w: f32, viewport_h: f32) -> Vec2 {
-        let vw = if viewport_w.abs() < 1e-4 { 800.0 } else { viewport_w };
-        let vh = if viewport_h.abs() < 1e-4 { 600.0 } else { viewport_h };
+        let vw = if viewport_w.abs() < 1e-4 {
+            800.0
+        } else {
+            viewport_w
+        };
+        let vh = if viewport_h.abs() < 1e-4 {
+            600.0
+        } else {
+            viewport_h
+        };
 
-        let zoom = if self.camera_zoom <= 0.0 { 1.0 } else { self.camera_zoom };
+        let zoom = if self.camera_zoom <= 0.0 {
+            1.0
+        } else {
+            self.camera_zoom
+        };
         let vx = world_pos.x - self.camera_position.x;
         let vy = world_pos.y - self.camera_position.y;
 
@@ -223,7 +247,9 @@ impl EditorState {
             // Clear current entities
             world.clear_entities();
             // Restore snapshot
-            snapshot.spawn_into_world(world).map_err(|e| e.to_string())?;
+            snapshot
+                .spawn_into_world(world)
+                .map_err(|e| e.to_string())?;
         }
         self.play_state = EditorPlayState::Edit;
         self.step_frames_remaining = 0;
@@ -320,9 +346,11 @@ pub fn pick_entities_at(world: &World, world_pos: Vec2) -> Vec<PickResult> {
 
     // Sort descending by z_order; for equal z_order, prefer smaller hit_area (topmost/foreground item)
     hits.sort_by(|a, b| {
-        b.z_order
-            .cmp(&a.z_order)
-            .then_with(|| a.hit_area.partial_cmp(&b.hit_area).unwrap_or(std::cmp::Ordering::Equal))
+        b.z_order.cmp(&a.z_order).then_with(|| {
+            a.hit_area
+                .partial_cmp(&b.hit_area)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        })
     });
 
     hits
@@ -385,19 +413,27 @@ pub fn hit_test_gizmo(
     match gizmo_mode {
         GizmoMode::Translate => {
             // Center square handle (Both axes)
-            if (world_pos.x - center.x).abs() <= hit_radius && (world_pos.y - center.y).abs() <= hit_radius {
+            if (world_pos.x - center.x).abs() <= hit_radius
+                && (world_pos.y - center.y).abs() <= hit_radius
+            {
                 return Some(GizmoDragAxis::Both);
             }
 
             // X-axis arrow: from center to center + (handle_size, 0)
             let x_arrow_tip = Vec2::new(center.x + handle_size, center.y);
-            if world_pos.x >= center.x && world_pos.x <= x_arrow_tip.x + hit_radius && (world_pos.y - center.y).abs() <= hit_radius {
+            if world_pos.x >= center.x
+                && world_pos.x <= x_arrow_tip.x + hit_radius
+                && (world_pos.y - center.y).abs() <= hit_radius
+            {
                 return Some(GizmoDragAxis::X);
             }
 
             // Y-axis arrow: from center to center + (0, handle_size)
             let y_arrow_tip = Vec2::new(center.x, center.y + handle_size);
-            if world_pos.y >= center.y && world_pos.y <= y_arrow_tip.y + hit_radius && (world_pos.x - center.x).abs() <= hit_radius {
+            if world_pos.y >= center.y
+                && world_pos.y <= y_arrow_tip.y + hit_radius
+                && (world_pos.x - center.x).abs() <= hit_radius
+            {
                 return Some(GizmoDragAxis::Y);
             }
         }
@@ -410,17 +446,23 @@ pub fn hit_test_gizmo(
         }
         GizmoMode::Scale => {
             // Center scale
-            if (world_pos.x - center.x).abs() <= hit_radius && (world_pos.y - center.y).abs() <= hit_radius {
+            if (world_pos.x - center.x).abs() <= hit_radius
+                && (world_pos.y - center.y).abs() <= hit_radius
+            {
                 return Some(GizmoDragAxis::Both);
             }
             // X scale box
             let x_box = Vec2::new(center.x + handle_size, center.y);
-            if (world_pos.x - x_box.x).abs() <= hit_radius && (world_pos.y - x_box.y).abs() <= hit_radius {
+            if (world_pos.x - x_box.x).abs() <= hit_radius
+                && (world_pos.y - x_box.y).abs() <= hit_radius
+            {
                 return Some(GizmoDragAxis::X);
             }
             // Y scale box
             let y_box = Vec2::new(center.x, center.y + handle_size);
-            if (world_pos.x - y_box.x).abs() <= hit_radius && (world_pos.y - y_box.y).abs() <= hit_radius {
+            if (world_pos.x - y_box.x).abs() <= hit_radius
+                && (world_pos.y - y_box.y).abs() <= hit_radius
+            {
                 return Some(GizmoDragAxis::Y);
             }
         }
@@ -430,11 +472,7 @@ pub fn hit_test_gizmo(
 }
 
 /// Updates editor interactions per frame (camera pan/zoom, selection, gizmo drag).
-pub fn update_editor_interactions(
-    world: &mut World,
-    viewport_w: f32,
-    viewport_h: f32,
-) {
+pub fn update_editor_interactions(world: &mut World, viewport_w: f32, viewport_h: f32) {
     let input = match world.get_resource::<InputState>() {
         Some(i) => i.clone(),
         None => return,
@@ -514,7 +552,8 @@ pub fn update_editor_interactions(
     let left_just_pressed = input.is_mouse_button_just_pressed(MouseButton::Left);
     let left_pressed = input.is_mouse_button_pressed(MouseButton::Left);
     let left_just_released = input.is_mouse_button_just_released(MouseButton::Left);
-    let shift_held = input.is_key_pressed(KeyCode::ShiftLeft) || input.is_key_pressed(KeyCode::ShiftRight);
+    let shift_held =
+        input.is_key_pressed(KeyCode::ShiftLeft) || input.is_key_pressed(KeyCode::ShiftRight);
 
     if !is_space {
         // Start interaction on left click
@@ -525,7 +564,8 @@ pub fn update_editor_interactions(
             if let Some(ref entity_id) = primary_entity {
                 if let Some(entity) = forge_core::find_entity_by_id(world, entity_id) {
                     if let Some(tf) = world.get::<Transform2D>(entity) {
-                        hit_gizmo_axis = hit_test_gizmo(editor.gizmo_mode, tf, mouse_world, editor.camera_zoom);
+                        hit_gizmo_axis =
+                            hit_test_gizmo(editor.gizmo_mode, tf, mouse_world, editor.camera_zoom);
                     }
                 }
             }
@@ -541,7 +581,10 @@ pub fn update_editor_interactions(
                     }
                 }
 
-                let start_pos = original_transforms.first().map(|(_, tf)| tf.position).unwrap_or(Vec2::ZERO);
+                let start_pos = original_transforms
+                    .first()
+                    .map(|(_, tf)| tf.position)
+                    .unwrap_or(Vec2::ZERO);
                 editor.active_gizmo_drag = Some(GizmoDragState {
                     axis,
                     start_world_pos: start_pos,
@@ -570,7 +613,8 @@ pub fn update_editor_interactions(
                         editor.selected_entities.clear();
                     }
                     editor.box_select_start = Some(mouse_world);
-                    editor.box_select_rect = Some([mouse_world.x, mouse_world.y, mouse_world.x, mouse_world.y]);
+                    editor.box_select_rect =
+                        Some([mouse_world.x, mouse_world.y, mouse_world.x, mouse_world.y]);
                 }
             }
         }
@@ -602,17 +646,26 @@ pub fn update_editor_interactions(
                                 }
                                 GizmoMode::Rotate => {
                                     let center = drag.start_world_pos;
-                                    let initial_angle = (drag.start_mouse_world.y - center.y).atan2(drag.start_mouse_world.x - center.x);
-                                    let current_angle = (mouse_world.y - center.y).atan2(mouse_world.x - center.x);
+                                    let initial_angle = (drag.start_mouse_world.y - center.y)
+                                        .atan2(drag.start_mouse_world.x - center.x);
+                                    let current_angle =
+                                        (mouse_world.y - center.y).atan2(mouse_world.x - center.x);
                                     let angle_delta = current_angle - initial_angle;
-                                    tf.rotation = editor.snap_rotation(orig_tf.rotation + angle_delta);
+                                    tf.rotation =
+                                        editor.snap_rotation(orig_tf.rotation + angle_delta);
                                 }
                                 GizmoMode::Scale => {
                                     let mut new_scale = orig_tf.scale;
                                     let factor = 1.0 + (delta.x + delta.y) * 0.01;
                                     match drag.axis {
-                                        GizmoDragAxis::X => new_scale.x = (orig_tf.scale.x * (1.0 + delta.x * 0.01)).max(0.01),
-                                        GizmoDragAxis::Y => new_scale.y = (orig_tf.scale.y * (1.0 + delta.y * 0.01)).max(0.01),
+                                        GizmoDragAxis::X => {
+                                            new_scale.x =
+                                                (orig_tf.scale.x * (1.0 + delta.x * 0.01)).max(0.01)
+                                        }
+                                        GizmoDragAxis::Y => {
+                                            new_scale.y =
+                                                (orig_tf.scale.y * (1.0 + delta.y * 0.01)).max(0.01)
+                                        }
                                         GizmoDragAxis::Both => {
                                             new_scale.x = (orig_tf.scale.x * factor).max(0.01);
                                             new_scale.y = (orig_tf.scale.y * factor).max(0.01);
@@ -640,14 +693,32 @@ pub fn update_editor_interactions(
                         if let Some(curr_tf) = world.get::<Transform2D>(e) {
                             if *curr_tf != orig_tf {
                                 let mut prev_map = std::collections::HashMap::new();
-                                prev_map.insert("position".to_string(), serde_json::json!([orig_tf.position.x, orig_tf.position.y]).to_string());
-                                prev_map.insert("rotation".to_string(), orig_tf.rotation.to_string());
-                                prev_map.insert("scale".to_string(), serde_json::json!([orig_tf.scale.x, orig_tf.scale.y]).to_string());
+                                prev_map.insert(
+                                    "position".to_string(),
+                                    serde_json::json!([orig_tf.position.x, orig_tf.position.y])
+                                        .to_string(),
+                                );
+                                prev_map
+                                    .insert("rotation".to_string(), orig_tf.rotation.to_string());
+                                prev_map.insert(
+                                    "scale".to_string(),
+                                    serde_json::json!([orig_tf.scale.x, orig_tf.scale.y])
+                                        .to_string(),
+                                );
 
                                 let mut new_map = std::collections::HashMap::new();
-                                new_map.insert("position".to_string(), serde_json::json!([curr_tf.position.x, curr_tf.position.y]).to_string());
-                                new_map.insert("rotation".to_string(), curr_tf.rotation.to_string());
-                                new_map.insert("scale".to_string(), serde_json::json!([curr_tf.scale.x, curr_tf.scale.y]).to_string());
+                                new_map.insert(
+                                    "position".to_string(),
+                                    serde_json::json!([curr_tf.position.x, curr_tf.position.y])
+                                        .to_string(),
+                                );
+                                new_map
+                                    .insert("rotation".to_string(), curr_tf.rotation.to_string());
+                                new_map.insert(
+                                    "scale".to_string(),
+                                    serde_json::json!([curr_tf.scale.x, curr_tf.scale.y])
+                                        .to_string(),
+                                );
 
                                 let cmd = SceneCommand::SetComponent {
                                     entity_id: id.clone(),

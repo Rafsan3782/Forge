@@ -1,10 +1,9 @@
-use forge_core::{Transform, Sprite, Tilemap, Rect, Vec2};
-use forge_runtime::editor::{
-    EditorState, EditorCamera, EditorPlayState,
-    screen_to_world, world_to_screen,
-    pick_entities_at, pick_entities_in_rect,
-};
 use bevy_ecs::prelude::*;
+use forge_core::{Rect, Sprite, Tilemap, Transform, Vec2};
+use forge_runtime::editor::{
+    pick_entities_at, pick_entities_in_rect, screen_to_world, world_to_screen, EditorCamera,
+    EditorPlayState, EditorState,
+};
 
 #[test]
 fn test_camera_coordinate_math_roundtrip() {
@@ -53,32 +52,36 @@ fn test_pick_ordering_topmost_sprite() {
     let mut world = World::new();
 
     // Sprite 1: Background, z = 0.0, size 100x100
-    let e1 = world.spawn((
-        Transform {
-            position: Vec2::new(0.0, 0.0),
-            z_order: 0.0,
-            ..Default::default()
-        },
-        Sprite {
-            texture_id: "bg".into(),
-            size: Vec2::new(100.0, 100.0),
-            ..Default::default()
-        },
-    )).id();
+    let e1 = world
+        .spawn((
+            Transform {
+                position: Vec2::new(0.0, 0.0),
+                z_order: 0.0,
+                ..Default::default()
+            },
+            Sprite {
+                texture_id: "bg".into(),
+                size: Vec2::new(100.0, 100.0),
+                ..Default::default()
+            },
+        ))
+        .id();
 
     // Sprite 2: Foreground, z = 10.0, size 40x40 at (10, 10)
-    let e2 = world.spawn((
-        Transform {
-            position: Vec2::new(10.0, 10.0),
-            z_order: 10.0,
-            ..Default::default()
-        },
-        Sprite {
-            texture_id: "fg".into(),
-            size: Vec2::new(40.0, 40.0),
-            ..Default::default()
-        },
-    )).id();
+    let e2 = world
+        .spawn((
+            Transform {
+                position: Vec2::new(10.0, 10.0),
+                z_order: 10.0,
+                ..Default::default()
+            },
+            Sprite {
+                texture_id: "fg".into(),
+                size: Vec2::new(40.0, 40.0),
+                ..Default::default()
+            },
+        ))
+        .id();
 
     // Click at (10, 10) hits both e1 and e2. e2 has higher z-order so it must be first.
     let hits = pick_entities_at(&world, Vec2::new(10.0, 10.0));
@@ -96,27 +99,31 @@ fn test_pick_ordering_topmost_sprite() {
 fn test_box_selection() {
     let mut world = World::new();
 
-    let e1 = world.spawn((
-        Transform {
-            position: Vec2::new(0.0, 0.0),
-            ..Default::default()
-        },
-        Sprite {
-            size: Vec2::new(20.0, 20.0),
-            ..Default::default()
-        },
-    )).id();
+    let e1 = world
+        .spawn((
+            Transform {
+                position: Vec2::new(0.0, 0.0),
+                ..Default::default()
+            },
+            Sprite {
+                size: Vec2::new(20.0, 20.0),
+                ..Default::default()
+            },
+        ))
+        .id();
 
-    let e2 = world.spawn((
-        Transform {
-            position: Vec2::new(100.0, 100.0),
-            ..Default::default()
-        },
-        Sprite {
-            size: Vec2::new(20.0, 20.0),
-            ..Default::default()
-        },
-    )).id();
+    let e2 = world
+        .spawn((
+            Transform {
+                position: Vec2::new(100.0, 100.0),
+                ..Default::default()
+            },
+            Sprite {
+                size: Vec2::new(20.0, 20.0),
+                ..Default::default()
+            },
+        ))
+        .id();
 
     // Box covering (-20, -20) to (20, 20) selects e1 but not e2
     let box_rect = Rect::new(-20.0, -20.0, 40.0, 40.0);
@@ -136,28 +143,32 @@ fn test_snapshot_and_restore_equality() {
     let mut world = World::new();
     world.insert_resource(EditorState::default());
 
-    let e1 = world.spawn((
-        forge_core::Name("Player".into()),
-        Transform {
-            position: Vec2::new(10.0, 20.0),
-            rotation: 0.5,
-            scale: Vec2::new(1.0, 1.0),
-            z_order: 1.0,
-        },
-        Sprite {
-            texture_id: "hero.png".into(),
-            size: Vec2::new(32.0, 32.0),
-            ..Default::default()
-        },
-    )).id();
+    let e1 = world
+        .spawn((
+            forge_core::Name("Player".into()),
+            Transform {
+                position: Vec2::new(10.0, 20.0),
+                rotation: 0.5,
+                scale: Vec2::new(1.0, 1.0),
+                z_order: 1.0,
+            },
+            Sprite {
+                texture_id: "hero.png".into(),
+                size: Vec2::new(32.0, 32.0),
+                ..Default::default()
+            },
+        ))
+        .id();
 
-    let e2 = world.spawn((
-        forge_core::Name("Enemy".into()),
-        Transform {
-            position: Vec2::new(50.0, 60.0),
-            ..Default::default()
-        },
-    )).id();
+    let e2 = world
+        .spawn((
+            forge_core::Name("Enemy".into()),
+            Transform {
+                position: Vec2::new(50.0, 60.0),
+                ..Default::default()
+            },
+        ))
+        .id();
 
     // 1. Snapshot scene before play
     {
