@@ -161,7 +161,7 @@ pub struct CommandEntry {
 }
 
 /// Centralized undo/redo stack managing all scene modifications.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, crate::ecs::Resource)]
 pub struct CommandStack {
     /// Undo stack.
     undo_stack: Vec<CommandEntry>,

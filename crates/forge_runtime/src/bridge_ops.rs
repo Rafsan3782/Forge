@@ -1028,6 +1028,7 @@ fn handle_scene_duplicate(
     }
 
     Ok(forge_protocol::SceneDuplicateEntityResult {
+        success: true,
         new_entity_id: new_id,
     })
 }
