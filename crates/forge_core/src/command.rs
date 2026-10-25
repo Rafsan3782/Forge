@@ -224,11 +224,7 @@ impl CommandStack {
     }
 
     /// Records an already-applied command onto the undo stack without re-executing it.
-    pub fn record_executed(
-        &mut self,
-        command: SceneCommand,
-        author: CommandAuthor,
-    ) -> String {
+    pub fn record_executed(&mut self, command: SceneCommand, author: CommandAuthor) -> String {
         self.counter += 1;
         let id = format!("cmd_{}", self.counter);
         let timestamp = std::time::SystemTime::now()
