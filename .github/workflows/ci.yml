@@ -81,7 +81,9 @@ jobs:
           cache-on-failure: true
 
       - name: Install cargo-nextest
-        uses: taiki-e/install-action@nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: nextest
 
       - name: Rust format check
         run: cargo fmt --check
