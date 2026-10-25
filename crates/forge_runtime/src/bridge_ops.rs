@@ -977,7 +977,7 @@ fn handle_scene_duplicate(
 
     let new_id = format!("{}_copy", params.entity_id);
 
-    let mut scene = forge_core::Scene::from_world(world, "snapshot").map_err(|e| e.to_string())?;
+    let scene = forge_core::Scene::from_world(world, "snapshot").map_err(|e| e.to_string())?;
     let source_se = scene
         .entities
         .into_iter()
