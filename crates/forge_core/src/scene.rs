@@ -194,12 +194,25 @@ impl Scene {
                 entity_builder.insert(script);
             }
 
+            if let Some(val) = se.components.get("Animator") {
+                let anim: crate::components::Animator = serde_json::from_value(val.clone())
+                    .map_err(|e| SceneError::ComponentParseError {
+                        component_name: "Animator".to_string(),
+                        message: e.to_string(),
+                    })?;
+                entity_builder.insert(anim);
+            }
+
             let entity = entity_builder.id();
             id_to_entity.insert(se.id.clone(), entity);
         }
 
         // Pass 2: Establish Parent and Children relationships
-        for se in &self.entities {
+        // Sort entities by id so children order is deterministic
+        let mut sorted_entities = self.entities.clone();
+        sorted_entities.sort_by(|a, b| a.id.cmp(&b.id));
+
+        for se in &sorted_entities {
             if let Some(ref parent_id) = se.parent {
                 let parent_entity = id_to_entity
                     .get(parent_id)
@@ -264,6 +277,9 @@ impl Scene {
                 }
                 if let Some(script) = entity_ref.get::<crate::components::Script>() {
                     components.insert("Script".to_string(), serde_json::to_value(script)?);
+                }
+                if let Some(anim) = entity_ref.get::<crate::components::Animator>() {
+                    components.insert("Animator".to_string(), serde_json::to_value(anim)?);
                 }
 
                 // Resolve parent stable id
