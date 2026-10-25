@@ -83,8 +83,9 @@ jobs:
       - name: Install cargo-nextest
         shell: pwsh
         run: |
-          $url = "https://github.com/nextest-rs/nextest/releases/latest/download/cargo-nextest-x86_64-pc-windows-msvc.zip"
-          Invoke-WebRequest -Uri $url -OutFile "$env:TEMP\nextest.zip"
+          $release = Invoke-RestMethod -Uri "https://api.github.com/repos/nextest-rs/nextest/releases/latest"
+          $asset = $release.assets | Where-Object { $_.name -like "*x86_64-pc-windows-msvc.zip" } | Select-Object -First 1
+          Invoke-WebRequest -Uri $asset.browser_download_url -OutFile "$env:TEMP\nextest.zip"
           Expand-Archive -Path "$env:TEMP\nextest.zip" -DestinationPath "$env:CARGO_HOME\bin" -Force
           cargo nextest --version
 
