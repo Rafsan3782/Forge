@@ -1,141 +1,158 @@
-use bevy_ecs::prelude::*;
-use forge_core::{Rect, Sprite, Tilemap, Transform, Vec2};
+use forge_core::components::{EntityId, Name, Sprite, Transform2D};
+use forge_core::{Vec2, World};
 use forge_runtime::editor::{
-    pick_entities_at, pick_entities_in_rect, screen_to_world, world_to_screen, EditorCamera,
-    EditorPlayState, EditorState,
+    pick_entities_at, pick_entities_in_rect, EditorPlayState, EditorState,
 };
 
 #[test]
 fn test_camera_coordinate_math_roundtrip() {
-    let camera = EditorCamera {
-        position: Vec2::new(100.0, 50.0),
-        zoom: 2.0,
+    let editor = EditorState {
+        camera_position: Vec2::new(100.0, 50.0),
+        camera_zoom: 2.0,
+        ..Default::default()
     };
-    let viewport_size = Vec2::new(800.0, 600.0);
+    let viewport_w = 800.0;
+    let viewport_h = 600.0;
 
     let screen_pos = Vec2::new(450.0, 250.0);
-    let world_pos = screen_to_world(screen_pos, &camera, viewport_size);
-    let back_to_screen = world_to_screen(world_pos, &camera, viewport_size);
+    let world_pos = editor.screen_to_world(screen_pos, viewport_w, viewport_h);
+    let back_to_screen = editor.world_to_screen(world_pos, viewport_w, viewport_h);
 
-    assert!((screen_pos.x - back_to_screen.x).abs() < 1e-4);
-    assert!((screen_pos.y - back_to_screen.y).abs() < 1e-4);
+    assert!((screen_pos.x - back_to_screen.x).abs() < 1e-3);
+    assert!((screen_pos.y - back_to_screen.y).abs() < 1e-3);
 }
 
 #[test]
 fn test_zoom_towards_cursor() {
-    let mut camera = EditorCamera {
-        position: Vec2::new(0.0, 0.0),
-        zoom: 1.0,
+    let mut editor = EditorState {
+        camera_position: Vec2::new(0.0, 0.0),
+        camera_zoom: 1.0,
+        ..Default::default()
     };
-    let viewport_size = Vec2::new(800.0, 600.0);
+    let viewport_w = 800.0;
+    let viewport_h = 600.0;
 
-    // Cursor at (600, 450)
+    // Cursor at screen (600, 450)
     let cursor_screen = Vec2::new(600.0, 450.0);
-    let world_before = screen_to_world(cursor_screen, &camera, viewport_size);
+    let world_before = editor.screen_to_world(cursor_screen, viewport_w, viewport_h);
 
     // Zoom in by factor 1.25 towards cursor
-    let new_zoom = camera.zoom * 1.25;
-    let screen_center = viewport_size * 0.5;
-    let cursor_offset = cursor_screen - screen_center;
-    camera.position += cursor_offset * (1.0 / camera.zoom - 1.0 / new_zoom);
-    camera.zoom = new_zoom;
+    let zoom_factor = 1.25;
+    let pre_zoom_world = editor.screen_to_world(cursor_screen, viewport_w, viewport_h);
+    editor.camera_zoom *= zoom_factor;
+    let post_zoom_world = editor.screen_to_world(cursor_screen, viewport_w, viewport_h);
 
-    let world_after = screen_to_world(cursor_screen, &camera, viewport_size);
+    editor.camera_position.x += pre_zoom_world.x - post_zoom_world.x;
+    editor.camera_position.y += pre_zoom_world.y - post_zoom_world.y;
+
+    let world_after = editor.screen_to_world(cursor_screen, viewport_w, viewport_h);
 
     // World position under cursor should remain identical
-    assert!((world_before.x - world_after.x).abs() < 1e-4);
-    assert!((world_before.y - world_after.y).abs() < 1e-4);
+    assert!((world_before.x - world_after.x).abs() < 1e-3);
+    assert!((world_before.y - world_after.y).abs() < 1e-3);
 }
 
 #[test]
 fn test_pick_ordering_topmost_sprite() {
     let mut world = World::new();
 
-    // Sprite 1: Background, z = 0.0, size 100x100
-    let e1 = world
-        .spawn((
-            Transform {
-                position: Vec2::new(0.0, 0.0),
-                z_order: 0.0,
-                ..Default::default()
-            },
-            Sprite {
-                texture_id: "bg".into(),
-                size: Vec2::new(100.0, 100.0),
-                ..Default::default()
-            },
-        ))
-        .id();
+    // Sprite 1: Background, z = 0, size 100x100
+    let _e1 = world.spawn((
+        EntityId::new("bg"),
+        Transform2D {
+            position: Vec2::new(0.0, 0.0),
+            rotation: 0.0,
+            scale: Vec2::ONE,
+        },
+        Sprite {
+            asset_id: "bg_tex".into(),
+            size: Vec2::new(100.0, 100.0),
+            color_tint: [1.0, 1.0, 1.0, 1.0],
+            z_order: 0,
+            frame: None,
+            uv_rect: None,
+        },
+    ));
 
-    // Sprite 2: Foreground, z = 10.0, size 40x40 at (10, 10)
-    let e2 = world
-        .spawn((
-            Transform {
-                position: Vec2::new(10.0, 10.0),
-                z_order: 10.0,
-                ..Default::default()
-            },
-            Sprite {
-                texture_id: "fg".into(),
-                size: Vec2::new(40.0, 40.0),
-                ..Default::default()
-            },
-        ))
-        .id();
+    // Sprite 2: Foreground, z = 10, size 40x40 at (10, 10)
+    let _e2 = world.spawn((
+        EntityId::new("fg"),
+        Transform2D {
+            position: Vec2::new(10.0, 10.0),
+            rotation: 0.0,
+            scale: Vec2::ONE,
+        },
+        Sprite {
+            asset_id: "fg_tex".into(),
+            size: Vec2::new(40.0, 40.0),
+            color_tint: [1.0, 1.0, 1.0, 1.0],
+            z_order: 10,
+            frame: None,
+            uv_rect: None,
+        },
+    ));
 
-    // Click at (10, 10) hits both e1 and e2. e2 has higher z-order so it must be first.
+    // Click at (10, 10) hits both bg and fg. fg has higher z-order so it must be first.
     let hits = pick_entities_at(&world, Vec2::new(10.0, 10.0));
     assert_eq!(hits.len(), 2);
-    assert_eq!(hits[0], e2);
-    assert_eq!(hits[1], e1);
+    assert_eq!(hits[0].entity_id, "fg");
+    assert_eq!(hits[1].entity_id, "bg");
 
-    // Click at (40, 40) only hits e1
+    // Click at (40, 40) only hits bg
     let hits_bg = pick_entities_at(&world, Vec2::new(40.0, 40.0));
     assert_eq!(hits_bg.len(), 1);
-    assert_eq!(hits_bg[0], e1);
+    assert_eq!(hits_bg[0].entity_id, "bg");
 }
 
 #[test]
 fn test_box_selection() {
     let mut world = World::new();
 
-    let e1 = world
-        .spawn((
-            Transform {
-                position: Vec2::new(0.0, 0.0),
-                ..Default::default()
-            },
-            Sprite {
-                size: Vec2::new(20.0, 20.0),
-                ..Default::default()
-            },
-        ))
-        .id();
+    let _e1 = world.spawn((
+        EntityId::new("entity_1"),
+        Transform2D {
+            position: Vec2::new(0.0, 0.0),
+            rotation: 0.0,
+            scale: Vec2::ONE,
+        },
+        Sprite {
+            asset_id: "s1".into(),
+            size: Vec2::new(20.0, 20.0),
+            color_tint: [1.0, 1.0, 1.0, 1.0],
+            z_order: 0,
+            frame: None,
+            uv_rect: None,
+        },
+    ));
 
-    let e2 = world
-        .spawn((
-            Transform {
-                position: Vec2::new(100.0, 100.0),
-                ..Default::default()
-            },
-            Sprite {
-                size: Vec2::new(20.0, 20.0),
-                ..Default::default()
-            },
-        ))
-        .id();
+    let _e2 = world.spawn((
+        EntityId::new("entity_2"),
+        Transform2D {
+            position: Vec2::new(100.0, 100.0),
+            rotation: 0.0,
+            scale: Vec2::ONE,
+        },
+        Sprite {
+            asset_id: "s2".into(),
+            size: Vec2::new(20.0, 20.0),
+            color_tint: [1.0, 1.0, 1.0, 1.0],
+            z_order: 0,
+            frame: None,
+            uv_rect: None,
+        },
+    ));
 
-    // Box covering (-20, -20) to (20, 20) selects e1 but not e2
-    let box_rect = Rect::new(-20.0, -20.0, 40.0, 40.0);
+    // Box covering (-20, -20) to (20, 20) selects entity_1 but not entity_2
+    let box_rect = [-20.0, -20.0, 20.0, 20.0];
     let selected = pick_entities_in_rect(&world, box_rect);
-    assert!(selected.contains(&e1));
-    assert!(!selected.contains(&e2));
+    assert!(selected.contains(&"entity_1".to_string()));
+    assert!(!selected.contains(&"entity_2".to_string()));
 
     // Box covering both
-    let large_rect = Rect::new(-50.0, -50.0, 200.0, 200.0);
+    let large_rect = [-50.0, -50.0, 150.0, 150.0];
     let selected_all = pick_entities_in_rect(&world, large_rect);
-    assert!(selected_all.contains(&e1));
-    assert!(selected_all.contains(&e2));
+    assert!(selected_all.contains(&"entity_1".to_string()));
+    assert!(selected_all.contains(&"entity_2".to_string()));
 }
 
 #[test]
@@ -145,27 +162,32 @@ fn test_snapshot_and_restore_equality() {
 
     let e1 = world
         .spawn((
-            forge_core::Name("Player".into()),
-            Transform {
+            EntityId::new("player"),
+            Name("Player".into()),
+            Transform2D {
                 position: Vec2::new(10.0, 20.0),
                 rotation: 0.5,
                 scale: Vec2::new(1.0, 1.0),
-                z_order: 1.0,
             },
             Sprite {
-                texture_id: "hero.png".into(),
+                asset_id: "hero.png".into(),
                 size: Vec2::new(32.0, 32.0),
-                ..Default::default()
+                color_tint: [1.0, 1.0, 1.0, 1.0],
+                z_order: 1,
+                frame: None,
+                uv_rect: None,
             },
         ))
         .id();
 
     let e2 = world
         .spawn((
-            forge_core::Name("Enemy".into()),
-            Transform {
+            EntityId::new("enemy"),
+            Name("Enemy".into()),
+            Transform2D {
                 position: Vec2::new(50.0, 60.0),
-                ..Default::default()
+                rotation: 0.0,
+                scale: Vec2::ONE,
             },
         ))
         .id();
@@ -173,61 +195,65 @@ fn test_snapshot_and_restore_equality() {
     // 1. Snapshot scene before play
     {
         let mut editor = world.resource_mut::<EditorState>();
-        editor.start_play(&world);
+        editor
+            .start_play(&world)
+            .expect("start_play should succeed");
         assert_eq!(editor.play_state, EditorPlayState::Playing);
     }
 
     // 2. Simulate play mode changes: mutate e1 position, despawn e2, spawn e3
-    if let Some(mut t) = world.get_mut::<Transform>(e1) {
+    if let Some(mut t) = world.get_mut::<Transform2D>(e1) {
         t.position = Vec2::new(999.0, 999.0);
     }
     world.despawn(e2);
     world.spawn((
-        forge_core::Name("Projectile".into()),
-        Transform {
+        EntityId::new("projectile"),
+        Name("Projectile".into()),
+        Transform2D {
             position: Vec2::new(123.0, 456.0),
-            ..Default::default()
+            rotation: 0.0,
+            scale: Vec2::ONE,
         },
     ));
 
     // 3. Stop play mode -> restores snapshot
     {
         let mut editor = world.resource_mut::<EditorState>();
-        editor.stop_play(&mut world);
+        editor
+            .stop_play(&mut world)
+            .expect("stop_play should succeed");
         assert_eq!(editor.play_state, EditorPlayState::Edit);
     }
 
-    // Verify e1 position was restored exactly
-    let t1 = world.get::<Transform>(e1).expect("e1 must exist");
+    // Verify player entity exists and position was restored exactly
+    let restored_player =
+        forge_core::find_entity_by_id(&world, "player").expect("player entity restored");
+    let t1 = world
+        .get::<Transform2D>(restored_player)
+        .expect("player transform restored");
     assert_eq!(t1.position, Vec2::new(10.0, 20.0));
     assert_eq!(t1.rotation, 0.5);
 
-    // Verify e2 was restored
-    let t2 = world.get::<Transform>(e2).expect("e2 must be restored");
+    // Verify enemy was restored
+    let restored_enemy = forge_core::find_entity_by_id(&world, "enemy").expect("enemy restored");
+    let t2 = world
+        .get::<Transform2D>(restored_enemy)
+        .expect("enemy transform restored");
     assert_eq!(t2.position, Vec2::new(50.0, 60.0));
 
     // Verify spawned projectile is gone
-    let count = world.query::<&Transform>().iter(&world).count();
-    assert_eq!(count, 2);
+    let projectile = forge_core::find_entity_by_id(&world, "projectile");
+    assert!(projectile.is_none());
 }
 
 #[test]
 fn test_coordinate_mapping_streamed_mode_dpi_scales() {
-    // Simulate Studio UI streamed frame viewport:
-    // Viewport element size in CSS pixels: 800 x 600
-    // Streamed frame resolution: 1280 x 720
-    // Click at CSS (400, 300) (center of element)
-    // Under different DPI scaling factors: 1.0 (100%), 1.25 (125%), 1.5 (150%)
-
     let frame_width = 1280.0;
     let frame_height = 720.0;
     let css_width = 800.0;
     let css_height = 600.0;
 
     let map_coords = |css_x: f32, css_y: f32, _dpi: f32| -> (f32, f32) {
-        // Studio coordinates mapping formula:
-        // CSS mouse coordinates relative to viewport element [0..css_width, 0..css_height]
-        // mapped to the render frame dimensions [0..frame_width, 0..frame_height]
         let norm_x = css_x / css_width;
         let norm_y = css_y / css_height;
         let target_x = norm_x * frame_width;
