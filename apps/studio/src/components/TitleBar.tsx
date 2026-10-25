@@ -95,7 +95,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({ projectName = "templates/hel
     e.stopPropagation();
     if (isDirty) {
       const confirmClose = window.confirm(
-        "You have unsaved changes in the scene. Do you want to close without saving?"
+        "You have unsaved changes in the scene. Do you want to close without saving?",
       );
       if (!confirmClose) return;
     }

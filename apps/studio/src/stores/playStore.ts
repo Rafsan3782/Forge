@@ -23,7 +23,7 @@ export interface PlayStoreState {
   toggleShowGrid: () => void;
 }
 
-export const usePlayStore = create<PlayStoreState>((set, get) => ({
+export const usePlayStore = create<PlayStoreState>((set) => ({
   playState: "edit",
   activeGizmo: "translate",
   gridSnapEnabled: true,

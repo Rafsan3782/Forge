@@ -1,6 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { usePlayStore } from "../stores/playStore";
-import { useRuntimeStore } from "../stores/runtimeStore";
 
 describe("viewportShortcuts & playStore", () => {
   beforeEach(() => {
@@ -67,7 +66,7 @@ describe("viewportShortcuts & playStore", () => {
       containerHeight: number,
       frameWidth: number,
       frameHeight: number,
-      dpiScale: number
+      _dpiScale: number,
     ): [number, number] => {
       // In streamed frames mode:
       // Normalized offset in the container element

@@ -59,13 +59,13 @@ export const ViewportPanel: React.FC = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't intercept if typing in an input/textarea/select
-      const activeEl = document.activeElement;
+      const activeEl = document.activeElement as HTMLElement | null;
       if (
         activeEl &&
         (activeEl.tagName === "INPUT" ||
           activeEl.tagName === "TEXTAREA" ||
           activeEl.tagName === "SELECT" ||
-          activeEl.isContentEditable)
+          Boolean(activeEl.isContentEditable))
       ) {
         return;
       }
@@ -212,13 +212,13 @@ export const ViewportPanel: React.FC = () => {
 
       return [Math.round(frameX), Math.round(frameY)];
     },
-    []
+    [],
   );
 
   const forwardPointerEvent = useCallback(
     async (
-      action: "mouse_down" | "mouse_up" | "mouse_move",
-      e: React.PointerEvent<HTMLDivElement>
+      input_type: "mouse_down" | "mouse_up" | "mouse_move",
+      e: React.PointerEvent<HTMLDivElement>,
     ) => {
       if (mode !== "stream" || !bridgeClient || !bridgeClient.isConnected()) return;
 
@@ -228,17 +228,20 @@ export const ViewportPanel: React.FC = () => {
       else if (e.button === 2) button = "right";
 
       try {
-        await bridgeClient.simulateInput({
-          action,
-          button,
-          position: [x, y],
-          delta: [e.movementX || 0, e.movementY || 0],
-        });
+        await bridgeClient.simulateInput([
+          {
+            input_type,
+            button,
+            position: [x, y],
+            delta: [e.movementX || 0, e.movementY || 0],
+            duration_frames: 1,
+          },
+        ]);
       } catch (err) {
         console.warn("Failed to forward stream pointer event:", err);
       }
     },
-    [mode, bridgeClient, calculateFrameCoordinates]
+    [mode, bridgeClient, calculateFrameCoordinates],
   );
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -269,46 +272,55 @@ export const ViewportPanel: React.FC = () => {
       const cssY = Math.max(0, Math.min(e.clientY - rect.top, rect.height));
 
       try {
-        await bridgeClient.simulateInput({
-          action: "mouse_wheel",
-          position: [Math.round(cssX), Math.round(cssY)],
-          delta: [e.deltaX, e.deltaY],
-        });
+        await bridgeClient.simulateInput([
+          {
+            input_type: "mouse_wheel",
+            position: [Math.round(cssX), Math.round(cssY)],
+            delta: [e.deltaX, e.deltaY],
+            duration_frames: 1,
+          },
+        ]);
       } catch (err) {
         console.warn("Failed to forward stream wheel event:", err);
       }
     },
-    [mode, bridgeClient]
+    [mode, bridgeClient],
   );
 
   const handleKeyDownStream = useCallback(
     async (e: React.KeyboardEvent<HTMLDivElement>) => {
       if (mode !== "stream" || !bridgeClient || !bridgeClient.isConnected()) return;
       try {
-        await bridgeClient.simulateInput({
-          action: "key_down",
-          key: e.key,
-        });
+        await bridgeClient.simulateInput([
+          {
+            input_type: "key_down",
+            key: e.key,
+            duration_frames: 1,
+          },
+        ]);
       } catch (err) {
         console.warn("Failed to forward stream key event:", err);
       }
     },
-    [mode, bridgeClient]
+    [mode, bridgeClient],
   );
 
   const handleKeyUpStream = useCallback(
     async (e: React.KeyboardEvent<HTMLDivElement>) => {
       if (mode !== "stream" || !bridgeClient || !bridgeClient.isConnected()) return;
       try {
-        await bridgeClient.simulateInput({
-          action: "key_up",
-          key: e.key,
-        });
+        await bridgeClient.simulateInput([
+          {
+            input_type: "key_up",
+            key: e.key,
+            duration_frames: 1,
+          },
+        ]);
       } catch (err) {
         console.warn("Failed to forward stream key event:", err);
       }
     },
-    [mode, bridgeClient]
+    [mode, bridgeClient],
   );
 
   const handleLaunch = () => {
@@ -467,6 +479,15 @@ export const ViewportPanel: React.FC = () => {
             >
               <Magnet className="w-3 h-3" />
             </button>
+            <button
+              onClick={toggleAngleSnap}
+              className={`p-1 rounded transition-colors text-[10px] font-mono font-bold ${
+                angleSnapEnabled ? "text-[#3DD68C]" : "text-[#8B919C] hover:text-[#E8EAED]"
+              }`}
+              title="Toggle 15° Angle Snapping"
+            >
+              15°
+            </button>
           </div>
 
           {/* Render Mode Switcher */}
@@ -501,8 +522,8 @@ export const ViewportPanel: React.FC = () => {
                   playState === "playing"
                     ? "bg-[#3DD68C] animate-pulse"
                     : playState === "paused"
-                    ? "bg-[#FFB020]"
-                    : "bg-[#8B919C]"
+                      ? "bg-[#FFB020]"
+                      : "bg-[#8B919C]"
                 }`}
               />
               <span className="text-[#E8EAED]">
