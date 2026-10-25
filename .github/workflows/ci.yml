@@ -81,9 +81,12 @@ jobs:
           cache-on-failure: true
 
       - name: Install cargo-nextest
-        uses: taiki-e/install-action@v2
-        with:
-          tool: nextest
+        shell: pwsh
+        run: |
+          $url = "https://github.com/nextest-rs/nextest/releases/latest/download/cargo-nextest-x86_64-pc-windows-msvc.zip"
+          Invoke-WebRequest -Uri $url -OutFile "$env:TEMP\nextest.zip"
+          Expand-Archive -Path "$env:TEMP\nextest.zip" -DestinationPath "$env:CARGO_HOME\bin" -Force
+          cargo nextest --version
 
       - name: Rust format check
         run: cargo fmt --check
