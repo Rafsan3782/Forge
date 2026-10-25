@@ -18,7 +18,8 @@
             "action_axis",
             "mouse_move",
             "mouse_down",
-            "mouse_up"
+            "mouse_up",
+            "mouse_wheel"
           ]
         },
         "key": {
@@ -32,6 +33,24 @@
         "value": {
           "type": "number",
           "description": "Axis value (-1.0 to 1.0) or mouse position"
+        },
+        "position": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Screen coordinate [x, y] in pixels"
+        },
+        "delta": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Mouse wheel or drag delta [dx, dy]"
+        },
+        "button": {
+          "type": "string",
+          "description": "Mouse button name (left, right, middle)"
         },
         "duration_frames": {
           "type": "integer",

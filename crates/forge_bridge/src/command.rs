@@ -243,6 +243,34 @@ pub enum BridgeCommand {
         /// Channel to return remove result.
         responder: oneshot::Sender<Result<forge_protocol::SceneRemoveComponentResult, String>>,
     },
+    /// Start play mode simulation.
+    PlayStart {
+        /// Play start parameters.
+        params: forge_protocol::PlayStartParams,
+        /// Channel to return play result.
+        responder: oneshot::Sender<Result<forge_protocol::PlayStartResult, String>>,
+    },
+    /// Pause play mode simulation.
+    PlayPause {
+        /// Play pause parameters.
+        params: forge_protocol::PlayPauseParams,
+        /// Channel to return play result.
+        responder: oneshot::Sender<Result<forge_protocol::PlayPauseResult, String>>,
+    },
+    /// Step simulation by N frames.
+    PlayStep {
+        /// Play step parameters.
+        params: forge_protocol::PlayStepParams,
+        /// Channel to return step result.
+        responder: oneshot::Sender<Result<forge_protocol::PlayStepResult, String>>,
+    },
+    /// Stop play mode simulation and restore snapshot.
+    PlayStop {
+        /// Play stop parameters.
+        params: forge_protocol::PlayStopParams,
+        /// Channel to return stop result.
+        responder: oneshot::Sender<Result<forge_protocol::PlayStopResult, String>>,
+    },
 }
 
 /// Sender side held by the bridge server to dispatch commands to the engine loop.

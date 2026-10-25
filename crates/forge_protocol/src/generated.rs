@@ -211,6 +211,12 @@ pub struct SimulateInputEvent {
     pub action: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub value: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub position: Option<[f64; 2]>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub delta: Option<[f64; 2]>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub button: Option<String>,
     #[serde(default = "default_duration_frames")]
     pub duration_frames: u32,
 }
@@ -795,4 +801,47 @@ pub struct SceneRemoveComponentParams {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SceneRemoveComponentResult {
     pub success: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct PlayStartParams {}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PlayStartResult {
+    pub success: bool,
+    pub state: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct PlayPauseParams {}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PlayPauseResult {
+    pub success: bool,
+    pub state: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct PlayStepParams {
+    #[serde(default = "default_step_frames")]
+    pub frames: i64,
+}
+
+fn default_step_frames() -> i64 {
+    1
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PlayStepResult {
+    pub success: bool,
+    pub frames_stepped: i64,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct PlayStopParams {}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PlayStopResult {
+    pub success: bool,
+    pub state: String,
 }

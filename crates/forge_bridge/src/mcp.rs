@@ -563,5 +563,30 @@ pub fn get_mcp_tools() -> Vec<McpTool> {
                 }
             }),
         },
+        McpTool {
+            name: "play.start".to_string(),
+            description: "Snapshot the active scene and start play mode simulation (scripts, physics, audio)".to_string(),
+            input_schema: json!({ "type": "object", "properties": {} }),
+        },
+        McpTool {
+            name: "play.pause".to_string(),
+            description: "Pause play mode simulation".to_string(),
+            input_schema: json!({ "type": "object", "properties": {} }),
+        },
+        McpTool {
+            name: "play.step".to_string(),
+            description: "Advance simulation by N frames while paused".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "frames": { "type": "integer", "default": 1 }
+                }
+            }),
+        },
+        McpTool {
+            name: "play.stop".to_string(),
+            description: "Stop simulation and restore exact scene snapshot from before play started".to_string(),
+            input_schema: json!({ "type": "object", "properties": {} }),
+        },
     ]
 }

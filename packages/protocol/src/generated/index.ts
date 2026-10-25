@@ -199,6 +199,7 @@ export const SimulateInputTypeSchema = z.enum([
   "mouse_move",
   "mouse_down",
   "mouse_up",
+  "mouse_wheel",
 ]);
 export type SimulateInputType = z.infer<typeof SimulateInputTypeSchema>;
 
@@ -207,6 +208,9 @@ export const SimulateInputEventSchema = z.object({
   key: z.string().optional(),
   action: z.string().optional(),
   value: z.number().optional(),
+  position: z.tuple([z.number(), z.number()]).optional(),
+  delta: z.tuple([z.number(), z.number()]).optional(),
+  button: z.string().optional(),
   duration_frames: z.number().int().optional().default(1),
 });
 export type SimulateInputEvent = z.infer<typeof SimulateInputEventSchema>;
@@ -724,6 +728,44 @@ export const SceneRemoveComponentResultSchema = z.object({
   success: z.boolean(),
 });
 export type SceneRemoveComponentResult = z.infer<typeof SceneRemoveComponentResultSchema>;
+
+export const PlayStartParamsSchema = z.object({});
+export type PlayStartParams = z.infer<typeof PlayStartParamsSchema>;
+
+export const PlayStartResultSchema = z.object({
+  success: z.boolean(),
+  state: z.enum(["playing", "paused", "stopped"]),
+});
+export type PlayStartResult = z.infer<typeof PlayStartResultSchema>;
+
+export const PlayPauseParamsSchema = z.object({});
+export type PlayPauseParams = z.infer<typeof PlayPauseParamsSchema>;
+
+export const PlayPauseResultSchema = z.object({
+  success: z.boolean(),
+  state: z.enum(["playing", "paused", "stopped"]),
+});
+export type PlayPauseResult = z.infer<typeof PlayPauseResultSchema>;
+
+export const PlayStepParamsSchema = z.object({
+  frames: z.number().int().optional(),
+});
+export type PlayStepParams = z.infer<typeof PlayStepParamsSchema>;
+
+export const PlayStepResultSchema = z.object({
+  success: z.boolean(),
+  frames_stepped: z.number().int(),
+});
+export type PlayStepResult = z.infer<typeof PlayStepResultSchema>;
+
+export const PlayStopParamsSchema = z.object({});
+export type PlayStopParams = z.infer<typeof PlayStopParamsSchema>;
+
+export const PlayStopResultSchema = z.object({
+  success: z.boolean(),
+  state: z.enum(["playing", "paused", "stopped"]),
+});
+export type PlayStopResult = z.infer<typeof PlayStopResultSchema>;
 
 /**
  * Global Forge scripting API contract exposed to quickjs scripts.
