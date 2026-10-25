@@ -243,13 +243,14 @@ pub fn process_bridge_commands(
                 responder,
             } => {
                 let res =
-                    if let Some(mut stack) = world.get_resource_mut::<forge_core::CommandStack>() {
-                        let desc = stack.undo(world).map_err(|e| e.to_string())?;
+                    if let Some(mut stack) = world.remove_resource::<forge_core::CommandStack>() {
+                        let desc = stack.undo(world).map_err(|e| e.to_string());
                         let can_undo = stack.get_history().can_undo;
                         let can_redo = stack.get_history().can_redo;
-                        Ok(forge_protocol::EditUndoResult {
+                        world.insert_resource(stack);
+                        desc.map(|d| forge_protocol::EditUndoResult {
                             success: true,
-                            undone_command: desc,
+                            undone_command: d,
                             can_undo,
                             can_redo,
                         })
@@ -264,13 +265,14 @@ pub fn process_bridge_commands(
                 responder,
             } => {
                 let res =
-                    if let Some(mut stack) = world.get_resource_mut::<forge_core::CommandStack>() {
-                        let desc = stack.redo(world).map_err(|e| e.to_string())?;
+                    if let Some(mut stack) = world.remove_resource::<forge_core::CommandStack>() {
+                        let desc = stack.redo(world).map_err(|e| e.to_string());
                         let can_undo = stack.get_history().can_undo;
                         let can_redo = stack.get_history().can_redo;
-                        Ok(forge_protocol::EditRedoResult {
+                        world.insert_resource(stack);
+                        desc.map(|d| forge_protocol::EditRedoResult {
                             success: true,
-                            redone_command: desc,
+                            redone_command: d,
                             can_undo,
                             can_redo,
                         })
@@ -294,13 +296,14 @@ pub fn process_bridge_commands(
 
             BridgeCommand::EditJumpHistory { params, responder } => {
                 let res =
-                    if let Some(mut stack) = world.get_resource_mut::<forge_core::CommandStack>() {
-                        let success = stack
+                    if let Some(mut stack) = world.remove_resource::<forge_core::CommandStack>() {
+                        let jump_res = stack
                             .jump_to(world, &params.target_id)
-                            .map_err(|e| e.to_string())?;
+                            .map_err(|e| e.to_string());
                         let can_undo = stack.get_history().can_undo;
                         let can_redo = stack.get_history().can_redo;
-                        Ok(forge_protocol::EditJumpHistoryResult {
+                        world.insert_resource(stack);
+                        jump_res.map(|success| forge_protocol::EditJumpHistoryResult {
                             success,
                             can_undo,
                             can_redo,
@@ -330,15 +333,16 @@ pub fn process_bridge_commands(
                 params: _,
                 responder,
             } => {
-                let (dirty, scene_path) =
+                let (is_dirty, current_scene_path) =
                     if let Some(stack) = world.get_resource::<forge_core::CommandStack>() {
                         (stack.is_dirty(), stack.current_scene_path.clone())
                     } else {
                         (false, None)
                     };
                 let _ = responder.send(Ok(forge_protocol::SceneGetDirtyResult {
-                    dirty,
-                    scene_path,
+                    is_dirty,
+                    undo_count: None,
+                    current_scene_path,
                 }));
             }
 
@@ -923,7 +927,7 @@ fn handle_scene_save(
 
     Ok(forge_protocol::SceneSaveResult {
         success: true,
-        saved_path: save_path,
+        path: save_path,
     })
 }
 
@@ -950,17 +954,15 @@ fn handle_scene_reparent(
         old_parent_id,
     };
 
+    forge_core::scene_ops::raw_reparent_entity(
+        world,
+        &params.entity_id,
+        params.new_parent_id.as_deref(),
+    )
+    .map_err(|e| e.to_string())?;
+
     if let Some(mut stack) = world.get_resource_mut::<forge_core::CommandStack>() {
-        stack
-            .execute(world, cmd, forge_core::CommandAuthor::User)
-            .map_err(|e| e.to_string())?;
-    } else {
-        forge_core::scene_ops::raw_reparent_entity(
-            world,
-            &params.entity_id,
-            params.new_parent_id.as_deref(),
-        )
-        .map_err(|e| e.to_string())?;
+        stack.record_executed(cmd, forge_core::CommandAuthor::User);
     }
 
     Ok(forge_protocol::SceneReparentEntityResult { success: true })
@@ -973,10 +975,7 @@ fn handle_scene_duplicate(
     let source_entity = forge_core::find_entity_by_id(world, &params.entity_id)
         .ok_or_else(|| format!("Entity '{}' not found", params.entity_id))?;
 
-    let new_id = params
-        .new_entity_id
-        .clone()
-        .unwrap_or_else(|| format!("{}_copy", params.entity_id));
+    let new_id = format!("{}_copy", params.entity_id);
 
     let mut scene = forge_core::Scene::from_world(world, "snapshot").map_err(|e| e.to_string())?;
     let source_se = scene
@@ -1009,22 +1008,20 @@ fn handle_scene_duplicate(
         entity_id: new_id.clone(),
         name,
         parent_id: source_se.parent.clone(),
-        components: Some(comps_map),
+        components: Some(comps_map.clone()),
     };
 
+    forge_core::scene_ops::raw_create_entity(
+        world,
+        &new_id,
+        &format!("{}_copy", params.entity_id),
+        source_se.parent.as_deref(),
+        Some(&comps_map),
+    )
+    .map_err(|e| e.to_string())?;
+
     if let Some(mut stack) = world.get_resource_mut::<forge_core::CommandStack>() {
-        stack
-            .execute(world, cmd, forge_core::CommandAuthor::User)
-            .map_err(|e| e.to_string())?;
-    } else {
-        forge_core::scene_ops::raw_create_entity(
-            world,
-            &new_id,
-            &format!("{}_copy", params.entity_id),
-            source_se.parent.as_deref(),
-            None,
-        )
-        .map_err(|e| e.to_string())?;
+        stack.record_executed(cmd, forge_core::CommandAuthor::User);
     }
 
     Ok(forge_protocol::SceneDuplicateEntityResult {
@@ -1097,7 +1094,7 @@ fn handle_scene_remove_component(
 
     if let Some(mut stack) = world.get_resource_mut::<forge_core::CommandStack>() {
         // Record on stack for undo
-        let _ = stack.execute(world, cmd, forge_core::CommandAuthor::User);
+        stack.record_executed(cmd, forge_core::CommandAuthor::User);
     }
 
     Ok(forge_protocol::SceneRemoveComponentResult { success: true })

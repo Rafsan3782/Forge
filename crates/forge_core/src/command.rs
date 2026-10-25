@@ -223,6 +223,30 @@ impl CommandStack {
         Ok(id)
     }
 
+    /// Records an already-applied command onto the undo stack without re-executing it.
+    pub fn record_executed(
+        &mut self,
+        command: SceneCommand,
+        author: CommandAuthor,
+    ) -> String {
+        self.counter += 1;
+        let id = format!("cmd_{}", self.counter);
+        let timestamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_secs_f64())
+            .unwrap_or(0.0);
+
+        self.undo_stack.push(CommandEntry {
+            id: id.clone(),
+            author,
+            timestamp,
+            command,
+        });
+
+        self.redo_stack.clear();
+        id
+    }
+
     /// Undoes the last command, returning the undone command description.
     pub fn undo(&mut self, world: &mut World) -> Result<Option<String>, SceneError> {
         if let Some(entry) = self.undo_stack.pop() {
