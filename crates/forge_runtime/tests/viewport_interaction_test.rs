@@ -194,11 +194,14 @@ fn test_snapshot_and_restore_equality() {
 
     // 1. Snapshot scene before play
     {
-        let mut editor = world.resource_mut::<EditorState>();
+        let mut editor = world
+            .remove_resource::<EditorState>()
+            .expect("EditorState should exist");
         editor
             .start_play(&world)
             .expect("start_play should succeed");
         assert_eq!(editor.play_state, EditorPlayState::Playing);
+        world.insert_resource(editor);
     }
 
     // 2. Simulate play mode changes: mutate e1 position, despawn e2, spawn e3
@@ -218,11 +221,14 @@ fn test_snapshot_and_restore_equality() {
 
     // 3. Stop play mode -> restores snapshot
     {
-        let mut editor = world.resource_mut::<EditorState>();
+        let mut editor = world
+            .remove_resource::<EditorState>()
+            .expect("EditorState should exist");
         editor
             .stop_play(&mut world)
             .expect("stop_play should succeed");
         assert_eq!(editor.play_state, EditorPlayState::Edit);
+        world.insert_resource(editor);
     }
 
     // Verify player entity exists and position was restored exactly
