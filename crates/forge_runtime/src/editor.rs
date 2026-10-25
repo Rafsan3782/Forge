@@ -1,7 +1,7 @@
 //! Editor interaction systems: Editor camera, picking, selection, gizmos, and play/edit mode.
 
-use forge_core::components::{Collider2D, Sprite, Transform2D};
-use forge_core::{Camera2D, CommandAuthor, CommandStack, Entity, Scene, SceneCommand, Vec2, World};
+use forge_core::components::{Sprite, Transform2D};
+use forge_core::{CommandAuthor, CommandStack, Entity, Scene, SceneCommand, Vec2, World};
 use forge_input::{InputState, KeyCode, MouseButton};
 
 /// Editor state mode: Edit (paused simulation, tools active), Playing (full simulation), Paused.

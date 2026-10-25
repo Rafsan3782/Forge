@@ -365,16 +365,20 @@ pub fn process_bridge_commands(
                 params: _,
                 responder,
             } => {
-                let res =
-                    if let Some(mut ed) = world.get_resource_mut::<crate::editor::EditorState>() {
-                        ed.start_play(world)
-                            .map(|_| forge_protocol::PlayStartResult {
-                                success: true,
-                                state: "playing".to_string(),
-                            })
-                    } else {
-                        Err("EditorState resource not found".to_string())
-                    };
+                let mut ed = world.remove_resource::<crate::editor::EditorState>();
+                let res = if let Some(ref mut editor) = ed {
+                    editor
+                        .start_play(world)
+                        .map(|_| forge_protocol::PlayStartResult {
+                            success: true,
+                            state: "playing".to_string(),
+                        })
+                } else {
+                    Err("EditorState resource not found".to_string())
+                };
+                if let Some(editor) = ed {
+                    world.insert_resource(editor);
+                }
                 let _ = responder.send(res);
             }
 
