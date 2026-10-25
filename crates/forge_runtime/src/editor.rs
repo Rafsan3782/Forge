@@ -31,9 +31,13 @@ pub enum GizmoMode {
 /// Active gizmo drag constraint.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GizmoDragAxis {
+    /// Constrained to X axis.
     X,
+    /// Constrained to Y axis.
     Y,
+    /// Unconstrained / planar manipulation.
     Both,
+    /// Rotational angle manipulation.
     Rotation,
 }
 
@@ -89,9 +93,13 @@ pub struct EditorState {
 /// Active gizmo manipulation state.
 #[derive(Debug, Clone)]
 pub struct GizmoDragState {
+    /// Active constraint axis for current drag
     pub axis: GizmoDragAxis,
+    /// World position of primary entity when drag started
     pub start_world_pos: Vec2,
+    /// Mouse position in world coordinates when drag started
     pub start_mouse_world: Vec2,
+    /// Original transforms of all selected entities prior to drag
     pub original_transforms: Vec<(String, Transform2D)>,
 }
 
