@@ -845,3 +845,169 @@ pub struct PlayStopResult {
     pub success: bool,
     pub state: String,
 }
+
+// -----------------------------------------------------------------------------
+// Agent Contracts & Event Stream
+// -----------------------------------------------------------------------------
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PlanStep {
+    pub id: String,
+    pub description: String,
+    pub status: String,
+    #[serde(default)]
+    pub acceptance_checks: Vec<String>,
+    #[serde(default)]
+    pub tool_call_ids: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Plan {
+    pub id: String,
+    pub title: String,
+    pub steps: Vec<PlanStep>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ToolCategory {
+    Read,
+    Write,
+    Exec,
+    Network,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ToolRiskLevel {
+    Safe,
+    Low,
+    Medium,
+    High,
+    Critical,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ToolDescriptor {
+    pub name: String,
+    pub description: String,
+    pub input_schema: serde_json::Value,
+    pub category: ToolCategory,
+    pub risk_level: ToolRiskLevel,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PermissionRequest {
+    pub id: String,
+    pub tool_name: String,
+    pub risk_level: ToolRiskLevel,
+    pub description: String,
+    pub arguments: serde_json::Value,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub suggested_diff: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Checkpoint {
+    pub id: String,
+    pub run_id: String,
+    pub timestamp: f64,
+    pub git_ref: String,
+    pub description: String,
+    #[serde(default)]
+    pub affected_files: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct BudgetUsage {
+    pub input_tokens: i64,
+    pub output_tokens: i64,
+    pub total_tokens: i64,
+    pub estimated_cost_usd: f64,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Budget {
+    pub max_tokens: i64,
+    pub max_cost_usd: f64,
+    pub max_turns: i64,
+    pub usage: BudgetUsage,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PermissionMode {
+    Autonomous,
+    AskRisky,
+    AskAll,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AgentSettings {
+    pub permission_mode: PermissionMode,
+    pub model_roles: HashMap<String, String>,
+    pub budgets: Budget,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RunSummary {
+    pub run_id: String,
+    pub status: String,
+    pub start_time: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub end_time: Option<f64>,
+    pub total_turns: i64,
+    pub budget_used: BudgetUsage,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AgentEventType {
+    RunStarted,
+    MessageDelta,
+    MessageDone,
+    PlanUpdated,
+    ToolCallStarted,
+    ToolCallFinished,
+    PermissionRequested,
+    PermissionResolved,
+    CheckpointCreated,
+    BudgetUpdate,
+    RunPaused,
+    RunFinished,
+    Error,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AgentEvent {
+    #[serde(rename = "type")]
+    pub event_type: AgentEventType,
+    pub run_id: String,
+    pub timestamp: f64,
+    #[serde(default)]
+    pub data: serde_json::Value,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AgentCommandType {
+    StartRun,
+    SendMessage,
+    Stop,
+    Pause,
+    Resume,
+    ResolvePermission,
+    RevertCheckpoint,
+    SetSettings,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AgentCommand {
+    pub command: AgentCommandType,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub run_id: Option<String>,
+    #[serde(default)]
+    pub payload: serde_json::Value,
+}

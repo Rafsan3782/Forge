@@ -767,6 +767,142 @@ export const PlayStopResultSchema = z.object({
 });
 export type PlayStopResult = z.infer<typeof PlayStopResultSchema>;
 
+// -----------------------------------------------------------------------------
+// Agent Contracts & Event Stream
+// -----------------------------------------------------------------------------
+
+export const PlanStepSchema = z.object({
+  id: z.string(),
+  description: z.string(),
+  status: z.enum(["pending", "in_progress", "completed", "failed", "skipped"]),
+  acceptance_checks: z.array(z.string()).default([]),
+  tool_call_ids: z.array(z.string()).default([]),
+});
+export type PlanStep = z.infer<typeof PlanStepSchema>;
+
+export const PlanSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  steps: z.array(PlanStepSchema),
+});
+export type Plan = z.infer<typeof PlanSchema>;
+
+export const ToolCategorySchema = z.enum(["read", "write", "exec", "network"]);
+export type ToolCategory = z.infer<typeof ToolCategorySchema>;
+
+export const ToolRiskLevelSchema = z.enum(["safe", "low", "medium", "high", "critical"]);
+export type ToolRiskLevel = z.infer<typeof ToolRiskLevelSchema>;
+
+export const ToolDescriptorSchema = z.object({
+  name: z.string(),
+  description: z.string(),
+  input_schema: z.record(z.string(), z.unknown()),
+  category: ToolCategorySchema,
+  risk_level: ToolRiskLevelSchema,
+});
+export type ToolDescriptor = z.infer<typeof ToolDescriptorSchema>;
+
+export const PermissionRequestSchema = z.object({
+  id: z.string(),
+  tool_name: z.string(),
+  risk_level: ToolRiskLevelSchema,
+  description: z.string(),
+  arguments: z.record(z.string(), z.unknown()),
+  suggested_diff: z.string().nullable().optional(),
+});
+export type PermissionRequest = z.infer<typeof PermissionRequestSchema>;
+
+export const CheckpointSchema = z.object({
+  id: z.string(),
+  run_id: z.string(),
+  timestamp: z.number(),
+  git_ref: z.string(),
+  description: z.string(),
+  affected_files: z.array(z.string()).default([]),
+});
+export type Checkpoint = z.infer<typeof CheckpointSchema>;
+
+export const BudgetUsageSchema = z.object({
+  input_tokens: z.number().int(),
+  output_tokens: z.number().int(),
+  total_tokens: z.number().int(),
+  estimated_cost_usd: z.number(),
+});
+export type BudgetUsage = z.infer<typeof BudgetUsageSchema>;
+
+export const BudgetSchema = z.object({
+  max_tokens: z.number().int(),
+  max_cost_usd: z.number(),
+  max_turns: z.number().int(),
+  usage: BudgetUsageSchema,
+});
+export type Budget = z.infer<typeof BudgetSchema>;
+
+export const PermissionModeSchema = z.enum(["autonomous", "ask_risky", "ask_all"]);
+export type PermissionMode = z.infer<typeof PermissionModeSchema>;
+
+export const AgentSettingsSchema = z.object({
+  permission_mode: PermissionModeSchema,
+  model_roles: z.record(z.string(), z.string()),
+  budgets: BudgetSchema,
+});
+export type AgentSettings = z.infer<typeof AgentSettingsSchema>;
+
+export const RunSummarySchema = z.object({
+  run_id: z.string(),
+  status: z.enum(["running", "paused", "completed", "failed", "cancelled"]),
+  start_time: z.number(),
+  end_time: z.number().nullable().optional(),
+  total_turns: z.number().int(),
+  budget_used: BudgetUsageSchema,
+  error: z.string().nullable().optional(),
+});
+export type RunSummary = z.infer<typeof RunSummarySchema>;
+
+export const AgentEventTypeSchema = z.enum([
+  "run_started",
+  "message_delta",
+  "message_done",
+  "plan_updated",
+  "tool_call_started",
+  "tool_call_finished",
+  "permission_requested",
+  "permission_resolved",
+  "checkpoint_created",
+  "budget_update",
+  "run_paused",
+  "run_finished",
+  "error",
+]);
+export type AgentEventType = z.infer<typeof AgentEventTypeSchema>;
+
+export const AgentEventSchema = z.object({
+  type: AgentEventTypeSchema,
+  run_id: z.string(),
+  timestamp: z.number(),
+  data: z.record(z.string(), z.unknown()).optional().default({}),
+}).passthrough();
+export type AgentEvent = z.infer<typeof AgentEventSchema>;
+
+export const AgentCommandTypeSchema = z.enum([
+  "start_run",
+  "send_message",
+  "stop",
+  "pause",
+  "resume",
+  "resolve_permission",
+  "revert_checkpoint",
+  "set_settings",
+]);
+export type AgentCommandType = z.infer<typeof AgentCommandTypeSchema>;
+
+export const AgentCommandSchema = z.object({
+  command: AgentCommandTypeSchema,
+  run_id: z.string().nullable().optional(),
+  payload: z.record(z.string(), z.unknown()).optional().default({}),
+}).passthrough();
+export type AgentCommand = z.infer<typeof AgentCommandSchema>;
+
 /**
  * Global Forge scripting API contract exposed to quickjs scripts.
  */
