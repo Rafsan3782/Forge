@@ -85,6 +85,13 @@ pub fn run_headless(args: &CliArgs) -> Result<(), Box<dyn std::error::Error>> {
     let mut world = World::new();
     scene.spawn_into_world(&mut world)?;
 
+    // Pre-load any tileset references found in the scene into the store
+    for entity_ref in world.iter_entities() {
+        if let Some(tilemap) = entity_ref.get::<forge_core::Tilemap>() {
+            let _ = tileset_store.get_or_load(&tilemap.tileset_id);
+        }
+    }
+
     // Insert asset resources
     world.insert_resource(asset_db);
     world.insert_resource(animation_store);
