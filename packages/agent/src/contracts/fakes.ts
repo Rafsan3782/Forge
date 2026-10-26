@@ -236,13 +236,25 @@ export class FakeOrchestrator implements Orchestrator {
   private currentPlan: Plan | null = null;
   private nextRunId = 1;
 
+  private llm: LlmProvider;
+  private tools: ToolProvider;
+  private safety: SafetyPolicy;
+  private checkpoints: CheckpointManager;
+  private settings: AgentSettings;
+
   constructor(
-    private llm: LlmProvider,
-    private tools: ToolProvider,
-    private safety: SafetyPolicy,
-    private checkpoints: CheckpointManager,
-    private settings: AgentSettings
-  ) {}
+    llm: LlmProvider,
+    tools: ToolProvider,
+    safety: SafetyPolicy,
+    checkpoints: CheckpointManager,
+    settings: AgentSettings
+  ) {
+    this.llm = llm;
+    this.tools = tools;
+    this.safety = safety;
+    this.checkpoints = checkpoints;
+    this.settings = settings;
+  }
 
   public subscribeEvents(listener: (event: AgentEvent) => void): () => void {
     this.listeners.add(listener);
