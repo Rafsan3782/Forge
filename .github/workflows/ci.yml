@@ -108,6 +108,11 @@ jobs:
         run: |
           cargo run -p forge_runtime -- --headless --frames 5 --screenshot hello_screenshot.png --scene templates/hello/scene.json
           cargo run -p forge_runtime -- --headless --frames 5 --screenshot tilemap_screenshot.png --scene templates/tilemap-demo/scene.json
+          cargo run -p forge_runtime -- --headless --frames 5 --screenshot platformer_screenshot.png --scene templates/platformer/scene.json
+
+      - name: Check platformer template TypeScript scripts
+        run: |
+          cargo run -p forge_cli -- check --project templates/platformer
 
       - name: Upload headless screenshots artifact
         uses: actions/upload-artifact@v4
@@ -117,6 +122,7 @@ jobs:
           path: |
             hello_screenshot.png
             tilemap_screenshot.png
+            platformer_screenshot.png
           if-no-files-found: warn
 
   typescript:

@@ -59,6 +59,12 @@ pub fn run_headless(args: &CliArgs) -> Result<(), Box<dyn std::error::Error>> {
         if let Err(e) = crate::procedural::generate_audio_demo_assets(&assets_dir) {
             tracing::warn!("Failed to auto-generate audio demo assets: {}", e);
         }
+    } else if args.scene.contains("platformer")
+        && (!assets_dir.exists() || !assets_dir.join("player_sheet.png").exists())
+    {
+        if let Err(e) = crate::procedural::generate_platformer_assets(&assets_dir) {
+            tracing::warn!("Failed to auto-generate platformer assets: {}", e);
+        }
     }
 
     // Initialize and scan AssetDatabase

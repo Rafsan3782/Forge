@@ -62,6 +62,10 @@ impl WindowApp {
             && (!assets_dir.exists() || !assets_dir.join("tone1.wav").exists())
         {
             let _ = crate::procedural::generate_audio_demo_assets(&assets_dir);
+        } else if args.scene.contains("platformer")
+            && (!assets_dir.exists() || !assets_dir.join("player_sheet.png").exists())
+        {
+            let _ = crate::procedural::generate_platformer_assets(&assets_dir);
         }
 
         // Initialize and scan AssetDatabase

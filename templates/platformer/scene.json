@@ -1,0 +1,325 @@
+{
+  "name": "Platformer",
+  "entities": [
+    {
+      "id": "camera",
+      "name": "Main Camera",
+      "components": {
+        "Transform2D": {
+          "position": [400.0, 150.0],
+          "rotation": 0.0,
+          "scale": [1.0, 1.0]
+        },
+        "Camera2D": {
+          "zoom": 1.0,
+          "is_active": true
+        },
+        "Script": {
+          "path": "templates/platformer/scripts/camera.ts",
+          "enabled": true
+        }
+      }
+    },
+    {
+      "id": "tilemap",
+      "name": "World Tilemap",
+      "components": {
+        "Transform2D": {
+          "position": [0.0, 0.0],
+          "rotation": 0.0,
+          "scale": [1.0, 1.0]
+        },
+        "Tilemap": {
+          "tileset_id": "tileset.json",
+          "tile_size": [32.0, 32.0],
+          "chunk_size": 16,
+          "layers": ["main"],
+          "chunks": {
+            "[0, 0]": {
+              "coord": [0, 0],
+              "layers": {
+                "main": [
+                  "1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0",
+                  "1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,2,2,2,2,2,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
+                ]
+              }
+            },
+            "[1, 0]": {
+              "coord": [1, 0],
+              "layers": {
+                "main": [
+                  "0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1",
+                  "0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1",
+                  "0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,2,2,2,2,2,0,0,0,0",
+                  "2,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
+                ]
+              }
+            },
+            "[2, 0]": {
+              "coord": [2, 0],
+              "layers": {
+                "main": [
+                  "1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1",
+                  "1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1",
+                  "0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,2,2,2,2,2,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
+                  "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
+                ]
+              }
+            }
+          },
+          "collision_groups": 4294967295,
+          "collision_mask": 4294967295,
+          "friction": 0.5,
+          "restitution": 0.0,
+          "z_order": -10
+        }
+      }
+    },
+    {
+      "id": "player",
+      "name": "Player Hero",
+      "components": {
+        "Transform2D": {
+          "position": [64.0, 80.0],
+          "rotation": 0.0,
+          "scale": [1.0, 1.0]
+        },
+        "Sprite": {
+          "asset_id": "player_sheet.png",
+          "size": {
+            "x": 32.0,
+            "y": 32.0
+          },
+          "color_tint": [1.0, 1.0, 1.0, 1.0],
+          "z_order": 10
+        },
+        "Script": {
+          "path": "templates/platformer/scripts/player.ts",
+          "enabled": true
+        }
+      }
+    },
+    {
+      "id": "patroller",
+      "name": "Patroller Enemy",
+      "components": {
+        "Transform2D": {
+          "position": [840.0, 80.0],
+          "rotation": 0.0,
+          "scale": [1.0, 1.0]
+        },
+        "Sprite": {
+          "asset_id": "patroller.png",
+          "size": {
+            "x": 32.0,
+            "y": 32.0
+          },
+          "color_tint": [1.0, 1.0, 1.0, 1.0],
+          "z_order": 5
+        },
+        "Script": {
+          "path": "templates/platformer/scripts/patroller.ts",
+          "enabled": true
+        }
+      }
+    },
+    {
+      "id": "hazard_1",
+      "name": "Stationary Hazard Spikes 1",
+      "components": {
+        "Transform2D": {
+          "position": [696.0, 76.0],
+          "rotation": 0.0,
+          "scale": [1.0, 1.0]
+        },
+        "Sprite": {
+          "asset_id": "hazard.png",
+          "size": {
+            "x": 24.0,
+            "y": 24.0
+          },
+          "color_tint": [1.0, 1.0, 1.0, 1.0],
+          "z_order": 2
+        }
+      }
+    },
+    {
+      "id": "hazard_2",
+      "name": "Stationary Hazard Spikes 2",
+      "components": {
+        "Transform2D": {
+          "position": [952.0, 76.0],
+          "rotation": 0.0,
+          "scale": [1.0, 1.0]
+        },
+        "Sprite": {
+          "asset_id": "hazard.png",
+          "size": {
+            "x": 24.0,
+            "y": 24.0
+          },
+          "color_tint": [1.0, 1.0, 1.0, 1.0],
+          "z_order": 2
+        }
+      }
+    },
+    {
+      "id": "coin_1",
+      "name": "Collectible Coin 1",
+      "components": {
+        "Transform2D": {
+          "position": [288.0, 192.0],
+          "rotation": 0.0,
+          "scale": [1.0, 1.0]
+        },
+        "Sprite": {
+          "asset_id": "coin.png",
+          "size": {
+            "x": 16.0,
+            "y": 16.0
+          },
+          "color_tint": [1.0, 1.0, 1.0, 1.0],
+          "z_order": 3
+        }
+      }
+    },
+    {
+      "id": "coin_2",
+      "name": "Collectible Coin 2",
+      "components": {
+        "Transform2D": {
+          "position": [544.0, 224.0],
+          "rotation": 0.0,
+          "scale": [1.0, 1.0]
+        },
+        "Sprite": {
+          "asset_id": "coin.png",
+          "size": {
+            "x": 16.0,
+            "y": 16.0
+          },
+          "color_tint": [1.0, 1.0, 1.0, 1.0],
+          "z_order": 3
+        }
+      }
+    },
+    {
+      "id": "coin_3",
+      "name": "Collectible Coin 3",
+      "components": {
+        "Transform2D": {
+          "position": [816.0, 208.0],
+          "rotation": 0.0,
+          "scale": [1.0, 1.0]
+        },
+        "Sprite": {
+          "asset_id": "coin.png",
+          "size": {
+            "x": 16.0,
+            "y": 16.0
+          },
+          "color_tint": [1.0, 1.0, 1.0, 1.0],
+          "z_order": 3
+        }
+      }
+    },
+    {
+      "id": "coin_4",
+      "name": "Collectible Coin 4",
+      "components": {
+        "Transform2D": {
+          "position": [1104.0, 224.0],
+          "rotation": 0.0,
+          "scale": [1.0, 1.0]
+        },
+        "Sprite": {
+          "asset_id": "coin.png",
+          "size": {
+            "x": 16.0,
+            "y": 16.0
+          },
+          "color_tint": [1.0, 1.0, 1.0, 1.0],
+          "z_order": 3
+        }
+      }
+    },
+    {
+      "id": "coin_5",
+      "name": "Collectible Coin 5",
+      "components": {
+        "Transform2D": {
+          "position": [1344.0, 96.0],
+          "rotation": 0.0,
+          "scale": [1.0, 1.0]
+        },
+        "Sprite": {
+          "asset_id": "coin.png",
+          "size": {
+            "x": 16.0,
+            "y": 16.0
+          },
+          "color_tint": [1.0, 1.0, 1.0, 1.0],
+          "z_order": 3
+        }
+      }
+    },
+    {
+      "id": "flag",
+      "name": "Goal Flag",
+      "components": {
+        "Transform2D": {
+          "position": [1440.0, 80.0],
+          "rotation": 0.0,
+          "scale": [1.0, 1.0]
+        },
+        "Sprite": {
+          "asset_id": "flag.png",
+          "size": {
+            "x": 32.0,
+            "y": 32.0
+          },
+          "color_tint": [1.0, 1.0, 1.0, 1.0],
+          "z_order": 4
+        }
+      }
+    }
+  ]
+}

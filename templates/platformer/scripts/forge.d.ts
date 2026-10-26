@@ -1,0 +1,98 @@
+/**
+ * TypeScript API definitions for Forge Engine scripting runtime.
+ */
+
+export interface ScriptEntityTransform {
+  position: [number, number];
+  rotation: number;
+  scale: [number, number];
+}
+
+export interface ScriptRaycastHit {
+  entity_id: string;
+  point: [number, number];
+  normal: [number, number];
+  fraction: number;
+}
+
+export interface ForgeScriptApi {
+  entity: {
+    getId(): string;
+    getName(): string;
+    getParent(): string | null;
+    getChildren(): string[];
+    getTransform(): ScriptEntityTransform;
+    setTransform(transform: Partial<ScriptEntityTransform>): void;
+    getComponent<T = unknown>(name: string): T | null;
+    setComponent<T = unknown>(name: string, data: T): void;
+  };
+  spawn(name: string, components?: Record<string, unknown>, parent?: string): string;
+  destroy(entityId: string): void;
+  scene: {
+    load(scenePath: string): void;
+  };
+  input: {
+    isActionPressed(action: string): boolean;
+    isActionJustPressed(action: string): boolean;
+    isActionJustReleased(action: string): boolean;
+    getAxis(axis: string): number;
+    getMousePosition(): [number, number];
+  };
+  time: {
+    deltaTime(): number;
+    elapsedTime(): number;
+    frameCount(): number;
+  };
+  physics: {
+    raycast(
+      origin: [number, number],
+      direction: [number, number],
+      maxDistance: number,
+    ): ScriptRaycastHit | null;
+    overlapCircle(center: [number, number], radius: number): string[];
+  };
+  audio: {
+    play(
+      assetId: string,
+      options?: {
+        bus?: "master" | "music" | "sfx";
+        volume?: number;
+        pitch?: number;
+        loop?: boolean;
+      },
+    ): string;
+    stop(playbackId?: string, bus?: "master" | "music" | "sfx"): void;
+    setBusVolume(bus: "master" | "music" | "sfx", volume: number): void;
+  };
+  animation: {
+    play(clipName: string, entityId?: string): void;
+  };
+  tilemap: {
+    getTile(entityId: string, layer: string, x: number, y: number): number;
+    setTile(entityId: string, layer: string, x: number, y: number, tileId: number): void;
+  };
+  log: {
+    info(...args: unknown[]): void;
+    warn(...args: unknown[]): void;
+    error(...args: unknown[]): void;
+  };
+}
+
+declare global {
+  const forge: ForgeScriptApi;
+
+  // Optional script lifecycle callbacks
+  function onStart(): void;
+  function onUpdate(dt: number): void;
+  function onFixedUpdate(dt: number): void;
+  function onCollisionEnter(otherEntityId: string): void;
+  function onCollisionExit(otherEntityId: string): void;
+  function onTriggerEnter(otherEntityId: string): void;
+  function onDestroy(): void;
+
+  // Optional state transfer lifecycle hooks for hot reloading
+  function serialize(): unknown;
+  function deserialize(state: unknown): void;
+}
+
+export {};

@@ -69,6 +69,16 @@ enum Commands {
         #[arg(long)]
         json: bool,
     },
+
+    /// Creates a new game project from a template and initializes its procedural assets
+    New {
+        /// Name of the project directory to create
+        name: String,
+
+        /// Starter template to use (defaults to 'platformer')
+        #[arg(long, default_value = "platformer")]
+        template: String,
+    },
 }
 
 #[tokio::main]
@@ -90,6 +100,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         } => run_runtime(scene, headless, port),
 
         Commands::Check { project, json } => run_check(project.as_deref(), json),
+
+        Commands::New { name, template } => run_new(&name, &template),
     }
 }
 
@@ -118,6 +130,84 @@ fn run_check(
         std::process::exit(1);
     }
 
+    Ok(())
+}
+
+fn run_new(name: &str, template: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let dest_dir = Path::new(name);
+    if dest_dir.exists() {
+        return Err(format!("Destination directory '{}' already exists", name).into());
+    }
+
+    let template_candidates = [
+        format!("templates/{}", template),
+        format!("../templates/{}", template),
+        format!("../../templates/{}", template),
+    ];
+
+    let mut found_template = None;
+    for cand in &template_candidates {
+        let p = Path::new(cand);
+        if p.exists() && p.is_dir() {
+            found_template = Some(p.to_path_buf());
+            break;
+        }
+    }
+
+    let src_dir = match found_template {
+        Some(p) => p,
+        None => {
+            return Err(format!("Starter template '{}' not found in templates/", template).into())
+        }
+    };
+
+    println!(
+        "Creating new Forge project '{}' using template '{}'...",
+        name, template
+    );
+    copy_dir_recursive(&src_dir, dest_dir)?;
+
+    // Invoke asset generation if procedural assets need to be generated
+    let assets_dir = dest_dir.join("assets");
+    fs::create_dir_all(&assets_dir)?;
+
+    let mut cmd = Command::new("cargo");
+    cmd.args([
+        "run",
+        "-p",
+        "forge_runtime",
+        "--",
+        "--scene",
+        &dest_dir.join("scene.json").to_string_lossy(),
+        "--headless",
+        "--frames",
+        "1",
+    ]);
+    let status = cmd.status();
+    if let Ok(st) = status {
+        if !st.success() {
+            tracing::warn!("Asset generation command exited with status: {}", st);
+        }
+    }
+
+    println!("Project created successfully at '{}'.", name);
+    println!("To run your project:\n  forge run {}/scene.json", name);
+
+    Ok(())
+}
+
+fn copy_dir_recursive(src: &Path, dst: &Path) -> std::io::Result<()> {
+    fs::create_dir_all(dst)?;
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let file_type = entry.file_type()?;
+        let dest_path = dst.join(entry.file_name());
+        if file_type.is_dir() {
+            copy_dir_recursive(&entry.path(), &dest_path)?;
+        } else {
+            fs::copy(entry.path(), dest_path)?;
+        }
+    }
     Ok(())
 }
 
