@@ -48,6 +48,17 @@ async fn test_platformer_collect_and_win() {
         .spawn_into_world(&mut world)
         .expect("Failed to spawn scene into world");
 
+    // Rewrite relative script paths to absolute workspace paths so ScriptServer loads them accurately
+    {
+        let mut query = world.query::<&mut forge_core::Script>();
+        for script in query.iter_mut(&mut world) {
+            let full_path = workspace_root.join(&script.path);
+            if full_path.exists() {
+                script.path = full_path.to_string_lossy().to_string();
+            }
+        }
+    }
+
     let action_map =
         ActionMap::load_from_file(&input_map_path).expect("Failed to load input_map.json");
 
@@ -217,6 +228,17 @@ async fn test_platformer_pit_fall_respawns_at_checkpoint() {
     scene
         .spawn_into_world(&mut world)
         .expect("Failed to spawn scene into world");
+
+    // Rewrite relative script paths to absolute workspace paths so ScriptServer loads them accurately
+    {
+        let mut query = world.query::<&mut forge_core::Script>();
+        for script in query.iter_mut(&mut world) {
+            let full_path = workspace_root.join(&script.path);
+            if full_path.exists() {
+                script.path = full_path.to_string_lossy().to_string();
+            }
+        }
+    }
 
     let action_map =
         ActionMap::load_from_file(&input_map_path).expect("Failed to load input_map.json");
