@@ -681,13 +681,11 @@ fn generate_hazard_sprite(path: &Path) -> Result<(), Box<dyn std::error::Error>>
     for y in 0..H {
         for x in 0..W {
             // Three sharp triangular spikes pointing upward
-            let spike_idx = x / 8;
             let lx = (x % 8) as i32;
-            let base_y = 20i32;
             let peak_y = 4i32;
-            let slope = (ly_from_top(y) - peak_y);
-            let inside = y >= 4 && y <= 22 && (lx - 4).abs() <= (slope / 4);
-            let px = if inside || (y >= 20 && y <= 23) {
+            let slope = ly_from_top(y) - peak_y;
+            let inside = (4..=22).contains(&y) && (lx - 4).abs() <= (slope / 4);
+            let px = if inside || (20..=23).contains(&y) {
                 if lx == 4 {
                     Rgba([255, 100, 100, 255]) // Center highlight
                 } else {
@@ -715,16 +713,16 @@ fn generate_flag_sprite(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
 
     for y in 0..H {
         for x in 0..W {
-            let px = if (6..=8).contains(&x) && y >= 2 && y <= 30 {
+            let px = if (6..=8).contains(&x) && (2..=30).contains(&y) {
                 Rgba([180, 180, 190, 255]) // Silver flagpole
-            } else if x >= 9 && x <= 26 && y >= 4 && y <= 16 {
+            } else if (9..=26).contains(&x) && (4..=16).contains(&y) {
                 // Gold / Emerald victory flag
                 if (x + y) % 3 == 0 {
                     Rgba([255, 230, 80, 255])
                 } else {
                     Rgba([46, 204, 113, 255])
                 }
-            } else if (4..=10).contains(&x) && y >= 29 && y <= 31 {
+            } else if (4..=10).contains(&x) && (29..=31).contains(&y) {
                 Rgba([80, 80, 90, 255]) // Base stand
             } else {
                 Rgba([0, 0, 0, 0])
@@ -745,7 +743,7 @@ fn generate_patroller_sprite(path: &Path) -> Result<(), Box<dyn std::error::Erro
     for y in 0..H {
         for x in 0..W {
             let dx = (x as i32 - 16).abs();
-            let px = if dx <= 10 && y >= 10 && y <= 26 {
+            let px = if dx <= 10 && (10..=26).contains(&y) {
                 // Slime / beetle enemy
                 if (x == 12 || x == 20) && y == 14 {
                     Rgba([255, 255, 255, 255]) // White eye
