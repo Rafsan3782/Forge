@@ -1,0 +1,200 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://forge.engine/schemas/agent.contracts.json",
+  "title": "AgentContracts",
+  "description": "Schemas for autonomous agent events, commands, plans, tools, permissions, and budgets in Forge",
+  "definitions": {
+    "PlanStep": {
+      "type": "object",
+      "required": ["id", "description", "status"],
+      "properties": {
+        "id": { "type": "string" },
+        "description": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "in_progress", "completed", "failed", "skipped"]
+        },
+        "acceptance_checks": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "tool_call_ids": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        }
+      },
+      "additionalProperties": false
+    },
+    "Plan": {
+      "type": "object",
+      "required": ["id", "title", "steps"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "steps": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/PlanStep" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "ToolCategory": {
+      "type": "string",
+      "enum": ["read", "write", "exec", "network"]
+    },
+    "ToolRiskLevel": {
+      "type": "string",
+      "enum": ["safe", "low", "medium", "high", "critical"]
+    },
+    "ToolDescriptor": {
+      "type": "object",
+      "required": ["name", "description", "input_schema", "category", "risk_level"],
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "input_schema": { "type": "object" },
+        "category": { "$ref": "#/definitions/ToolCategory" },
+        "risk_level": { "$ref": "#/definitions/ToolRiskLevel" }
+      },
+      "additionalProperties": false
+    },
+    "PermissionRequest": {
+      "type": "object",
+      "required": ["id", "tool_name", "risk_level", "description", "arguments"],
+      "properties": {
+        "id": { "type": "string" },
+        "tool_name": { "type": "string" },
+        "risk_level": { "$ref": "#/definitions/ToolRiskLevel" },
+        "description": { "type": "string" },
+        "arguments": { "type": "object" },
+        "suggested_diff": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "Checkpoint": {
+      "type": "object",
+      "required": ["id", "run_id", "timestamp", "git_ref", "description"],
+      "properties": {
+        "id": { "type": "string" },
+        "run_id": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "git_ref": { "type": "string" },
+        "description": { "type": "string" },
+        "affected_files": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        }
+      },
+      "additionalProperties": false
+    },
+    "BudgetUsage": {
+      "type": "object",
+      "required": ["input_tokens", "output_tokens", "total_tokens", "estimated_cost_usd"],
+      "properties": {
+        "input_tokens": { "type": "integer" },
+        "output_tokens": { "type": "integer" },
+        "total_tokens": { "type": "integer" },
+        "estimated_cost_usd": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "Budget": {
+      "type": "object",
+      "required": ["max_tokens", "max_cost_usd", "max_turns", "usage"],
+      "properties": {
+        "max_tokens": { "type": "integer" },
+        "max_cost_usd": { "type": "number" },
+        "max_turns": { "type": "integer" },
+        "usage": { "$ref": "#/definitions/BudgetUsage" }
+      },
+      "additionalProperties": false
+    },
+    "PermissionMode": {
+      "type": "string",
+      "enum": ["autonomous", "ask_risky", "ask_all"]
+    },
+    "AgentSettings": {
+      "type": "object",
+      "required": ["permission_mode", "model_roles", "budgets"],
+      "properties": {
+        "permission_mode": { "$ref": "#/definitions/PermissionMode" },
+        "model_roles": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "budgets": { "$ref": "#/definitions/Budget" }
+      },
+      "additionalProperties": false
+    },
+    "RunSummary": {
+      "type": "object",
+      "required": ["run_id", "status", "start_time", "end_time", "total_turns", "budget_used"],
+      "properties": {
+        "run_id": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["running", "paused", "completed", "failed", "cancelled"]
+        },
+        "start_time": { "type": "number" },
+        "end_time": { "type": ["number", "null"] },
+        "total_turns": { "type": "integer" },
+        "budget_used": { "$ref": "#/definitions/BudgetUsage" },
+        "error": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "AgentEvent": {
+      "type": "object",
+      "required": ["type", "run_id", "timestamp"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "run_started",
+            "message_delta",
+            "message_done",
+            "plan_updated",
+            "tool_call_started",
+            "tool_call_finished",
+            "permission_requested",
+            "permission_resolved",
+            "checkpoint_created",
+            "budget_update",
+            "run_paused",
+            "run_finished",
+            "error"
+          ]
+        },
+        "run_id": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "data": { "type": "object" }
+      },
+      "additionalProperties": true
+    },
+    "AgentCommand": {
+      "type": "object",
+      "required": ["command"],
+      "properties": {
+        "command": {
+          "type": "string",
+          "enum": [
+            "start_run",
+            "send_message",
+            "stop",
+            "pause",
+            "resume",
+            "resolve_permission",
+            "revert_checkpoint",
+            "set_settings"
+          ]
+        },
+        "run_id": { "type": ["string", "null"] },
+        "payload": { "type": "object", "default": {} }
+      },
+      "additionalProperties": true
+    }
+  }
+}

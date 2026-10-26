@@ -801,6 +801,142 @@ export const PlayStopResultSchema = z.object({
 });
 export type PlayStopResult = z.infer<typeof PlayStopResultSchema>;
 
+// -----------------------------------------------------------------------------
+// Agent Contracts & Event Stream
+// -----------------------------------------------------------------------------
+
+export const PlanStepSchema = z.object({
+  id: z.string(),
+  description: z.string(),
+  status: z.enum(["pending", "in_progress", "completed", "failed", "skipped"]),
+  acceptance_checks: z.array(z.string()).default([]),
+  tool_call_ids: z.array(z.string()).default([]),
+});
+export type PlanStep = z.infer<typeof PlanStepSchema>;
+
+export const PlanSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  steps: z.array(PlanStepSchema),
+});
+export type Plan = z.infer<typeof PlanSchema>;
+
+export const ToolCategorySchema = z.enum(["read", "write", "exec", "network"]);
+export type ToolCategory = z.infer<typeof ToolCategorySchema>;
+
+export const ToolRiskLevelSchema = z.enum(["safe", "low", "medium", "high", "critical"]);
+export type ToolRiskLevel = z.infer<typeof ToolRiskLevelSchema>;
+
+export const ToolDescriptorSchema = z.object({
+  name: z.string(),
+  description: z.string(),
+  input_schema: z.record(z.string(), z.unknown()),
+  category: ToolCategorySchema,
+  risk_level: ToolRiskLevelSchema,
+});
+export type ToolDescriptor = z.infer<typeof ToolDescriptorSchema>;
+
+export const PermissionRequestSchema = z.object({
+  id: z.string(),
+  tool_name: z.string(),
+  risk_level: ToolRiskLevelSchema,
+  description: z.string(),
+  arguments: z.record(z.string(), z.unknown()),
+  suggested_diff: z.string().nullable().optional(),
+});
+export type PermissionRequest = z.infer<typeof PermissionRequestSchema>;
+
+export const CheckpointSchema = z.object({
+  id: z.string(),
+  run_id: z.string(),
+  timestamp: z.number(),
+  git_ref: z.string(),
+  description: z.string(),
+  affected_files: z.array(z.string()).default([]),
+});
+export type Checkpoint = z.infer<typeof CheckpointSchema>;
+
+export const BudgetUsageSchema = z.object({
+  input_tokens: z.number().int(),
+  output_tokens: z.number().int(),
+  total_tokens: z.number().int(),
+  estimated_cost_usd: z.number(),
+});
+export type BudgetUsage = z.infer<typeof BudgetUsageSchema>;
+
+export const BudgetSchema = z.object({
+  max_tokens: z.number().int(),
+  max_cost_usd: z.number(),
+  max_turns: z.number().int(),
+  usage: BudgetUsageSchema,
+});
+export type Budget = z.infer<typeof BudgetSchema>;
+
+export const PermissionModeSchema = z.enum(["autonomous", "ask_risky", "ask_all"]);
+export type PermissionMode = z.infer<typeof PermissionModeSchema>;
+
+export const AgentSettingsSchema = z.object({
+  permission_mode: PermissionModeSchema,
+  model_roles: z.record(z.string(), z.string()),
+  budgets: BudgetSchema,
+});
+export type AgentSettings = z.infer<typeof AgentSettingsSchema>;
+
+export const RunSummarySchema = z.object({
+  run_id: z.string(),
+  status: z.enum(["running", "paused", "completed", "failed", "cancelled"]),
+  start_time: z.number(),
+  end_time: z.number().nullable().optional(),
+  total_turns: z.number().int(),
+  budget_used: BudgetUsageSchema,
+  error: z.string().nullable().optional(),
+});
+export type RunSummary = z.infer<typeof RunSummarySchema>;
+
+export const AgentEventTypeSchema = z.enum([
+  "run_started",
+  "message_delta",
+  "message_done",
+  "plan_updated",
+  "tool_call_started",
+  "tool_call_finished",
+  "permission_requested",
+  "permission_resolved",
+  "checkpoint_created",
+  "budget_update",
+  "run_paused",
+  "run_finished",
+  "error",
+]);
+export type AgentEventType = z.infer<typeof AgentEventTypeSchema>;
+
+export const AgentEventSchema = z.object({
+  type: AgentEventTypeSchema,
+  run_id: z.string(),
+  timestamp: z.number(),
+  data: z.record(z.string(), z.unknown()).optional().default({}),
+}).passthrough();
+export type AgentEvent = z.infer<typeof AgentEventSchema>;
+
+export const AgentCommandTypeSchema = z.enum([
+  "start_run",
+  "send_message",
+  "stop",
+  "pause",
+  "resume",
+  "resolve_permission",
+  "revert_checkpoint",
+  "set_settings",
+]);
+export type AgentCommandType = z.infer<typeof AgentCommandTypeSchema>;
+
+export const AgentCommandSchema = z.object({
+  command: AgentCommandTypeSchema,
+  run_id: z.string().nullable().optional(),
+  payload: z.record(z.string(), z.unknown()).optional().default({}),
+}).passthrough();
+export type AgentCommand = z.infer<typeof AgentCommandSchema>;
+
 /**
  * Global Forge scripting API contract exposed to quickjs scripts.
  */
@@ -1705,6 +1841,172 @@ pub struct PlayStopParams {}
 pub struct PlayStopResult {
     pub success: bool,
     pub state: String,
+}
+
+// -----------------------------------------------------------------------------
+// Agent Contracts & Event Stream
+// -----------------------------------------------------------------------------
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PlanStep {
+    pub id: String,
+    pub description: String,
+    pub status: String,
+    #[serde(default)]
+    pub acceptance_checks: Vec<String>,
+    #[serde(default)]
+    pub tool_call_ids: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Plan {
+    pub id: String,
+    pub title: String,
+    pub steps: Vec<PlanStep>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ToolCategory {
+    Read,
+    Write,
+    Exec,
+    Network,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ToolRiskLevel {
+    Safe,
+    Low,
+    Medium,
+    High,
+    Critical,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ToolDescriptor {
+    pub name: String,
+    pub description: String,
+    pub input_schema: serde_json::Value,
+    pub category: ToolCategory,
+    pub risk_level: ToolRiskLevel,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PermissionRequest {
+    pub id: String,
+    pub tool_name: String,
+    pub risk_level: ToolRiskLevel,
+    pub description: String,
+    pub arguments: serde_json::Value,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub suggested_diff: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Checkpoint {
+    pub id: String,
+    pub run_id: String,
+    pub timestamp: f64,
+    pub git_ref: String,
+    pub description: String,
+    #[serde(default)]
+    pub affected_files: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct BudgetUsage {
+    pub input_tokens: i64,
+    pub output_tokens: i64,
+    pub total_tokens: i64,
+    pub estimated_cost_usd: f64,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Budget {
+    pub max_tokens: i64,
+    pub max_cost_usd: f64,
+    pub max_turns: i64,
+    pub usage: BudgetUsage,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PermissionMode {
+    Autonomous,
+    AskRisky,
+    AskAll,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AgentSettings {
+    pub permission_mode: PermissionMode,
+    pub model_roles: HashMap<String, String>,
+    pub budgets: Budget,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RunSummary {
+    pub run_id: String,
+    pub status: String,
+    pub start_time: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub end_time: Option<f64>,
+    pub total_turns: i64,
+    pub budget_used: BudgetUsage,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AgentEventType {
+    RunStarted,
+    MessageDelta,
+    MessageDone,
+    PlanUpdated,
+    ToolCallStarted,
+    ToolCallFinished,
+    PermissionRequested,
+    PermissionResolved,
+    CheckpointCreated,
+    BudgetUpdate,
+    RunPaused,
+    RunFinished,
+    Error,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AgentEvent {
+    #[serde(rename = "type")]
+    pub event_type: AgentEventType,
+    pub run_id: String,
+    pub timestamp: f64,
+    #[serde(default)]
+    pub data: serde_json::Value,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AgentCommandType {
+    StartRun,
+    SendMessage,
+    Stop,
+    Pause,
+    Resume,
+    ResolvePermission,
+    RevertCheckpoint,
+    SetSettings,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AgentCommand {
+    pub command: AgentCommandType,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub run_id: Option<String>,
+    #[serde(default)]
+    pub payload: serde_json::Value,
 }
 `;
 
