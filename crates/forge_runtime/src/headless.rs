@@ -59,6 +59,12 @@ pub fn run_headless(args: &CliArgs) -> Result<(), Box<dyn std::error::Error>> {
         if let Err(e) = crate::procedural::generate_audio_demo_assets(&assets_dir) {
             tracing::warn!("Failed to auto-generate audio demo assets: {}", e);
         }
+    } else if args.scene.contains("platformer")
+        && (!assets_dir.exists() || !assets_dir.join("player_sheet.png").exists())
+    {
+        if let Err(e) = crate::procedural::generate_platformer_assets(&assets_dir) {
+            tracing::warn!("Failed to auto-generate platformer assets: {}", e);
+        }
     }
 
     // Initialize and scan AssetDatabase
@@ -78,6 +84,13 @@ pub fn run_headless(args: &CliArgs) -> Result<(), Box<dyn std::error::Error>> {
     let scene = Scene::load_from_file(&args.scene)?;
     let mut world = World::new();
     scene.spawn_into_world(&mut world)?;
+
+    // Pre-load any tileset references found in the scene into the store
+    for entity_ref in world.iter_entities() {
+        if let Some(tilemap) = entity_ref.get::<forge_core::Tilemap>() {
+            let _ = tileset_store.get_or_load(&tilemap.tileset_id);
+        }
+    }
 
     // Insert asset resources
     world.insert_resource(asset_db);

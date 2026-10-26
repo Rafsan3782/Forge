@@ -41,6 +41,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+    // Ensure platformer template procedural assets exist if missing
+    let platformer_assets_dir = Path::new("templates/platformer/assets");
+    if !platformer_assets_dir.exists() || !platformer_assets_dir.join("player_sheet.png").exists() {
+        if let Err(e) = forge_runtime::procedural::generate_platformer_assets(platformer_assets_dir)
+        {
+            tracing::warn!("Failed to auto-generate platformer assets: {}", e);
+        }
+    }
+
     if args.headless {
         run_headless(&args)
     } else {

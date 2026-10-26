@@ -460,3 +460,307 @@ fn generate_music_loop(path: &Path) -> std::io::Result<()> {
 
     write_wav_file(path, SAMPLE_RATE, &samples)
 }
+
+/// Generates procedural spritesheet, tileset, sounds, and music for the `platformer` template:
+/// - `player_sheet.png`: 4 frames (128x32 total, each 32x32: Idle, Run, Jump, Fall)
+/// - `player_sheet.spritesheet.json`: Grid specification for player sheet
+/// - `tileset.png`: 64x64 tileset (Tile 0: Empty, 1: Grass, 2: Stone, 3: Hazard Spike, 4: Coin, 5: Goal Flag)
+/// - `tileset.json`: Tileset metadata
+/// - `coin.png`: Standalone coin sprite (16x16)
+/// - `hazard.png`: Standalone hazard spike sprite (24x24)
+/// - `flag.png`: Standalone goal flag sprite (32x32)
+/// - `patroller.png`: Standalone enemy patroller sprite (32x32)
+/// - `jump.wav`: Retro upward pitch sweep
+/// - `coin.wav`: Bright two-stage coin ping
+/// - `hurt.wav`: Low explosion/thud
+/// - `music.wav`: Looping 8-second 120BPM chord progression
+pub fn generate_platformer_assets(output_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    std::fs::create_dir_all(output_dir)?;
+
+    generate_player_spritesheet(&output_dir.join("player_sheet.png"))?;
+    std::fs::write(
+        output_dir.join("player_sheet.spritesheet.json"),
+        r#"{
+  "texture_asset_id": "player_sheet.png",
+  "layout": {
+    "type": "grid",
+    "frame_width": 32,
+    "frame_height": 32,
+    "margin": 0,
+    "spacing": 0,
+    "frame_count": 4
+  }
+}
+"#,
+    )?;
+
+    generate_platformer_tileset(&output_dir.join("tileset.png"))?;
+    std::fs::write(
+        output_dir.join("tileset.json"),
+        r#"{
+  "texture_asset_id": "tileset.png",
+  "tile_size": [32, 32],
+  "margin": 0,
+  "spacing": 0,
+  "tile_properties": {
+    "0": { "solid": false, "one_way": false },
+    "1": { "solid": true, "one_way": false },
+    "2": { "solid": true, "one_way": false },
+    "3": { "solid": false, "one_way": false }
+  }
+}
+"#,
+    )?;
+
+    generate_coin_sprite(&output_dir.join("coin.png"))?;
+    generate_hazard_sprite(&output_dir.join("hazard.png"))?;
+    generate_flag_sprite(&output_dir.join("flag.png"))?;
+    generate_patroller_sprite(&output_dir.join("patroller.png"))?;
+
+    // Audio
+    generate_jump_blip(&output_dir.join("jump.wav"))?;
+    generate_coin_ping(&output_dir.join("coin.wav"))?;
+    generate_explosion_thud(&output_dir.join("hurt.wav"))?;
+    generate_music_loop(&output_dir.join("music.wav"))?;
+
+    Ok(())
+}
+
+fn generate_player_spritesheet(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    const W: u32 = 128; // 4 frames of 32x32
+    const H: u32 = 32;
+    let mut img: ImageBuffer<Rgba<u8>, Vec<u8>> = ImageBuffer::new(W, H);
+
+    for frame in 0..4 {
+        let offset_x = frame * 32;
+        for y in 0..H {
+            for lx in 0..32 {
+                let x = offset_x + lx;
+                let px = match frame {
+                    // Frame 0: Idle hero
+                    0 => match (lx, y) {
+                        (14..=17, 10) => Rgba([30, 30, 40, 255]),         // Eyes
+                        (14..=17, 4..=6) => Rgba([255, 215, 0, 255]),     // Gold crest
+                        (12..=19, 7..=12) => Rgba([220, 220, 230, 255]),  // Visor/Helm
+                        (13..=18, 14..=20) => Rgba([240, 240, 255, 255]), // White cross
+                        (11..=20, 13..=22) => Rgba([40, 120, 220, 255]),  // Blue tunic
+                        (12..=15, 23..=29) | (16..=19, 23..=29) => Rgba([60, 60, 70, 255]), // Boots
+                        _ => Rgba([0, 0, 0, 0]),
+                    },
+                    // Frame 1: Run hero (legs wide)
+                    1 => match (lx, y) {
+                        (14..=17, 10) => Rgba([30, 30, 40, 255]),
+                        (14..=17, 4..=6) => Rgba([255, 215, 0, 255]),
+                        (12..=19, 7..=12) => Rgba([220, 220, 230, 255]),
+                        (13..=18, 14..=20) => Rgba([240, 240, 255, 255]),
+                        (11..=20, 13..=22) => Rgba([40, 120, 220, 255]),
+                        (9..=13, 23..=29) | (18..=22, 23..=29) => Rgba([60, 60, 70, 255]), // Stride
+                        _ => Rgba([0, 0, 0, 0]),
+                    },
+                    // Frame 2: Jump hero (arms raised, legs tucked)
+                    2 => match (lx, y) {
+                        (14..=17, 8) => Rgba([30, 30, 40, 255]),
+                        (14..=17, 2..=4) => Rgba([255, 215, 0, 255]),
+                        (12..=19, 5..=10) => Rgba([220, 220, 230, 255]),
+                        (7..=10, 8..=13) | (21..=24, 8..=13) => Rgba([255, 215, 0, 255]), // Raised arms
+                        (11..=20, 11..=19) => Rgba([40, 120, 220, 255]),
+                        (13..=18, 20..=25) => Rgba([60, 60, 70, 255]), // Tucked legs
+                        _ => Rgba([0, 0, 0, 0]),
+                    },
+                    // Frame 3: Fall hero (arms spread, cape flapping)
+                    _ => match (lx, y) {
+                        (14..=17, 11) => Rgba([30, 30, 40, 255]),
+                        (14..=17, 5..=7) => Rgba([255, 215, 0, 255]),
+                        (12..=19, 8..=13) => Rgba([220, 220, 230, 255]),
+                        (6..=10, 14..=18) | (21..=25, 14..=18) => Rgba([200, 40, 40, 255]), // Red cape
+                        (11..=20, 14..=22) => Rgba([40, 120, 220, 255]),
+                        (11..=14, 23..=28) | (17..=20, 23..=28) => Rgba([60, 60, 70, 255]),
+                        _ => Rgba([0, 0, 0, 0]),
+                    },
+                };
+                img.put_pixel(x, y, px);
+            }
+        }
+    }
+
+    img.save(path)?;
+    Ok(())
+}
+
+fn generate_platformer_tileset(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    const W: u32 = 64;
+    const H: u32 = 64;
+    let mut img: ImageBuffer<Rgba<u8>, Vec<u8>> = ImageBuffer::new(W, H);
+
+    for y in 0..H {
+        for x in 0..W {
+            let px = match (x, y) {
+                // Tile 0 (top-left 0..32, 0..32): Empty/air
+                (0..=31, 0..=31) => Rgba([0, 0, 0, 0]),
+                // Tile 1 (top-right 32..64, 0..32): Grass top + rich dirt
+                (32..=63, 0..=31) => {
+                    let ly = y;
+                    if ly < 6 {
+                        Rgba([60, 180, 75, 255]) // Grass top
+                    } else if ly < 9 {
+                        Rgba([45, 135, 55, 255]) // Grass edge
+                    } else if (x + y) % 7 == 0 {
+                        Rgba([110, 70, 45, 255]) // Dark pebble
+                    } else {
+                        Rgba([139, 90, 43, 255]) // Dirt
+                    }
+                }
+                // Tile 2 (bottom-left 0..32, 32..64): Stone floating platform
+                (0..=31, 32..=63) => {
+                    let ly = y - 32;
+                    let lx = x;
+                    if ly == 0 || ly == 31 || lx == 0 || lx == 31 || ly == 15 {
+                        Rgba([50, 50, 60, 255]) // Mortar edge
+                    } else if (lx + ly) % 6 == 0 {
+                        Rgba([180, 185, 195, 255]) // Highlight
+                    } else {
+                        Rgba([120, 125, 135, 255]) // Grey stone
+                    }
+                }
+                // Tile 3 (bottom-right 32..64, 32..64): Hazard spikes
+                (32..=63, 32..=63) => {
+                    let lx = x - 32;
+                    let ly = y - 32;
+                    let triangle_x = lx % 8;
+                    let height = (ly as i32) - 16;
+                    if height >= 0 && (triangle_x as i32 - 4).abs() <= (height / 4) {
+                        Rgba([200, 50, 50, 255]) // Crimson spike
+                    } else {
+                        Rgba([0, 0, 0, 0])
+                    }
+                }
+                _ => Rgba([0, 0, 0, 0]),
+            };
+            img.put_pixel(x, y, px);
+        }
+    }
+
+    img.save(path)?;
+    Ok(())
+}
+
+fn generate_coin_sprite(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    const W: u32 = 16;
+    const H: u32 = 16;
+    let mut img: ImageBuffer<Rgba<u8>, Vec<u8>> = ImageBuffer::new(W, H);
+
+    for y in 0..H {
+        for x in 0..W {
+            let dx = x as i32 - 8;
+            let dy = y as i32 - 8;
+            let dist_sq = dx * dx + dy * dy;
+            let px = if dist_sq <= 36 {
+                if dist_sq <= 16 {
+                    Rgba([255, 240, 120, 255]) // Center shimmer
+                } else if dist_sq <= 30 {
+                    Rgba([255, 215, 0, 255]) // Gold body
+                } else {
+                    Rgba([218, 165, 32, 255]) // Border
+                }
+            } else {
+                Rgba([0, 0, 0, 0])
+            };
+            img.put_pixel(x, y, px);
+        }
+    }
+
+    img.save(path)?;
+    Ok(())
+}
+
+fn generate_hazard_sprite(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    const W: u32 = 24;
+    const H: u32 = 24;
+    let mut img: ImageBuffer<Rgba<u8>, Vec<u8>> = ImageBuffer::new(W, H);
+
+    for y in 0..H {
+        for x in 0..W {
+            // Three sharp triangular spikes pointing upward
+            let lx = (x % 8) as i32;
+            let peak_y = 4i32;
+            let slope = ly_from_top(y) - peak_y;
+            let inside = (4..=22).contains(&y) && (lx - 4).abs() <= (slope / 4);
+            let px = if inside || (20..=23).contains(&y) {
+                if lx == 4 {
+                    Rgba([255, 100, 100, 255]) // Center highlight
+                } else {
+                    Rgba([180, 30, 30, 255]) // Dark red spike
+                }
+            } else {
+                Rgba([0, 0, 0, 0])
+            };
+            img.put_pixel(x, y, px);
+        }
+    }
+
+    img.save(path)?;
+    Ok(())
+}
+
+fn ly_from_top(y: u32) -> i32 {
+    y as i32
+}
+
+fn generate_flag_sprite(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    const W: u32 = 32;
+    const H: u32 = 32;
+    let mut img: ImageBuffer<Rgba<u8>, Vec<u8>> = ImageBuffer::new(W, H);
+
+    for y in 0..H {
+        for x in 0..W {
+            let px = if (6..=8).contains(&x) && (2..=30).contains(&y) {
+                Rgba([180, 180, 190, 255]) // Silver flagpole
+            } else if (9..=26).contains(&x) && (4..=16).contains(&y) {
+                // Gold / Emerald victory flag
+                if (x + y) % 3 == 0 {
+                    Rgba([255, 230, 80, 255])
+                } else {
+                    Rgba([46, 204, 113, 255])
+                }
+            } else if (4..=10).contains(&x) && (29..=31).contains(&y) {
+                Rgba([80, 80, 90, 255]) // Base stand
+            } else {
+                Rgba([0, 0, 0, 0])
+            };
+            img.put_pixel(x, y, px);
+        }
+    }
+
+    img.save(path)?;
+    Ok(())
+}
+
+fn generate_patroller_sprite(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    const W: u32 = 32;
+    const H: u32 = 32;
+    let mut img: ImageBuffer<Rgba<u8>, Vec<u8>> = ImageBuffer::new(W, H);
+
+    for y in 0..H {
+        for x in 0..W {
+            let dx = (x as i32 - 16).abs();
+            let px = if dx <= 10 && (10..=26).contains(&y) {
+                // Slime / beetle enemy
+                if (x == 12 || x == 20) && y == 14 {
+                    Rgba([255, 255, 255, 255]) // White eye
+                } else if (x == 13 || x == 19) && y == 14 {
+                    Rgba([200, 20, 20, 255]) // Red pupil
+                } else if y >= 24 {
+                    Rgba([100, 30, 120, 255]) // Dark purple base
+                } else {
+                    Rgba([180, 60, 220, 255]) // Violet slime body
+                }
+            } else {
+                Rgba([0, 0, 0, 0])
+            };
+            img.put_pixel(x, y, px);
+        }
+    }
+
+    img.save(path)?;
+    Ok(())
+}
