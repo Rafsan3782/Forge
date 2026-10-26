@@ -53,3 +53,4 @@ templates/**/assets/*.mp3
 out.png
 hello_screenshot.png
 .forge/
+tools/delete-failed-runs.ps1
