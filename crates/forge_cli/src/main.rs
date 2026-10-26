@@ -63,7 +63,12 @@ enum Commands {
     /// Runs TypeScript type checking on a project's scripts folder
     Check {
         /// Project directory containing scripts/ and tsconfig.json (defaults to current dir)
+        #[arg(long, short)]
         project: Option<String>,
+
+        /// Positional project directory argument for backwards compatibility
+        #[arg(index = 1)]
+        project_pos: Option<String>,
 
         /// Print diagnostics as structured JSON for autonomous agents
         #[arg(long)]
@@ -99,7 +104,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             port,
         } => run_runtime(scene, headless, port),
 
-        Commands::Check { project, json } => run_check(project.as_deref(), json),
+        Commands::Check {
+            project,
+            project_pos,
+            json,
+        } => run_check(project.as_deref().or(project_pos.as_deref()), json),
 
         Commands::New { name, template } => run_new(&name, &template),
     }
