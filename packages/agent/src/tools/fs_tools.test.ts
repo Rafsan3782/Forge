@@ -6,6 +6,7 @@ import os from "node:os";
 import { ProjectSandbox } from "./fs_sandbox.ts";
 import { createFsTools } from "./fs_tools.ts";
 import { ToolRegistry } from "./registry.ts";
+import { ToolExecutionError } from "./errors.ts";
 
 test("ProjectSandbox: rejects path escaping project root (..\\..\\secret.txt)", async () => {
   const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "forge-sandbox-escape-"));
@@ -16,8 +17,8 @@ test("ProjectSandbox: rejects path escaping project root (..\\..\\secret.txt)", 
       async () => {
         await sandbox.resolveSafePath("..\\..\\secret.txt");
       },
-      (err: any) => {
-        return err.code === "SANDBOX_VIOLATION";
+      (err: unknown) => {
+        return err instanceof ToolExecutionError && err.code === "SANDBOX_VIOLATION";
       }
     );
 
@@ -25,8 +26,8 @@ test("ProjectSandbox: rejects path escaping project root (..\\..\\secret.txt)", 
       async () => {
         await sandbox.resolveSafePath("../../secret.txt");
       },
-      (err: any) => {
-        return err.code === "SANDBOX_VIOLATION";
+      (err: unknown) => {
+        return err instanceof ToolExecutionError && err.code === "SANDBOX_VIOLATION";
       }
     );
   } finally {
@@ -46,7 +47,6 @@ test("ProjectSandbox: rejects symlink escaping project root", async () => {
   try {
     await fs.symlink(secretFile, symlinkPath);
   } catch {
-    // Windows might lack developer mode symlink permission in non-elevated runs
     return;
   }
 
@@ -57,8 +57,8 @@ test("ProjectSandbox: rejects symlink escaping project root", async () => {
       async () => {
         await sandbox.readFile("leaked_link.txt");
       },
-      (err: any) => {
-        return err.code === "SANDBOX_VIOLATION";
+      (err: unknown) => {
+        return err instanceof ToolExecutionError && err.code === "SANDBOX_VIOLATION";
       }
     );
   } finally {
@@ -75,21 +75,21 @@ test("ProjectSandbox: denylists .git, .forge/secrets, and .tools", async () => {
       async () => {
         await sandbox.resolveSafePath(".git/config");
       },
-      (err: any) => err.code === "ACCESS_DENIED"
+      (err: unknown) => err instanceof ToolExecutionError && err.code === "ACCESS_DENIED"
     );
 
     await assert.rejects(
       async () => {
         await sandbox.resolveSafePath(".forge/secrets/key.txt");
       },
-      (err: any) => err.code === "ACCESS_DENIED"
+      (err: unknown) => err instanceof ToolExecutionError && err.code === "ACCESS_DENIED"
     );
 
     await assert.rejects(
       async () => {
         await sandbox.resolveSafePath(".tools/bin/tool");
       },
-      (err: any) => err.code === "ACCESS_DENIED"
+      (err: unknown) => err instanceof ToolExecutionError && err.code === "ACCESS_DENIED"
     );
   } finally {
     await fs.rm(tmpDir, { recursive: true, force: true });
@@ -113,7 +113,7 @@ test("fs.read and fs.write operations with line slicing", async () => {
       path: "src/main.ts",
     });
     assert.equal(readFull.is_error, false);
-    const fullData = readFull.content as any;
+    const fullData = readFull.content as { content: string; total_lines: number };
     assert.equal(fullData.total_lines, 5);
     assert.ok(fullData.content.includes("line 1"));
 
@@ -123,7 +123,7 @@ test("fs.read and fs.write operations with line slicing", async () => {
       end_line: 4,
     });
     assert.equal(readSlice.is_error, false);
-    const sliceData = readSlice.content as any;
+    const sliceData = readSlice.content as { content: string; start_line: number; end_line: number };
     assert.equal(sliceData.content, "line 2\nline 3\nline 4");
     assert.equal(sliceData.start_line, 2);
     assert.equal(sliceData.end_line, 4);
@@ -150,7 +150,7 @@ test("fs.edit fails when search text matches zero or several times", async () =>
       replace_text: "grape",
     });
     assert.equal(zeroMatch.is_error, true);
-    assert.equal((zeroMatch.content as any).code, "SEARCH_NOT_FOUND");
+    assert.equal((zeroMatch.content as { code: string }).code, "SEARCH_NOT_FOUND");
 
     const multiMatch = await registry.executeTool("fs.edit", {
       path: "test.txt",
@@ -158,7 +158,7 @@ test("fs.edit fails when search text matches zero or several times", async () =>
       replace_text: "grape",
     });
     assert.equal(multiMatch.is_error, true);
-    assert.equal((multiMatch.content as any).code, "AMBIGUOUS_MATCH");
+    assert.equal((multiMatch.content as { code: string }).code, "AMBIGUOUS_MATCH");
 
     const singleMatch = await registry.executeTool("fs.edit", {
       path: "test.txt",
@@ -166,12 +166,12 @@ test("fs.edit fails when search text matches zero or several times", async () =>
       replace_text: "mango",
     });
     assert.equal(singleMatch.is_error, false);
-    const diffData = singleMatch.content as any;
+    const diffData = singleMatch.content as { diff: string };
     assert.ok(diffData.diff.includes("-banana"));
     assert.ok(diffData.diff.includes("+mango"));
 
     const verifyRead = await registry.executeTool("fs.read", { path: "test.txt" });
-    assert.ok((verifyRead.content as any).content.includes("mango"));
+    assert.ok((verifyRead.content as { content: string }).content.includes("mango"));
   } finally {
     await fs.rm(tmpDir, { recursive: true, force: true });
   }
@@ -189,7 +189,7 @@ test("fs.list, fs.glob, fs.search, fs.move and fs.delete", async () => {
 
     const listRes = await registry.executeTool("fs.list", { path: "." });
     assert.equal(listRes.is_error, false);
-    const listItems = listRes.content as any[];
+    const listItems = listRes.content as Array<{ name: string }>;
     assert.ok(listItems.some((i) => i.name === "a.ts"));
 
     const globRes = await registry.executeTool("fs.glob", { pattern: "**/*.ts" });
@@ -200,7 +200,7 @@ test("fs.list, fs.glob, fs.search, fs.move and fs.delete", async () => {
 
     const searchRes = await registry.executeTool("fs.search", { query: "const hello" });
     assert.equal(searchRes.is_error, false);
-    const matches = searchRes.content as any[];
+    const matches = searchRes.content as Array<{ file: string; line_number: number }>;
     assert.equal(matches.length, 1);
     assert.equal(matches[0].file, "a.ts");
     assert.equal(matches[0].line_number, 1);
@@ -213,7 +213,7 @@ test("fs.list, fs.glob, fs.search, fs.move and fs.delete", async () => {
 
     const checkRead = await registry.executeTool("fs.read", { path: "moved.ts" });
     assert.equal(checkRead.is_error, true);
-    assert.equal((checkRead.content as any).code, "FILE_NOT_FOUND");
+    assert.equal((checkRead.content as { code: string }).code, "FILE_NOT_FOUND");
   } finally {
     await fs.rm(tmpDir, { recursive: true, force: true });
   }

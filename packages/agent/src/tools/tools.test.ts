@@ -45,19 +45,27 @@ test("ToolRegistry collision check and provider registration", () => {
   });
 
   // Attempt duplicate registration
-  assert.throws(() => {
-    registry.registerTool({
-      descriptor: {
-        name: "test.tool",
-        description: "Colliding tool",
-        category: "read",
-        risk_level: "safe",
-        input_schema: { type: "object" },
-      },
-      metadata: { category: "read", risk: "safe" },
-      execute: async () => ({ status: "error" }),
-    });
-  }, /TOOL_COLLISION/);
+  assert.throws(
+    () => {
+      registry.registerTool({
+        descriptor: {
+          name: "test.tool",
+          description: "Colliding tool",
+          category: "read",
+          risk_level: "safe",
+          input_schema: { type: "object" },
+        },
+        metadata: { category: "read", risk: "safe" },
+        execute: async () => ({ status: "error" }),
+      });
+    },
+    (err: unknown) => {
+      return (
+        err instanceof Error &&
+        ("code" in err ? (err as { code: string }).code === "TOOL_COLLISION" : false)
+      );
+    }
+  );
 });
 
 test("EngineMcpClient with fake WebSocket bridge server", async () => {
@@ -143,11 +151,15 @@ test("EngineMcpClient with fake WebSocket bridge server", async () => {
     assert.ok(tools.some((t) => t.descriptor.name === "scene.get_tree"));
     assert.ok(tools.some((t) => t.descriptor.name === "game.screenshot"));
 
-    const treeRes = (await engineMcp.executeTool("scene.get_tree", {})) as any;
+    const treeRes = (await engineMcp.executeTool("scene.get_tree", {})) as {
+      root_entities: Array<{ id: string; name: string }>;
+    };
     assert.ok(treeRes.root_entities);
     assert.equal(treeRes.root_entities[0].id, "ent_1");
 
-    const shotRes = (await engineMcp.executeTool("game.screenshot", {})) as any;
+    const shotRes = (await engineMcp.executeTool("game.screenshot", {})) as {
+      image_part: { inline_data: { data: string } };
+    };
     assert.ok(shotRes.image_part);
     assert.equal(shotRes.image_part.inline_data.data, "iVBORw0KGgoAAAANSUhEUg==");
 
@@ -195,5 +207,5 @@ test("ToolProvider contract tests against ToolRegistry", async () => {
   });
 
   assert.equal(res.is_error, false);
-  assert.equal((res.content as any).path, "scripts/test.ts");
+  assert.equal((res.content as { path: string }).path, "scripts/test.ts");
 });

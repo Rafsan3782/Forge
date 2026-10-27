@@ -60,10 +60,10 @@ export class EngineMcpClient {
     }
 
     try {
-      const response = await this.client.sendRequest<
-        Record<string, unknown>,
-        { tools: McpBridgeTool[] }
-      >("tools/list", {});
+      const response = await this.client.call<{ tools: McpBridgeTool[] }>(
+        "tools/list",
+        {}
+      );
 
       this.knownTools.clear();
       for (const rawTool of response.tools ?? []) {
@@ -128,7 +128,7 @@ export class EngineMcpClient {
         idempotent: tool.idempotent ?? false,
       },
       execute: async (args) => {
-        const res = await this.client.sendRequest(name, args);
+        const res = await this.client.call<Record<string, unknown>>(name, args);
         if (isScreenshot && res && typeof res === "object") {
           const screenshotRes = res as { data_base64?: string; width?: number; height?: number };
           if (screenshotRes.data_base64) {
