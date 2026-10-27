@@ -1,14 +1,9 @@
-{
+﻿{
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "strict": true,
     "rootDir": "src",
-    "outDir": "dist",
-    "jsx": "react-jsx",
-    "moduleResolution": "NodeNext",
-    "module": "NodeNext",
-    "target": "ES2022",
-    "skipLibCheck": true
+    "outDir": "dist"
   },
   "include": ["src/**/*"]
 }
