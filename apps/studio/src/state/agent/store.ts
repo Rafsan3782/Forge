@@ -342,6 +342,7 @@ export const useAgentStore = create<AgentSessionState>((set, get) => ({
     const cmd: AgentCommand = {
       command: "stop",
       run_id: runId,
+      payload: {},
     };
     if (client) {
       await client.sendCommand(cmd);
@@ -353,6 +354,7 @@ export const useAgentStore = create<AgentSessionState>((set, get) => ({
     const cmd: AgentCommand = {
       command: "pause",
       run_id: runId,
+      payload: {},
     };
     if (client) {
       await client.sendCommand(cmd);
@@ -364,6 +366,7 @@ export const useAgentStore = create<AgentSessionState>((set, get) => ({
     const cmd: AgentCommand = {
       command: "resume",
       run_id: runId,
+      payload: {},
     };
     if (client) {
       await client.sendCommand(cmd);
