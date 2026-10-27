@@ -1,5 +1,7 @@
 import type { ToolDescriptor } from "@forge/protocol";
+import type { TaskItem } from "./types.ts";
 import { ProjectBrain } from "./brain.ts";
+
 
 export interface ToolResult {
   content: unknown;
@@ -212,7 +214,7 @@ export class BrainToolProvider implements ToolProviderContract {
 
         case "brain.add_task": {
           const title = String(args.title);
-          const status = (args.status as any) || "todo";
+          const status = (args.status as TaskItem["status"]) || "todo";
           const checks = Array.isArray(args.acceptance_checks)
             ? args.acceptance_checks.map(String)
             : [];
@@ -231,8 +233,8 @@ export class BrainToolProvider implements ToolProviderContract {
 
         case "brain.update_task": {
           const taskId = String(args.task_id);
-          const updates: any = {};
-          if (args.status !== undefined) updates.status = args.status;
+          const updates: Partial<Omit<TaskItem, "id">> = {};
+          if (args.status !== undefined) updates.status = args.status as TaskItem["status"];
           if (args.title !== undefined) updates.title = String(args.title);
           if (Array.isArray(args.acceptance_checks)) {
             updates.acceptance_checks = args.acceptance_checks.map(String);
@@ -263,11 +265,13 @@ export class BrainToolProvider implements ToolProviderContract {
             is_error: true,
           };
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
       return {
-        content: err.message || String(err),
+        content: msg,
         is_error: true,
       };
     }
+
   }
 }

@@ -130,15 +130,18 @@ test("ProjectBrain class satisfies prompt-18 contract and operates file suite", 
 
     const readRes = await tools.executeTool("brain.read", { token_budget: 2000 });
     assert.equal(readRes.is_error, false);
-    assert.ok((readRes.content as any).gameSummary);
+    const pack = readRes.content as { gameSummary?: string };
+    assert.ok(pack.gameSummary);
 
     const updateRes = await tools.executeTool("brain.update_task", {
       task_id: "TASK-001",
       status: "in_progress",
     });
     assert.equal(updateRes.is_error, false);
-    assert.equal((updateRes.content as any).status, "in_progress");
+    const updatedTask = updateRes.content as { status?: string };
+    assert.equal(updatedTask.status, "in_progress");
   } finally {
     await fs.rm(tempDir, { recursive: true, force: true });
   }
 });
+

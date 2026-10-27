@@ -9,8 +9,11 @@ import type {
 } from "./types.ts";
 import { parseSections, patchSection, mergeSectionsThreeWay } from "./markdown.ts";
 import { parseTasks, serializeTasks, parseDecisions, appendDecision } from "./tasks-decisions.ts";
-import { appendMemoryNote, compactMemory } from "./memory.ts";
+import { appendMemoryNote } from "./memory.ts";
 import { buildContextPack } from "./context-pack.ts";
+
+
+
 
 export class ProjectBrain implements ProjectBrainContract {
   private projectRoot: string;

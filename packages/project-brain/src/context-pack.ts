@@ -85,10 +85,14 @@ export function buildContextPack(
       scenes,
       entity_count: Object.keys(entities).length,
       sample_entities: Object.keys(entities).slice(0, 10),
-      scripts: scripts.map((s: any) => ({
-        path: s.path,
-        lifecycle: s.lifecycle_functions,
-      })),
+      scripts: scripts.map((s) => {
+        const item = s as { path?: string; lifecycle_functions?: string[] };
+        return {
+          path: item.path,
+          lifecycle: item.lifecycle_functions,
+        };
+      }),
+
       asset_count: assets.length,
       sample_assets: assets.slice(0, 10),
       input_actions: inputActions,

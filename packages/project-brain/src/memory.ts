@@ -11,11 +11,12 @@ export function compactMemory(
 
   const lines = content.split(/\r?\n/);
   const entries: string[] = [];
-  let summaryHeader = "# Agent Memory\n";
+  const summaryHeader = "# Agent Memory\n";
   let existingArchiveSummary = "";
 
   let inArchive = false;
-  let archiveLines: string[] = [];
+  const archiveLines: string[] = [];
+
 
   for (const line of lines) {
     if (line.startsWith("# Agent Memory")) {
@@ -48,7 +49,7 @@ export function compactMemory(
 
   const newSummaryBullets: string[] = [];
   for (const item of toCompact) {
-    const clean = item.replace(/^[-*#\s\d:_/()\[\]-]+/, "").trim();
+    const clean = item.replace(/^[-*#\s\d:_/()[\]-]+/, "").trim();
     if (clean.length > 0) {
       const short = clean.length > 80 ? clean.slice(0, 77) + "..." : clean;
       newSummaryBullets.push(`- ${short}`);
@@ -88,9 +89,10 @@ export function appendMemoryNote(
   const timestamp = new Date().toISOString().replace("T", " ").slice(0, 19);
   const noteLine = `- [${timestamp}]: ${note.trim()}`;
 
-  let updated = existingContent.trim()
+  const updated = existingContent.trim()
     ? `${existingContent.trim()}\n${noteLine}\n`
     : `# Agent Memory\n\n## Active Notes\n${noteLine}\n`;
 
   return compactMemory(updated, maxBytes);
 }
+
