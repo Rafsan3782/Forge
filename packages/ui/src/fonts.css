@@ -1,0 +1,30 @@
+/* Local Font Face Definitions for Offline Operation */
+@font-face {
+  font-family: 'Geist Sans';
+  src: local('Geist Sans'), local('Geist'), local('Inter'), local('Segoe UI'), system-ui;
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: local('JetBrains Mono'), local('Fira Code'), local('Cascadia Code'), monospace;
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Base Styles & Inspector tabular figures */
+.forge-tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.forge-text-hero {
+  font-family: var(--forge-font-sans);
+  font-size: var(--forge-font-size-base);
+  line-height: var(--forge-line-height-base);
+  color: var(--forge-text-primary);
+  -webkit-font-smoothing: antialiased;
+}

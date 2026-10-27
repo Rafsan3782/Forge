@@ -1,51 +1,255 @@
 :root,
 [data-theme="dark"] {
-  /* Backgrounds */
-  --forge-bg-base: #0a0b0d;
-  --forge-bg-panel: #121418;
-  --forge-bg-surface: #181b20;
-  --forge-bg-elevated: #20232b;
-  --forge-bg-active: #282c36;
-  --forge-bg-hover: #1c1e24;
+  /* Surfaces */
+  --forge-surface-base: #0a0b0e;
+  --forge-surface-raised: #12141a;
+  --forge-surface-overlay: #181b22;
+  --forge-surface-sunken: #060708;
+  --forge-surface-active: #222631;
+  --forge-surface-hover: #1a1d26;
+
+  /* Legacy aliases for backwards compatibility */
+  --forge-bg-base: var(--forge-surface-base);
+  --forge-bg-panel: var(--forge-surface-raised);
+  --forge-bg-surface: var(--forge-surface-overlay);
+  --forge-bg-elevated: var(--forge-surface-overlay);
+  --forge-bg-active: var(--forge-surface-active);
+  --forge-bg-hover: var(--forge-surface-hover);
 
   /* Borders */
-  --forge-border: #23262d;
-  --forge-border-subtle: #1a1c22;
-  --forge-border-focus: #7c5cff;
+  --forge-border-subtle: #1e222b;
+  --forge-border: #282d39;
+  --forge-border-strong: #3b4253;
+  --forge-border-focus: #ff5c26;
 
-  /* Typography Colors */
-  --forge-text-primary: #e8eaed;
-  --forge-text-muted: #8b919c;
-  --forge-text-disabled: #565b64;
-  --forge-text-inverse: #0a0b0d;
+  /* Text & Icons */
+  --forge-text-primary: #f0f2f5;
+  --forge-text-muted: #8d95a5;
+  --forge-text-disabled: #4e5463;
+  --forge-text-inverse: #0a0b0e;
 
-  /* Brand & AI Accents */
-  --forge-accent-ember: #ff6a2b;
-  --forge-accent-ember-hover: #e05a20;
-  --forge-accent-arc: #7c5cff;
-  --forge-accent-arc-hover: #6a4be0;
+  /* Accent (Ember) */
+  --forge-accent: #ff5c26;
+  --forge-accent-hover: #e64a17;
+  --forge-accent-active: #cc3d0e;
+  --forge-accent-subtle: rgba(255, 92, 38, 0.12);
+  --forge-accent-contrast: #ffffff;
 
-  /* Feedback Colors */
-  --forge-success: #3dd68c;
-  --forge-warn: #f5a524;
-  --forge-error: #ff4d4f;
+  /* Legacy Accent Aliases */
+  --forge-accent-ember: var(--forge-accent);
+  --forge-accent-ember-hover: var(--forge-accent-hover);
 
+  /* AI Accent (Arc Violet) */
+  --forge-ai: #8b5cf6;
+  --forge-ai-hover: #7c3aed;
+  --forge-ai-active: #6d28d9;
+  --forge-ai-subtle: rgba(139, 92, 246, 0.15);
+  --forge-ai-contrast: #ffffff;
+
+  /* Legacy AI Aliases */
+  --forge-accent-arc: var(--forge-ai);
+  --forge-accent-arc-hover: var(--forge-ai-hover);
+
+  /* Feedback */
+  --forge-success: #22c55e;
+  --forge-success-subtle: rgba(34, 197, 94, 0.12);
+  --forge-warn: #f59e0b;
+  --forge-warn-subtle: rgba(245, 158, 11, 0.12);
+  --forge-danger: #ef4444;
+  --forge-danger-subtle: rgba(239, 68, 68, 0.12);
+  --forge-error: var(--forge-danger);
+  --forge-info: #38bdf8;
+  --forge-info-subtle: rgba(56, 189, 248, 0.12);
+
+  /* Selection & Focus */
+  --forge-selection-bg: rgba(255, 92, 38, 0.22);
+  --forge-selection-border: #ff5c26;
+  --forge-focus-ring: #ff5c26;
+
+  /* Syntax Highlighting */
+  --forge-syntax-keyword: #f472b6;
+  --forge-syntax-entity: #60a5fa;
+  --forge-syntax-string: #4ade80;
+  --forge-syntax-number: #fb923c;
+  --forge-syntax-comment: #64748b;
+  --forge-syntax-variable: #e2e8f0;
+  --forge-syntax-constant: #c084fc;
+  --forge-syntax-type: #38bdf8;
+}
+
+[data-theme="light"] {
+  --forge-surface-base: #ffffff;
+  --forge-surface-raised: #f8fafc;
+  --forge-surface-overlay: #f1f5f9;
+  --forge-surface-sunken: #e2e8f0;
+  --forge-surface-active: #e2e8f0;
+  --forge-surface-hover: #f1f5f9;
+
+  --forge-bg-base: var(--forge-surface-base);
+  --forge-bg-panel: var(--forge-surface-raised);
+  --forge-bg-surface: var(--forge-surface-overlay);
+  --forge-bg-elevated: var(--forge-surface-overlay);
+  --forge-bg-active: var(--forge-surface-active);
+  --forge-bg-hover: var(--forge-surface-hover);
+
+  --forge-border-subtle: #f1f5f9;
+  --forge-border: #e2e8f0;
+  --forge-border-strong: #cbd5e1;
+  --forge-border-focus: #ff5c26;
+
+  --forge-text-primary: #0f172a;
+  --forge-text-muted: #64748b;
+  --forge-text-disabled: #94a3b8;
+  --forge-text-inverse: #ffffff;
+
+  --forge-accent: #ff5c26;
+  --forge-accent-hover: #e64a17;
+  --forge-accent-active: #cc3d0e;
+  --forge-accent-subtle: rgba(255, 92, 38, 0.1);
+  --forge-accent-contrast: #ffffff;
+
+  --forge-accent-ember: var(--forge-accent);
+  --forge-accent-ember-hover: var(--forge-accent-hover);
+
+  --forge-ai: #7c3aed;
+  --forge-ai-hover: #6d28d9;
+  --forge-ai-active: #5b21b6;
+  --forge-ai-subtle: rgba(124, 58, 237, 0.12);
+  --forge-ai-contrast: #ffffff;
+
+  --forge-accent-arc: var(--forge-ai);
+  --forge-accent-arc-hover: var(--forge-ai-hover);
+
+  --forge-success: #16a34a;
+  --forge-success-subtle: rgba(22, 163, 74, 0.1);
+  --forge-warn: #d97706;
+  --forge-warn-subtle: rgba(217, 119, 6, 0.1);
+  --forge-danger: #dc2626;
+  --forge-danger-subtle: rgba(220, 38, 38, 0.1);
+  --forge-error: var(--forge-danger);
+  --forge-info: #0284c7;
+  --forge-info-subtle: rgba(2, 132, 199, 0.1);
+
+  --forge-selection-bg: rgba(255, 92, 38, 0.18);
+  --forge-selection-border: #ff5c26;
+  --forge-focus-ring: #ff5c26;
+
+  --forge-syntax-keyword: #db2777;
+  --forge-syntax-entity: #2563eb;
+  --forge-syntax-string: #16a34a;
+  --forge-syntax-number: #ea580c;
+  --forge-syntax-comment: #94a3b8;
+  --forge-syntax-variable: #1e293b;
+  --forge-syntax-constant: #9333ea;
+  --forge-syntax-type: #0284c7;
+}
+
+[data-theme="high-contrast"] {
+  --forge-surface-base: #000000;
+  --forge-surface-raised: #0a0a0a;
+  --forge-surface-overlay: #141414;
+  --forge-surface-sunken: #000000;
+  --forge-surface-active: #262626;
+  --forge-surface-hover: #1c1c1c;
+
+  --forge-bg-base: var(--forge-surface-base);
+  --forge-bg-panel: var(--forge-surface-raised);
+  --forge-bg-surface: var(--forge-surface-overlay);
+  --forge-bg-elevated: var(--forge-surface-overlay);
+  --forge-bg-active: var(--forge-surface-active);
+  --forge-bg-hover: var(--forge-surface-hover);
+
+  --forge-border-subtle: #ffffff;
+  --forge-border: #ffffff;
+  --forge-border-strong: #ffffff;
+  --forge-border-focus: #00ffff;
+
+  --forge-text-primary: #ffffff;
+  --forge-text-muted: #d4d4d4;
+  --forge-text-disabled: #8c8c8c;
+  --forge-text-inverse: #000000;
+
+  --forge-accent: #ff6a2b;
+  --forge-accent-hover: #ff854d;
+  --forge-accent-active: #ff4d00;
+  --forge-accent-subtle: rgba(255, 106, 43, 0.25);
+  --forge-accent-contrast: #000000;
+
+  --forge-accent-ember: var(--forge-accent);
+  --forge-accent-ember-hover: var(--forge-accent-hover);
+
+  --forge-ai: #a78bfa;
+  --forge-ai-hover: #c4b5fd;
+  --forge-ai-active: #8b5cf6;
+  --forge-ai-subtle: rgba(167, 139, 250, 0.25);
+  --forge-ai-contrast: #000000;
+
+  --forge-accent-arc: var(--forge-ai);
+  --forge-accent-arc-hover: var(--forge-ai-hover);
+
+  --forge-success: #4ade80;
+  --forge-success-subtle: rgba(74, 222, 128, 0.2);
+  --forge-warn: #facc15;
+  --forge-warn-subtle: rgba(250, 204, 21, 0.2);
+  --forge-danger: #f87171;
+  --forge-danger-subtle: rgba(248, 113, 113, 0.2);
+  --forge-error: var(--forge-danger);
+  --forge-info: #38bdf8;
+  --forge-info-subtle: rgba(56, 189, 248, 0.2);
+
+  --forge-selection-bg: #ffffff;
+  --forge-selection-border: #00ffff;
+  --forge-focus-ring: #00ffff;
+
+  --forge-syntax-keyword: #ff79c6;
+  --forge-syntax-entity: #8be9fd;
+  --forge-syntax-string: #50fa7b;
+  --forge-syntax-number: #ffb86c;
+  --forge-syntax-comment: #bd93f9;
+  --forge-syntax-variable: #f8f8f2;
+  --forge-syntax-constant: #ff79c6;
+  --forge-syntax-type: #8be9fd;
+}
+
+/* Common Non-Color Tokens across all themes */
+:root {
   /* Fonts */
-  --forge-font-sans:
-    "Geist Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --forge-font-mono: "JetBrains Mono", "Fira Code", monospace;
+  --forge-font-sans: 'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --forge-font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
 
-  /* Spacing Scale */
+  /* Typography Sizes */
+  --forge-font-size-xs: 11px;
+  --forge-font-size-sm: 12px;
+  --forge-font-size-base: 13px;
+  --forge-font-size-md: 14px;
+  --forge-font-size-lg: 16px;
+  --forge-font-size-xl: 20px;
+
+  /* Line Heights */
+  --forge-line-height-xs: 14px;
+  --forge-line-height-sm: 16px;
+  --forge-line-height-base: 18px;
+  --forge-line-height-md: 20px;
+  --forge-line-height-lg: 24px;
+  --forge-line-height-xl: 28px;
+
+  /* Font Weights */
+  --forge-font-weight-normal: 400;
+  --forge-font-weight-medium: 500;
+  --forge-font-weight-semibold: 600;
+  --forge-font-weight-bold: 700;
+
+  /* Spacing Scale (4px increments) */
   --forge-space-0: 0px;
-  --forge-space-1: 0.25rem;
-  --forge-space-2: 0.5rem;
-  --forge-space-3: 0.75rem;
-  --forge-space-4: 1rem;
-  --forge-space-5: 1.25rem;
-  --forge-space-6: 1.5rem;
-  --forge-space-8: 2rem;
-  --forge-space-10: 2.5rem;
-  --forge-space-12: 3rem;
+  --forge-space-1: 4px;
+  --forge-space-2: 8px;
+  --forge-space-3: 12px;
+  --forge-space-4: 16px;
+  --forge-space-5: 20px;
+  --forge-space-6: 24px;
+  --forge-space-8: 32px;
+  --forge-space-10: 40px;
+  --forge-space-12: 48px;
 
   /* Radius Scale */
   --forge-radius-none: 0px;
@@ -56,8 +260,56 @@
   --forge-radius-xl: 12px;
   --forge-radius-full: 9999px;
 
-  /* Motion Scale (120ms to 200ms) */
-  --forge-motion-fast: 120ms cubic-bezier(0.16, 1, 0.3, 1);
-  --forge-motion-normal: 160ms cubic-bezier(0.16, 1, 0.3, 1);
+  /* Motion */
+  --forge-motion-fast: 100ms cubic-bezier(0.16, 1, 0.3, 1);
+  --forge-motion-normal: 150ms cubic-bezier(0.16, 1, 0.3, 1);
   --forge-motion-slow: 200ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Elevation */
+  --forge-elevation-low: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --forge-elevation-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
+  --forge-elevation-high: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.6);
+  --forge-elevation-floating: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.7);
+
+  /* Z-Index Layers */
+  --forge-z-panel: 10;
+  --forge-z-header: 20;
+  --forge-z-dropdown: 50;
+  --forge-z-sticky: 60;
+  --forge-z-overlay: 100;
+  --forge-z-modal: 200;
+  --forge-z-popover: 300;
+  --forge-z-toast: 400;
+  --forge-z-tooltip: 500;
+}
+
+/* Density Mode: Compact (Default) */
+:root,
+[data-density="compact"] {
+  --forge-control-height-sm: 22px;
+  --forge-control-height-md: 26px;
+  --forge-control-height-lg: 30px;
+  --forge-density-padding-x: 6px;
+  --forge-density-padding-y: 2px;
+}
+
+/* Density Mode: Comfortable */
+[data-density="comfortable"] {
+  --forge-control-height-sm: 26px;
+  --forge-control-height-md: 30px;
+  --forge-control-height-lg: 34px;
+  --forge-density-padding-x: 10px;
+  --forge-density-padding-y: 4px;
+}
+
+/* Respect Prefers Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
