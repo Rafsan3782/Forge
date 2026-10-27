@@ -303,6 +303,16 @@ importers:
 
   packages/plugin-sdk: {}
 
+  packages/project-brain:
+    dependencies:
+      '@forge/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+    devDependencies:
+      '@types/node':
+        specifier: ^26.6.4
+        version: 26.6.4
+
   packages/protocol:
     dependencies:
       zod:
