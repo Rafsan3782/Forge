@@ -1,20 +1,15 @@
-import { z } from "zod";
+export type DocsAudience = "human" | "agent" | "both";
 
-export const DocsAudienceSchema = z.enum(["human", "agent", "both"]);
-export type DocsAudience = z.infer<typeof DocsAudienceSchema>;
-
-export const DocsFrontmatterSchema = z.object({
-  id: z.string().min(1, "Document id must not be empty"),
-  title: z.string().min(1, "Title must not be empty"),
-  summary: z.string().min(5, "Summary must be at least 5 characters and end with a period"),
-  tags: z.array(z.string()).min(1, "At least one tag is required"),
-  audience: DocsAudienceSchema,
-  engine_version: z.string().regex(/^\d+\.\d+\.\d+/, "engine_version must follow semver (e.g. '0.1.0')"),
-  last_verified: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "last_verified must be YYYY-MM-DD"),
-  related_ids: z.array(z.string()).default([]),
-});
-
-export type DocsFrontmatter = z.infer<typeof DocsFrontmatterSchema>;
+export interface DocsFrontmatter {
+  id: string;
+  title: string;
+  summary: string;
+  tags: string[];
+  audience: DocsAudience;
+  engine_version: string;
+  last_verified: string;
+  related_ids: string[];
+}
 
 export interface ParsedDocPage {
   filePath: string;
@@ -22,6 +17,60 @@ export interface ParsedDocPage {
   rawContent: string;
   bodyContent: string;
   tokenCount: number;
+}
+
+export function validateFrontmatter(fields: Record<string, unknown>, filePath: string): DocsFrontmatter {
+  const errors: string[] = [];
+
+  if (typeof fields.id !== "string" || !fields.id.trim()) {
+    errors.push("Document 'id' must be a non-empty string");
+  }
+
+  if (typeof fields.title !== "string" || !fields.title.trim()) {
+    errors.push("Document 'title' must be a non-empty string");
+  }
+
+  if (typeof fields.summary !== "string" || fields.summary.trim().length < 5) {
+    errors.push("Document 'summary' must be at least 5 characters");
+  } else if (!fields.summary.trim().endsWith(".")) {
+    errors.push("Document 'summary' should end with a period");
+  }
+
+  if (!Array.isArray(fields.tags) || fields.tags.length === 0) {
+    errors.push("Document 'tags' must be a non-empty array of strings");
+  }
+
+  const validAudiences = ["human", "agent", "both"];
+  if (typeof fields.audience !== "string" || !validAudiences.includes(fields.audience)) {
+    errors.push("Document 'audience' must be one of: 'human', 'agent', 'both'");
+  }
+
+  if (typeof fields.engine_version !== "string" || !/^\d+\.\d+\.\d+/.test(fields.engine_version)) {
+    errors.push("Document 'engine_version' must follow semver (e.g. '0.1.0')");
+  }
+
+  if (typeof fields.last_verified !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(fields.last_verified)) {
+    errors.push("Document 'last_verified' must be YYYY-MM-DD");
+  }
+
+  const related_ids: string[] = Array.isArray(fields.related_ids)
+    ? fields.related_ids.map(s => String(s).trim())
+    : [];
+
+  if (errors.length > 0) {
+    throw new Error(`Frontmatter validation failed for '${filePath}':\n${errors.map(e => ` - ${e}`).join("\n")}`);
+  }
+
+  return {
+    id: String(fields.id).trim(),
+    title: String(fields.title).trim(),
+    summary: String(fields.summary).trim(),
+    tags: (fields.tags as unknown[]).map(t => String(t).trim()),
+    audience: fields.audience as DocsAudience,
+    engine_version: String(fields.engine_version).trim(),
+    last_verified: String(fields.last_verified).trim(),
+    related_ids,
+  };
 }
 
 export function parseFrontmatter(rawContent: string, filePath: string): { frontmatter: DocsFrontmatter; bodyContent: string } {
@@ -60,12 +109,8 @@ export function parseFrontmatter(rawContent: string, filePath: string): { frontm
     }
   }
 
-  const result = DocsFrontmatterSchema.safeParse(fields);
-  if (!result.success) {
-    throw new Error(`Frontmatter validation failed for '${filePath}':\n${result.error.issues.map(i => ` - ${i.path.join(".")}: ${i.message}`).join("\n")}`);
-  }
-
-  return { frontmatter: result.data, bodyContent };
+  const validated = validateFrontmatter(fields, filePath);
+  return { frontmatter: validated, bodyContent };
 }
 
 export function estimateTokens(text: string): number {
