@@ -8,7 +8,7 @@ import { generateEventsAndErrors, EVENTS, ERROR_CATALOG } from "./generate-event
 import { generateScriptApi, SCRIPT_MODULES } from "./generate-script-api.ts";
 import { generateCli, CLI_COMMANDS } from "./generate-cli.ts";
 import { generateAgentPacks, AGENT_PACK_TOPICS } from "./generate-agent-packs.ts";
-import { parseFrontmatter, estimateTokens, ParsedDocPage } from "./schema.ts";
+import { parseFrontmatter, estimateTokens, type ParsedDocPage } from "./schema.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

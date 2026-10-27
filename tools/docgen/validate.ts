@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseFrontmatter, collectAllDocFiles } from "./build.ts";
+import { parseFrontmatter } from "./schema.ts";
+import { collectAllDocFiles } from "./build.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
