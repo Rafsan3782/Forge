@@ -84,6 +84,13 @@ enum Commands {
         #[arg(long, default_value = "platformer")]
         template: String,
     },
+
+    /// Generates .forge/map.json indexing scenes, entities, scripts, assets, clips, and input actions
+    Index {
+        /// Project directory to index (defaults to current dir)
+        #[arg(default_value = ".")]
+        project: String,
+    },
 }
 
 #[tokio::main]
@@ -111,8 +118,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         } => run_check(project.as_deref().or(project_pos.as_deref()), json),
 
         Commands::New { name, template } => run_new(&name, &template),
+
+        Commands::Index { project } => run_index(&project),
     }
 }
+
 
 fn run_check(
     project_path: Option<&str>,
@@ -199,11 +209,28 @@ fn run_new(name: &str, template: &str) -> Result<(), Box<dyn std::error::Error>>
         }
     }
 
+    // Generate .forge/map.json index deterministically
+    if let Err(e) = forge_cli::index_project(dest_dir) {
+        tracing::warn!("Failed to generate project map index: {}", e);
+    }
+
     println!("Project created successfully at '{}'.", name);
     println!("To run your project:\n  forge run {}/scene.json", name);
 
     Ok(())
 }
+
+fn run_index(project_path: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let p = Path::new(project_path);
+    if !p.exists() {
+        return Err(format!("Project directory '{}' does not exist", project_path).into());
+    }
+
+    let map_file = forge_cli::index_project(p)?;
+    println!("Project index successfully written to '{}'.", map_file.display());
+    Ok(())
+}
+
 
 fn copy_dir_recursive(src: &Path, dst: &Path) -> std::io::Result<()> {
     fs::create_dir_all(dst)?;
