@@ -1,0 +1,47 @@
+export interface EvalQuestion {
+  question: string;
+  expectedDocId: string;
+}
+
+export const EVALUATION_QUESTIONS: EvalQuestion[] = [
+  { question: "how do I make the camera follow the player", expectedDocId: "cookbook.camera-follow-shake" },
+  { question: "why does my sprite not collide with platforms", expectedDocId: "agents.rules-and-invariants" },
+  { question: "what is the coordinate system and which way is up", expectedDocId: "agents.conventions" },
+  { question: "how does the fixed update and render order work", expectedDocId: "agents.mental-model" },
+  { question: "how to implement coyote time and jump buffer", expectedDocId: "cookbook.player-movement-platformer" },
+  { question: "what are sensible defaults for platformer gravity and run speed", expectedDocId: "agents.game-feel-defaults" },
+  { question: "how do I make a double jump", expectedDocId: "cookbook.jump-variants" },
+  { question: "how do I shoot projectiles and bullets", expectedDocId: "cookbook.shooting-projectiles" },
+  { question: "enemy patrol back and forth between two points", expectedDocId: "cookbook.enemy-patrol-chase" },
+  { question: "how to apply damage and invulnerability frames to hero", expectedDocId: "cookbook.health-damage" },
+  { question: "coin pickup collision and score counter", expectedDocId: "cookbook.pickups-collectibles" },
+  { question: "how to save checkpoint and respawn on death", expectedDocId: "cookbook.checkpoints-respawn" },
+  { question: "how to add screen shake on hit", expectedDocId: "cookbook.camera-follow-shake" },
+  { question: "how to spawn enemies on a wave timer", expectedDocId: "cookbook.spawners-pools" },
+  { question: "finite state machine for player states", expectedDocId: "cookbook.state-machines" },
+  { question: "how to play background music loop and sfx", expectedDocId: "cookbook.audio-cues" },
+  { question: "pause game without stopping menu", expectedDocId: "cookbook.pausing-game" },
+  { question: "level transition and scene load", expectedDocId: "cookbook.scene-transitions" },
+  { question: "how to save player progress and highscore", expectedDocId: "cookbook.saving-progress" },
+  { question: "how to make a dash dodge roll", expectedDocId: "cookbook.dash-mechanic" },
+  { question: "moving platforms that carry the player", expectedDocId: "cookbook.moving-platforms" },
+  { question: "particle burst with sprites", expectedDocId: "cookbook.particles-sprites" },
+  { question: "why does my character fall upward", expectedDocId: "agents.rules-and-invariants" },
+  { question: "why is the screen completely black with no render", expectedDocId: "agents.rules-and-invariants" },
+  { question: "why is onCollisionEnter not firing in my script", expectedDocId: "agents.rules-and-invariants" },
+  { question: "does the engine support 3D or perspective cameras", expectedDocId: "agents.limits" },
+  { question: "can I use font rendering or text component in game UI", expectedDocId: "agents.limits" },
+  { question: "how to build tilemap level procedural platforms", expectedDocId: "cookbook.tilemap-level-building" },
+  { question: "how to implement doors and keys puzzle", expectedDocId: "cookbook.doors-keys" },
+  { question: "multi-phase boss fight with charge attack", expectedDocId: "cookbook.boss-encounter" },
+  { question: "grid movement for puzzle sokoban game", expectedDocId: "cookbook.grid-movement-puzzle" },
+  { question: "temporary speed boost powerup with timer", expectedDocId: "cookbook.powerups-buffs" },
+  { question: "fade to black screen transition", expectedDocId: "cookbook.screen-fade-transitions" },
+  { question: "victory and game over flow", expectedDocId: "cookbook.game-over-victory" },
+  { question: "how does bevy_ecs entity component system work in Forge", expectedDocId: "concepts.ecs" },
+  { question: "wgpu 2d sprite batching and camera projection", expectedDocId: "concepts.rendering" },
+  { question: "rapier 2d physics bodies and colliders", expectedDocId: "concepts.physics" },
+  { question: "quickjs typescript transpilation and global forge object", expectedDocId: "concepts.scripting" },
+  { question: "json-rpc and mcp websocket bridge communication", expectedDocId: "concepts.bridge" },
+  { question: "chunked tilemaps and layers", expectedDocId: "concepts.tilemaps" }
+];
