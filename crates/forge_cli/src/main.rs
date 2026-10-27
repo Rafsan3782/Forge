@@ -123,7 +123,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 }
 
-
 fn run_check(
     project_path: Option<&str>,
     json_output: bool,
@@ -227,10 +226,12 @@ fn run_index(project_path: &str) -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let map_file = forge_cli::index_project(p)?;
-    println!("Project index successfully written to '{}'.", map_file.display());
+    println!(
+        "Project index successfully written to '{}'.",
+        map_file.display()
+    );
     Ok(())
 }
-
 
 fn copy_dir_recursive(src: &Path, dst: &Path) -> std::io::Result<()> {
     fs::create_dir_all(dst)?;

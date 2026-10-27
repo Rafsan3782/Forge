@@ -78,7 +78,8 @@ pub fn build_project_map(project_dir: &Path) -> Result<ProjectMap, Box<dyn std::
                                 if c_name == "Name" {
                                     if let Some(s) = c_val.as_str() {
                                         name_from_comp = Some(s.to_string());
-                                    } else if let Some(s) = c_val.get("0").and_then(|v| v.as_str()) {
+                                    } else if let Some(s) = c_val.get("0").and_then(|v| v.as_str())
+                                    {
                                         name_from_comp = Some(s.to_string());
                                     }
                                 }
@@ -183,15 +184,12 @@ pub fn build_project_map(project_dir: &Path) -> Result<ProjectMap, Box<dyn std::
                     if val.get("frames").and_then(|f| f.as_array()).is_some()
                         && val.get("fps").is_some()
                     {
-                        let name = val
-                            .get("name")
-                            .and_then(|n| n.as_str())
-                            .unwrap_or_else(|| {
-                                full_path
-                                    .file_stem()
-                                    .and_then(|s| s.to_str())
-                                    .unwrap_or("clip")
-                            });
+                        let name = val.get("name").and_then(|n| n.as_str()).unwrap_or_else(|| {
+                            full_path
+                                .file_stem()
+                                .and_then(|s| s.to_str())
+                                .unwrap_or("clip")
+                        });
                         let fps = val.get("fps").and_then(|f| f.as_f64()).unwrap_or(12.0) as u32;
                         let frames_len = val
                             .get("frames")

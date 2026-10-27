@@ -54,7 +54,11 @@ fn test_forge_index_performance_under_budget() {
         "name": "BigScene",
         "entities": entities
     });
-    fs::write(temp_dir.join("scene.json"), serde_json::to_string(&scene_json).unwrap()).unwrap();
+    fs::write(
+        temp_dir.join("scene.json"),
+        serde_json::to_string(&scene_json).unwrap(),
+    )
+    .unwrap();
 
     let start = Instant::now();
     let map_file = index_project(&temp_dir).expect("index project");
