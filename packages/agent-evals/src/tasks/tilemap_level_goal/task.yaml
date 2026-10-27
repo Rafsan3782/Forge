@@ -1,0 +1,14 @@
+id: tilemap_level_goal
+name: Build Tilemap Level with Goal
+description: Create a tilemap level layout and place a Goal entity
+template: tilemap-demo
+prompt: "Build out the main layer of the tilemap and add a Goal entity with a Collider2D trigger at the end."
+limits:
+  timeout_seconds: 60
+  max_turns: 5
+  max_tokens: 20000
+  max_cost_usd: 0.1
+tags:
+  - tilemap
+  - level-design
+  - goal

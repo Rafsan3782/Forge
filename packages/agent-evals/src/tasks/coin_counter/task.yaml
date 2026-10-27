@@ -1,0 +1,14 @@
+id: coin_counter
+name: Add Coin Counter UI
+description: Add a coin counter variable and HUD UI display logic to the player script
+template: platformer
+prompt: "Add a coin counter HUD display and collection tracking in scripts/player.ts."
+limits:
+  timeout_seconds: 60
+  max_turns: 5
+  max_tokens: 20000
+  max_cost_usd: 0.1
+tags:
+  - ui
+  - collectibles
+  - platformer

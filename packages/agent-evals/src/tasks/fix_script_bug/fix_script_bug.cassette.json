@@ -1,0 +1,60 @@
+{
+  "$schema": "https://forge.engine/schemas/cassette.json",
+  "version": 1,
+  "metadata": {
+    "recording_id": "fix_script_bug",
+    "created_at": "2026-10-27T00:00:00Z",
+    "model": "gemini-2.5-pro",
+    "temperature": 0.2
+  },
+  "interactions": [
+    {
+      "turn_id": "turn_001",
+      "request": {
+        "messages": [
+          { "role": "user", "content": "Fix the syntax or type error in scripts/coin_spawner.ts so that type checking and execution succeed." }
+        ],
+        "available_tools": ["fs.write"]
+      },
+      "response": {
+        "thought": "I will fix coin_spawner.ts syntax and type errors.",
+        "tool_calls": [
+          {
+            "id": "call_fix1",
+            "name": "fs.write",
+            "arguments": {
+              "path": "scripts/coin_spawner.ts",
+              "content": "let timer: number = 0.0;\nconst SPAWN_INTERVAL: number = 1.0;\nlet coinCount: number = 0;\n\nexport function onStart(): void {\n  forge.log.info(\"Coin spawner initialized.\");\n}\n\nexport function onUpdate(dt: number): void {\n  timer += dt;\n}\n"
+            }
+          }
+        ],
+        "finish_reason": "tool_calls",
+        "usage": {
+          "input_tokens": 140,
+          "output_tokens": 70,
+          "total_tokens": 210,
+          "estimated_cost_usd": 0.0002
+        }
+      }
+    },
+    {
+      "turn_id": "turn_002",
+      "request": {
+        "messages": [
+          { "role": "user", "content": "Done" }
+        ]
+      },
+      "response": {
+        "thought": "Script bug fixed.",
+        "message_delta": "Fixed error in coin_spawner.ts.",
+        "finish_reason": "stop",
+        "usage": {
+          "input_tokens": 50,
+          "output_tokens": 15,
+          "total_tokens": 65,
+          "estimated_cost_usd": 0.0001
+        }
+      }
+    }
+  ]
+}

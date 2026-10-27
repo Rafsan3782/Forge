@@ -1,0 +1,14 @@
+id: double_jump
+name: Add Double Jump to Platformer
+description: Add double jump capability to the platformer player script
+template: platformer
+prompt: "Modify the platformer player controller script to allow the player to double jump when airborne."
+limits:
+  timeout_seconds: 60
+  max_turns: 5
+  max_tokens: 20000
+  max_cost_usd: 0.1
+tags:
+  - platformer
+  - player
+  - mechanics

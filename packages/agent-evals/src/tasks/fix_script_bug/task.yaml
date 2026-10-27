@@ -1,0 +1,13 @@
+id: fix_script_bug
+name: Fix Seeded Bug in Script
+description: Fix a syntax/type error seeded in coin_spawner.ts
+template: script-demo
+prompt: "Fix the syntax or type error in scripts/coin_spawner.ts so that type checking and execution succeed."
+limits:
+  timeout_seconds: 60
+  max_turns: 5
+  max_tokens: 20000
+  max_cost_usd: 0.1
+tags:
+  - debugging
+  - typescript

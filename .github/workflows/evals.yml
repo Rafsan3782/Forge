@@ -1,0 +1,102 @@
+name: Agent Evaluations
+
+on:
+  pull_request:
+    paths:
+      - 'packages/agent/**'
+      - 'packages/agent-evals/**'
+      - 'packages/protocol/**'
+      - '.github/workflows/evals.yml'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Evaluation Mode (replay or live)'
+        required: true
+        default: 'replay'
+        type: choice
+        options:
+          - replay
+          - live
+  schedule:
+    # Nightly run of the live suite at 02:00 UTC
+    - cron: '0 2 * * *'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  replay-evals:
+    name: Replay Suite (Deterministic Cassettes)
+    if: ${{ github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'replay') }}
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install pnpm dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Replay Evals
+        shell: pwsh
+        run: |
+          node --experimental-strip-types packages/agent-evals/src/cli.ts
+
+      - name: Upload Replay Eval Report Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agent-evals-replay-report
+          path: |
+            eval-reports/eval_report.html
+            eval-reports/eval_report.json
+          if-no-files-found: warn
+
+  live-evals:
+    name: Live Suite (Nightly / Manual)
+    if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'live') }}
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install pnpm dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Live Evals
+        shell: pwsh
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          node --experimental-strip-types packages/agent-evals/src/cli.ts --live
+
+      - name: Upload Live Eval Report Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agent-evals-live-report
+          path: |
+            eval-reports/eval_report.html
+            eval-reports/eval_report.json
+          if-no-files-found: warn

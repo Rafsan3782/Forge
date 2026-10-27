@@ -1,0 +1,67 @@
+{
+  "$schema": "https://forge.engine/schemas/cassette.json",
+  "version": 1,
+  "metadata": {
+    "recording_id": "patrolling_enemy",
+    "created_at": "2026-10-27T00:00:00Z",
+    "model": "gemini-2.5-pro",
+    "temperature": 0.2
+  },
+  "interactions": [
+    {
+      "turn_id": "turn_001",
+      "request": {
+        "messages": [
+          { "role": "user", "content": "Add a patrolling enemy entity named Patroller with a Transform2D, Sprite, and Collider2D to the scene." }
+        ],
+        "available_tools": ["scene.edit"]
+      },
+      "response": {
+        "thought": "I will add the Patroller entity to scene.json.",
+        "tool_calls": [
+          {
+            "id": "call_patrol1",
+            "name": "scene.edit",
+            "arguments": {
+              "entity": {
+                "id": "patroller_enemy",
+                "name": "Patroller",
+                "components": {
+                  "Transform2D": { "position": [200, 80], "scale": [1, 1], "rotation": 0 },
+                  "Sprite": { "asset_id": "hero.png", "size": [32, 32] },
+                  "Collider2D": { "shape": { "Box": { "half_extents": { "x": 16, "y": 16 } } } }
+                }
+              }
+            }
+          }
+        ],
+        "finish_reason": "tool_calls",
+        "usage": {
+          "input_tokens": 130,
+          "output_tokens": 65,
+          "total_tokens": 195,
+          "estimated_cost_usd": 0.0002
+        }
+      }
+    },
+    {
+      "turn_id": "turn_002",
+      "request": {
+        "messages": [
+          { "role": "user", "content": "Done" }
+        ]
+      },
+      "response": {
+        "thought": "Patroller entity added.",
+        "message_delta": "Added Patroller enemy to scene.",
+        "finish_reason": "stop",
+        "usage": {
+          "input_tokens": 50,
+          "output_tokens": 15,
+          "total_tokens": 65,
+          "estimated_cost_usd": 0.0001
+        }
+      }
+    }
+  ]
+}
