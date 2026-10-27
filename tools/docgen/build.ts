@@ -2,13 +2,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { generateBridgeTools, BRIDGE_TOOLS } from "./generate-tools.js";
-import { generateComponents, COMPONENTS } from "./generate-components.js";
-import { generateEventsAndErrors, EVENTS, ERROR_CATALOG } from "./generate-events-errors.js";
-import { generateScriptApi, SCRIPT_MODULES } from "./generate-script-api.js";
-import { generateCli, CLI_COMMANDS } from "./generate-cli.js";
-import { generateAgentPacks, AGENT_PACK_TOPICS } from "./generate-agent-packs.js";
-import { parseFrontmatter, estimateTokens, ParsedDocPage } from "./schema.js";
+import { generateBridgeTools, BRIDGE_TOOLS } from "./generate-tools.ts";
+import { generateComponents, COMPONENTS } from "./generate-components.ts";
+import { generateEventsAndErrors, EVENTS, ERROR_CATALOG } from "./generate-events-errors.ts";
+import { generateScriptApi, SCRIPT_MODULES } from "./generate-script-api.ts";
+import { generateCli, CLI_COMMANDS } from "./generate-cli.ts";
+import { generateAgentPacks, AGENT_PACK_TOPICS } from "./generate-agent-packs.ts";
+import { parseFrontmatter, estimateTokens, ParsedDocPage } from "./schema.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

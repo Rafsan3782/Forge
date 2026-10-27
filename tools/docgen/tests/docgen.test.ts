@@ -4,8 +4,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { buildDocumentation } from "../build.js";
-import { validateAllQualityGates } from "../validate.js";
+import { buildDocumentation } from "../build.ts";
+import { validateAllQualityGates } from "../validate.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
