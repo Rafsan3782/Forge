@@ -1,6 +1,7 @@
 import * as child_process from "node:child_process";
 import * as util from "node:util";
 import * as path from "node:path";
+import * as fs from "node:fs/promises";
 import type { Checkpoint } from "@forge/protocol";
 import type { CheckpointManager } from "../contracts/interfaces.ts";
 
