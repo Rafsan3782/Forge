@@ -1,7 +1,7 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import * as os from "node:os";
-import type { AgentEvent, AgentSettings, RunSummary, ToolDescriptor } from "@forge/protocol";
+import type { AgentEvent, AgentSettings, RunSummary } from "@forge/protocol";
 import {
   FakeLlmProvider,
   FakeSafetyPolicy,
@@ -9,7 +9,6 @@ import {
   FakeOrchestrator,
   FakeToolProvider,
   type LlmProvider,
-  type ToolProvider,
   type SafetyPolicy,
   type CheckpointManager,
 } from "@forge/agent";
@@ -28,6 +27,20 @@ export interface RunnerOptions {
   cassettesDir?: string;
   reportsDir?: string;
   customLlmProvider?: LlmProvider;
+}
+
+interface EventDataWithToolCall {
+  tool_call?: {
+    name: string;
+    arguments: Record<string, unknown>;
+  };
+}
+
+interface EventDataWithUsage {
+  usage?: {
+    total_tokens: number;
+    estimated_cost_usd: number;
+  };
 }
 
 export class EvalRunner {
@@ -72,12 +85,28 @@ export class EvalRunner {
     const tempPrefix = path.join(os.tmpdir(), `forge-eval-${task.config.id}-`);
     const isolatedWorkspace = await fs.mkdtemp(tempPrefix);
 
-    const templateDir = path.resolve(process.cwd(), "templates", task.config.template);
+    // Look for template in cwd or relative up
+    const possibleTemplateDirs = [
+      path.resolve(process.cwd(), "templates", task.config.template),
+      path.resolve(process.cwd(), "..", "..", "templates", task.config.template),
+      path.resolve(process.cwd(), "..", "templates", task.config.template),
+    ];
+    let templateDir = possibleTemplateDirs[0];
+    for (const cand of possibleTemplateDirs) {
+      try {
+        await fs.access(cand);
+        templateDir = cand;
+        break;
+      } catch {
+        // try next
+      }
+    }
+
     try {
       await fs.access(templateDir);
       await this.copyDir(templateDir, isolatedWorkspace);
     } catch {
-      // If template not found in cwd, create bare minimal directory
+      // If template not found, create bare minimal directory
       await fs.mkdir(isolatedWorkspace, { recursive: true });
     }
 
@@ -100,7 +129,7 @@ export class EvalRunner {
     if (this.options.mode === "replay") {
       try {
         llm = await ReplayLlmProvider.fromFile(cassettePath);
-      } catch (err: any) {
+      } catch {
         // Fallback to fake if cassette file is missing
         llm = new FakeLlmProvider();
       }
@@ -117,7 +146,6 @@ export class EvalRunner {
 
     // Set up real filesystem tool execution in the isolated workspace
     const tools = new FakeToolProvider();
-    // Register tool that writes files inside isolated workspace
     tools.registerTool(
       {
         name: "fs.write",
@@ -134,7 +162,6 @@ export class EvalRunner {
       }
     );
 
-    // Register tool that updates scene JSON
     tools.registerTool(
       {
         name: "scene.edit",
@@ -147,15 +174,15 @@ export class EvalRunner {
         const scenePath = path.join(isolatedWorkspace, "scene.json");
         try {
           const raw = await fs.readFile(scenePath, "utf-8");
-          const scene = JSON.parse(raw);
+          const scene = JSON.parse(raw) as { entities?: unknown[] };
           if (args.entity) {
             scene.entities = scene.entities || [];
             scene.entities.push(args.entity);
           }
           await fs.writeFile(scenePath, JSON.stringify(scene, null, 2), "utf-8");
           return { content: { success: true }, is_error: false };
-        } catch (e: any) {
-          return { content: e.message, is_error: true };
+        } catch (e: unknown) {
+          return { content: e instanceof Error ? e.message : String(e), is_error: true };
         }
       }
     );
@@ -190,12 +217,17 @@ export class EvalRunner {
         checkpointsCount++;
       }
       if (ev.type === "tool_call_started") {
-        const tc = ev.data.tool_call;
-        toolCalls.push({ name: tc.name, args: tc.arguments });
+        const tc = (ev.data as EventDataWithToolCall)?.tool_call;
+        if (tc) {
+          toolCalls.push({ name: tc.name, args: tc.arguments });
+        }
       }
       if (ev.type === "budget_update") {
-        totalTokens = ev.data.usage.total_tokens;
-        totalCostUsd = ev.data.usage.estimated_cost_usd;
+        const usage = (ev.data as EventDataWithUsage)?.usage;
+        if (usage) {
+          totalTokens = usage.total_tokens;
+          totalCostUsd = usage.estimated_cost_usd;
+        }
       }
     });
 
@@ -219,8 +251,8 @@ export class EvalRunner {
       if (recorder) {
         await recorder.saveToFile(cassettePath);
       }
-    } catch (err: any) {
-      runError = err.message || String(err);
+    } catch (err: unknown) {
+      runError = err instanceof Error ? err.message : String(err);
     }
 
     // Execute task checks
@@ -238,11 +270,11 @@ export class EvalRunner {
       try {
         const res = await check(checkCtx);
         checkResults.push(res);
-      } catch (err: any) {
+      } catch (err: unknown) {
         checkResults.push({
           name: "Unknown check",
           passed: false,
-          message: `Check execution error: ${err.message}`,
+          message: `Check execution error: ${err instanceof Error ? err.message : String(err)}`,
         });
       }
     }

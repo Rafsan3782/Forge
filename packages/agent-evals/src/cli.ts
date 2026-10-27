@@ -57,8 +57,8 @@ export async function runCli(options: CliOptions): Promise<EvalSuiteReport> {
       } else {
         console.log(`  No regressions detected.`);
       }
-    } catch (e: any) {
-      console.warn(`Could not perform run comparison: ${e.message}`);
+    } catch (e: unknown) {
+      console.warn(`Could not perform run comparison: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
 

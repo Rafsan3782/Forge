@@ -6,6 +6,24 @@ import type { CheckResult, CheckContext } from "./types.ts";
 
 const execFileAsync = promisify(execFile);
 
+interface SceneEntityLike {
+  id?: string;
+  name?: string;
+  components?: Record<string, Record<string, unknown>>;
+}
+
+interface SceneJsonLike {
+  entities?: SceneEntityLike[];
+}
+
+function getErrorMessage(err: unknown): string {
+  if (err instanceof Error) {
+    const execErr = err as Error & { stdout?: string; stderr?: string };
+    return execErr.stdout || execErr.stderr || execErr.message;
+  }
+  return String(err);
+}
+
 /**
  * 1. Checks that forge check runs cleanly without TypeScript or script errors on the project.
  */
@@ -23,7 +41,7 @@ export async function checkForgeCheckClean(ctx: CheckContext): Promise<CheckResu
       };
     }
 
-    const { stdout, stderr } = await execFileAsync("cargo", [
+    const { stdout } = await execFileAsync("cargo", [
       "run",
       "-p",
       "forge_cli",
@@ -38,11 +56,11 @@ export async function checkForgeCheckClean(ctx: CheckContext): Promise<CheckResu
       passed: true,
       message: stdout || "Typecheck passed cleanly",
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       name: checkName,
       passed: false,
-      message: `forge check failed: ${error.stdout || error.stderr || error.message}`,
+      message: `forge check failed: ${getErrorMessage(error)}`,
     };
   }
 }
@@ -95,11 +113,11 @@ export async function checkHeadlessRunNoErrors(
       passed: true,
       message: `Successfully executed ${frames} frames headless`,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       name: checkName,
       passed: false,
-      message: `Headless runtime execution crashed: ${error.message}`,
+      message: `Headless runtime execution crashed: ${getErrorMessage(error)}`,
     };
   }
 }
@@ -124,9 +142,9 @@ export async function checkEntityOrComponentExists(
 
   try {
     const raw = await fs.readFile(scenePath, "utf-8");
-    const scene = JSON.parse(raw);
+    const scene = JSON.parse(raw) as SceneJsonLike;
 
-    const entities: any[] = scene.entities || [];
+    const entities: SceneEntityLike[] = scene.entities || [];
     const matched = entities.filter((ent) => {
       if (predicate.entityId && ent.id !== predicate.entityId) return false;
       if (predicate.entityName && ent.name !== predicate.entityName) return false;
@@ -157,11 +175,11 @@ export async function checkEntityOrComponentExists(
       passed: false,
       message: `No entity matched criteria: ${JSON.stringify(predicate)}`,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       name: checkName,
       passed: false,
-      message: `Failed to inspect scene: ${error.message}`,
+      message: `Failed to inspect scene: ${getErrorMessage(error)}`,
     };
   }
 }
@@ -181,11 +199,11 @@ export async function checkScriptedInputState(
       passed: res.passed,
       message: res.message,
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     return {
       name: checkName,
       passed: false,
-      message: `Failed checking game state: ${err.message}`,
+      message: `Failed checking game state: ${getErrorMessage(err)}`,
     };
   }
 }
@@ -206,13 +224,15 @@ export async function checkTilemapTileEquals(
 
   try {
     const raw = await fs.readFile(scenePath, "utf-8");
-    const scene = JSON.parse(raw);
+    const scene = JSON.parse(raw) as {
+      entities?: Array<{ components?: { Tilemap?: { chunk_size?: number; chunks?: Record<string, { layers?: Record<string, string[]> }> } } }>;
+    };
 
     const tilemapEntity = (scene.entities || []).find(
-      (ent: any) => ent.components && ent.components.Tilemap
+      (ent) => ent.components && ent.components.Tilemap
     );
 
-    if (!tilemapEntity) {
+    if (!tilemapEntity || !tilemapEntity.components?.Tilemap) {
       return {
         name: checkName,
         passed: false,
@@ -263,11 +283,11 @@ export async function checkTilemapTileEquals(
       passed: false,
       message: `Expected tile ${expectedValue} at (${tileX}, ${tileY}), got '${actualVal}'`,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       name: checkName,
       passed: false,
-      message: `Failed inspecting tilemap tile: ${error.message}`,
+      message: `Failed inspecting tilemap tile: ${getErrorMessage(error)}`,
     };
   }
 }
@@ -313,11 +333,11 @@ export async function checkScreenshotVisionRubric(
       message: `Vision judge (${verdict.score}/10): ${verdict.critique}`,
       is_soft: true,
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     return {
       name: checkName,
       passed: true, // soft check
-      message: `Vision judge soft warning: ${err.message}`,
+      message: `Vision judge soft warning: ${getErrorMessage(err)}`,
       is_soft: true,
     };
   }
@@ -353,11 +373,11 @@ export async function checkFileContains(
       passed: false,
       message: `File '${relativeFilePath}' did not contain expected content`,
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     return {
       name: checkName,
       passed: false,
-      message: `Could not read file '${filePath}': ${err.message}`,
+      message: `Could not read file '${filePath}': ${getErrorMessage(err)}`,
     };
   }
 }

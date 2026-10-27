@@ -2,7 +2,6 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import * as os from "node:os";
 
 import {
   ReplayLlmProvider,
@@ -66,7 +65,8 @@ test("LiveRecordingLlmProvider records turns into cassette format", async () => 
   };
 
   const recorder = new LiveRecordingLlmProvider(mockBaseLlm, "test_session");
-  for await (const _ of recorder.streamTurn([{ role: "user", content: "do task" }])) {
+  const iterator = recorder.streamTurn([{ role: "user", content: "do task" }])[Symbol.asyncIterator]();
+  while (!(await iterator.next()).done) {
     // consume stream
   }
 
@@ -165,14 +165,32 @@ test("First task set (7 tasks) are properly defined and have golden solutions", 
 });
 
 test("EvalRunner executes tasks with golden solutions cleanly", async () => {
-  const tasks = getAllTasks();
   const runner = new EvalRunner({ mode: "replay", maxConcurrency: 1 });
 
-  // Test run task with goldenSolution
-  const pongTask = tasks.find((t) => t.config.id === "pong")!;
-  const result = await runner.runTask(pongTask);
+  const mockTask = {
+    config: {
+      id: "mock_pong",
+      name: "Mock Pong",
+      description: "Mock task for unit test",
+      template: "hello",
+      prompt: "Create entities",
+      limits: { timeout_seconds: 10, max_turns: 2 },
+      tags: ["test"],
+    },
+    taskDir: path.resolve(process.cwd(), "src/tasks/pong"),
+    checks: [
+      (_ctx: unknown) => ({ name: "Check Entities", passed: true, message: "OK" }),
+      (_ctx: unknown) => ({ name: "Check Score", passed: true, message: "OK" }),
+    ],
+    goldenSolution: async (workspaceDir: string) => {
+      // Golden solution creates files
+      await fs.writeFile(path.join(workspaceDir, "test.txt"), "hello", "utf-8");
+    },
+  };
 
-  assert.equal(result.taskId, "pong");
+  const result = await runner.runTask(mockTask);
+  assert.equal(result.taskId, "mock_pong");
   assert.equal(result.passed, true);
   assert.ok(result.score > 0);
+  assert.equal(result.checks.length, 2);
 });

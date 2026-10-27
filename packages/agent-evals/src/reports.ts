@@ -1,6 +1,12 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import type { EvalSuiteReport, TaskEvalResult } from "./types.ts";
+import type { EvalSuiteReport } from "./types.ts";
+
+interface ToolCallData {
+  tool_call?: {
+    name?: string;
+  };
+}
 
 export function generateHtmlReport(report: EvalSuiteReport): string {
   const passRate = report.totalTasks > 0
@@ -33,7 +39,7 @@ export function generateHtmlReport(report: EvalSuiteReport): string {
           ${
             ev.type === "tool_call_started"
               ? `<span class="timeline-detail">${escapeHtml(
-                  ev.data?.tool_call?.name || ""
+                  (ev.data as ToolCallData)?.tool_call?.name || ""
                 )}</span>`
               : ""
           }

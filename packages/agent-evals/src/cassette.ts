@@ -8,22 +8,7 @@ import type {
 } from "@forge/agent";
 import type { CassetteData, CassetteTurnInteraction } from "./types.ts";
 
-/**
- * Normalizes input messages for matching against recorded cassette interactions.
- */
-function hashRequest(
-  messages: LlmMessage[],
-  tools?: { name: string }[]
-): string {
-  const simplifiedMsgs = messages.map((m) => ({
-    role: m.role,
-    content: m.content.trim(),
-    name: m.name,
-    tool_call_id: m.tool_call_id,
-  }));
-  const toolNames = (tools || []).map((t) => t.name).sort();
-  return JSON.stringify({ messages: simplifiedMsgs, tools: toolNames });
-}
+
 
 /**
  * ReplayLlmProvider deterministically serves recorded turns from a .cassette.json file.

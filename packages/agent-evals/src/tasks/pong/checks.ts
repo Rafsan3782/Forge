@@ -26,7 +26,7 @@ export const checks: CheckFn[] = [
 
 export async function goldenSolution(workspaceDir: string): Promise<void> {
   const scenePath = path.join(workspaceDir, "scene.json");
-  let scene: any = { name: "Pong", entities: [] };
+  let scene: { name?: string; entities?: unknown[] } = { name: "Pong", entities: [] };
   try {
     const raw = await fs.readFile(scenePath, "utf-8");
     scene = JSON.parse(raw);
