@@ -19,7 +19,7 @@
  * If a type is an array containing "null", e.g. ["string", "null"],
  * it is converted to type: "string" and nullable: true.
  *
- * $ref pointers within the same document (e.g. #/definitions/...) are dereferenced/inlined.
+ * Handles recursive $ref (such as EntityNode children) without infinite recursion.
  */
 
 export function convertJsonSchemaToGemini(
@@ -27,6 +27,7 @@ export function convertJsonSchemaToGemini(
   targetSchema?: Record<string, unknown>
 ): Record<string, unknown> {
   const schemaToConvert = targetSchema ?? rootSchema;
+  const visitedRefs = new Set<string>();
 
   function dereference(refStr: string): Record<string, unknown> | null {
     if (!refStr.startsWith("#/")) {
@@ -44,37 +45,47 @@ export function convertJsonSchemaToGemini(
     return curr && typeof curr === "object" ? (curr as Record<string, unknown>) : null;
   }
 
-  function resolveSchema(node: Record<string, unknown>): Record<string, unknown> {
-    if (typeof node.$ref === "string") {
-      const deref = dereference(node.$ref);
-      if (deref) {
-        const merged = { ...deref };
-        if (typeof node.description === "string") {
-          merged.description = node.description;
-        }
-        return resolveSchema(merged);
-      }
-    }
-    return node;
-  }
-
-  function transformNode(input: unknown): unknown {
+  function transformNode(input: unknown, activePath = new Set<string>()): unknown {
     if (!input || typeof input !== "object" || Array.isArray(input)) {
       return input;
     }
 
-    const resolved = resolveSchema(input as Record<string, unknown>);
+    let node = input as Record<string, unknown>;
+
+    // Handle $ref
+    if (typeof node.$ref === "string") {
+      const refStr = node.$ref;
+      if (activePath.has(refStr)) {
+        // Recursive cycle detected (e.g. EntityNode.children -> EntityNode)
+        return {
+          type: "object",
+          description: typeof node.description === "string" ? node.description : `Recursive reference to ${refStr}`,
+        };
+      }
+
+      const deref = dereference(refStr);
+      if (deref) {
+        const nextActive = new Set(activePath);
+        nextActive.add(refStr);
+        const merged = { ...deref };
+        if (typeof node.description === "string") {
+          merged.description = node.description;
+        }
+        return transformNode(merged, nextActive);
+      }
+    }
+
     const result: Record<string, unknown> = {};
 
     // 1. Description
-    if (typeof resolved.description === "string") {
-      result.description = resolved.description;
+    if (typeof node.description === "string") {
+      result.description = node.description;
     }
 
     // 2. Type & Nullable handling
-    if (resolved.type !== undefined) {
-      if (Array.isArray(resolved.type)) {
-        const types = resolved.type as string[];
+    if (node.type !== undefined) {
+      if (Array.isArray(node.type)) {
+        const types = node.type as string[];
         const hasNull = types.includes("null");
         const nonNullTypes = types.filter((t) => t !== "null");
         if (nonNullTypes.length > 0) {
@@ -83,36 +94,36 @@ export function convertJsonSchemaToGemini(
         if (hasNull) {
           result.nullable = true;
         }
-      } else if (typeof resolved.type === "string") {
-        if (resolved.type === "null") {
+      } else if (typeof node.type === "string") {
+        if (node.type === "null") {
           result.type = "string";
           result.nullable = true;
         } else {
-          result.type = resolved.type;
+          result.type = node.type;
         }
       }
     }
 
     // 3. Nullable explicit
-    if (resolved.nullable === true) {
+    if (node.nullable === true) {
       result.nullable = true;
     }
 
     // 4. Format
-    if (typeof resolved.format === "string") {
-      result.format = resolved.format;
+    if (typeof node.format === "string") {
+      result.format = node.format;
     }
 
     // 5. Enum
-    if (Array.isArray(resolved.enum)) {
-      result.enum = resolved.enum;
+    if (Array.isArray(node.enum)) {
+      result.enum = node.enum;
     }
 
-    // 6. Properties (for type object)
-    if (resolved.properties && typeof resolved.properties === "object" && !Array.isArray(resolved.properties)) {
+    // 6. Properties
+    if (node.properties && typeof node.properties === "object" && !Array.isArray(node.properties)) {
       const propsObj: Record<string, unknown> = {};
-      for (const [key, propVal] of Object.entries(resolved.properties as Record<string, unknown>)) {
-        propsObj[key] = transformNode(propVal);
+      for (const [key, propVal] of Object.entries(node.properties as Record<string, unknown>)) {
+        propsObj[key] = transformNode(propVal, activePath);
       }
       result.properties = propsObj;
       if (!result.type) {
@@ -120,21 +131,21 @@ export function convertJsonSchemaToGemini(
       }
     }
 
-    // 7. Items (for type array)
-    if (resolved.items) {
-      if (Array.isArray(resolved.items)) {
-        result.items = transformNode(resolved.items[0]);
+    // 7. Items
+    if (node.items) {
+      if (Array.isArray(node.items)) {
+        result.items = transformNode(node.items[0], activePath);
       } else {
-        result.items = transformNode(resolved.items);
+        result.items = transformNode(node.items, activePath);
       }
       if (!result.type) {
         result.type = "array";
       }
     }
 
-    // 8. Required array
-    if (Array.isArray(resolved.required)) {
-      result.required = resolved.required;
+    // 8. Required
+    if (Array.isArray(node.required)) {
+      result.required = node.required;
     }
 
     return result;

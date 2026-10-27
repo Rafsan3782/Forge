@@ -460,16 +460,34 @@ function escapeRegex(str: string): string {
 }
 
 function globToRegex(glob: string): RegExp {
-  const parts = glob.split("/");
-  const regexParts = parts.map((part) => {
-    if (part === "**") {
-      return "(?:.*)";
+  // Normalize forward slashes
+  const normalized = glob.replace(/\\/g, "/");
+  let reStr = "^";
+  let i = 0;
+  while (i < normalized.length) {
+    const c = normalized[i];
+    if (c === "*" && normalized[i + 1] === "*") {
+      if (normalized[i + 2] === "/") {
+        reStr += "(?:.*/)?";
+        i += 3;
+      } else {
+        reStr += ".*";
+        i += 2;
+      }
+    } else if (c === "*") {
+      reStr += "[^/]*";
+      i++;
+    } else if (c === "?") {
+      reStr += "[^/]";
+      i++;
+    } else if (/[.+^${}()|[\]\\]/.test(c)) {
+      reStr += "\\" + c;
+      i++;
+    } else {
+      reStr += c;
+      i++;
     }
-    const escaped = part
-      .replace(/[.+^${}()|[\]\\]/g, "\\$&")
-      .replace(/\*/g, "[^/]*")
-      .replace(/\?/g, "[^/]");
-    return escaped;
-  });
-  return new RegExp(`^${regexParts.join("/")}$`);
+  }
+  reStr += "$";
+  return new RegExp(reStr);
 }
