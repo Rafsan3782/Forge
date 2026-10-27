@@ -1,8 +1,12 @@
-//! Core library functions for Forge CLI, including TypeScript project type checking.
+pub mod indexer;
 
 use forge_protocol::ScriptDiagnostic;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+
+pub use indexer::{
+    build_project_map, index_project, MapAnimationClip, MapEntity, MapScript, ProjectMap,
+};
 
 /// Locates the Node binary in project-local `.tools/node` or system PATH.
 pub fn find_node_executable() -> Option<PathBuf> {
