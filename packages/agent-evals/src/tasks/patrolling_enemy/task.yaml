@@ -1,0 +1,14 @@
+id: patrolling_enemy
+name: Add a Patrolling Enemy
+description: Add a patrolling enemy entity with movement script and collider
+template: hello
+prompt: "Add a patrolling enemy entity named Patroller with a Transform2D, Sprite, and Collider2D to the scene."
+limits:
+  timeout_seconds: 60
+  max_turns: 5
+  max_tokens: 20000
+  max_cost_usd: 0.1
+tags:
+  - enemy
+  - scene
+  - ai

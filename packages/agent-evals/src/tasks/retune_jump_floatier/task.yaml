@@ -1,0 +1,14 @@
+id: retune_jump_floatier
+name: Retune Jump to Be Floatier
+description: Modify GRAVITY and JUMP_VELOCITY parameters in scripts/player.ts to give the jump a floatier feel
+template: platformer
+prompt: "Retune the jump parameters in scripts/player.ts to be floatier by reducing GRAVITY and adjusting JUMP_VELOCITY."
+limits:
+  timeout_seconds: 60
+  max_turns: 5
+  max_tokens: 20000
+  max_cost_usd: 0.1
+tags:
+  - physics
+  - tuning
+  - feel

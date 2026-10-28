@@ -1,0 +1,60 @@
+{
+  "$schema": "https://forge.engine/schemas/cassette.json",
+  "version": 1,
+  "metadata": {
+    "recording_id": "coin_counter",
+    "created_at": "2026-10-27T00:00:00Z",
+    "model": "gemini-2.5-pro",
+    "temperature": 0.2
+  },
+  "interactions": [
+    {
+      "turn_id": "turn_001",
+      "request": {
+        "messages": [
+          { "role": "user", "content": "Add a coin counter HUD display and collection tracking in scripts/player.ts." }
+        ],
+        "available_tools": ["fs.write"]
+      },
+      "response": {
+        "thought": "I will update scripts/player.ts to track coinCount.",
+        "tool_calls": [
+          {
+            "id": "call_coin1",
+            "name": "fs.write",
+            "arguments": {
+              "path": "scripts/player.ts",
+              "content": "// Player script with coin tracking\nexport let coinCount: number = 0;\nexport function onUpdate() {}\n"
+            }
+          }
+        ],
+        "finish_reason": "tool_calls",
+        "usage": {
+          "input_tokens": 120,
+          "output_tokens": 60,
+          "total_tokens": 180,
+          "estimated_cost_usd": 0.0002
+        }
+      }
+    },
+    {
+      "turn_id": "turn_002",
+      "request": {
+        "messages": [
+          { "role": "user", "content": "Done" }
+        ]
+      },
+      "response": {
+        "thought": "Coin counter tracking implemented.",
+        "message_delta": "Coin tracking added.",
+        "finish_reason": "stop",
+        "usage": {
+          "input_tokens": 40,
+          "output_tokens": 15,
+          "total_tokens": 55,
+          "estimated_cost_usd": 0.0001
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+id: pong
+name: Make Pong Game
+description: Create a Pong game with left paddle, right paddle, ball, and score display
+template: hello
+prompt: "Create a 2D Pong game in the scene with LeftPaddle, RightPaddle, and Ball entities with colliders."
+limits:
+  timeout_seconds: 60
+  max_turns: 5
+  max_tokens: 20000
+  max_cost_usd: 0.1
+tags:
+  - game-creation
+  - pong
+  - 2d

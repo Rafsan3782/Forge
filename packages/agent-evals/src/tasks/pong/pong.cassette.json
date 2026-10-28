@@ -1,0 +1,94 @@
+{
+  "$schema": "https://forge.engine/schemas/cassette.json",
+  "version": 1,
+  "metadata": {
+    "recording_id": "pong",
+    "created_at": "2026-10-27T00:00:00Z",
+    "model": "gemini-2.5-pro",
+    "temperature": 0.2
+  },
+  "interactions": [
+    {
+      "turn_id": "turn_001",
+      "request": {
+        "messages": [
+          { "role": "user", "content": "Create a 2D Pong game in the scene with LeftPaddle, RightPaddle, and Ball entities with colliders." }
+        ],
+        "available_tools": ["scene.edit", "fs.write"]
+      },
+      "response": {
+        "thought": "I need to add LeftPaddle, RightPaddle and Ball entities to scene.json",
+        "tool_calls": [
+          {
+            "id": "call_p1",
+            "name": "scene.edit",
+            "arguments": {
+              "entity": {
+                "id": "left_paddle",
+                "name": "LeftPaddle",
+                "components": {
+                  "Transform2D": { "position": [-350, 0], "scale": [1, 1], "rotation": 0 },
+                  "Collider2D": { "shape": { "Box": { "half_extents": { "x": 10, "y": 50 } } } }
+                }
+              }
+            }
+          },
+          {
+            "id": "call_p2",
+            "name": "scene.edit",
+            "arguments": {
+              "entity": {
+                "id": "right_paddle",
+                "name": "RightPaddle",
+                "components": {
+                  "Transform2D": { "position": [350, 0], "scale": [1, 1], "rotation": 0 },
+                  "Collider2D": { "shape": { "Box": { "half_extents": { "x": 10, "y": 50 } } } }
+                }
+              }
+            }
+          },
+          {
+            "id": "call_p3",
+            "name": "scene.edit",
+            "arguments": {
+              "entity": {
+                "id": "ball",
+                "name": "Ball",
+                "components": {
+                  "Transform2D": { "position": [0, 0], "scale": [1, 1], "rotation": 0 },
+                  "Collider2D": { "shape": { "Circle": { "radius": 8 } } }
+                }
+              }
+            }
+          }
+        ],
+        "finish_reason": "tool_calls",
+        "usage": {
+          "input_tokens": 120,
+          "output_tokens": 80,
+          "total_tokens": 200,
+          "estimated_cost_usd": 0.0002
+        }
+      }
+    },
+    {
+      "turn_id": "turn_002",
+      "request": {
+        "messages": [
+          { "role": "user", "content": "Done" }
+        ]
+      },
+      "response": {
+        "thought": "Pong entities have been created successfully.",
+        "message_delta": "Pong entities created.",
+        "finish_reason": "stop",
+        "usage": {
+          "input_tokens": 80,
+          "output_tokens": 20,
+          "total_tokens": 100,
+          "estimated_cost_usd": 0.0001
+        }
+      }
+    }
+  ]
+}

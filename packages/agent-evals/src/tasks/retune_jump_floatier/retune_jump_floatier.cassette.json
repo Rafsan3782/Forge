@@ -1,0 +1,60 @@
+{
+  "$schema": "https://forge.engine/schemas/cassette.json",
+  "version": 1,
+  "metadata": {
+    "recording_id": "retune_jump_floatier",
+    "created_at": "2026-10-27T00:00:00Z",
+    "model": "gemini-2.5-pro",
+    "temperature": 0.2
+  },
+  "interactions": [
+    {
+      "turn_id": "turn_001",
+      "request": {
+        "messages": [
+          { "role": "user", "content": "Retune the jump parameters in scripts/player.ts to be floatier by reducing GRAVITY and adjusting JUMP_VELOCITY." }
+        ],
+        "available_tools": ["fs.write"]
+      },
+      "response": {
+        "thought": "I will lower GRAVITY in scripts/player.ts to 520.0 to create a floatier jump feel.",
+        "tool_calls": [
+          {
+            "id": "call_jump1",
+            "name": "fs.write",
+            "arguments": {
+              "path": "scripts/player.ts",
+              "content": "export const MOVE_SPEED: number = 220.0;\nexport const JUMP_VELOCITY: number = 320.0;\nexport const GRAVITY: number = 520.0;\nexport function onUpdate() {}\n"
+            }
+          }
+        ],
+        "finish_reason": "tool_calls",
+        "usage": {
+          "input_tokens": 130,
+          "output_tokens": 65,
+          "total_tokens": 195,
+          "estimated_cost_usd": 0.0002
+        }
+      }
+    },
+    {
+      "turn_id": "turn_002",
+      "request": {
+        "messages": [
+          { "role": "user", "content": "Done" }
+        ]
+      },
+      "response": {
+        "thought": "Jump physics retuned.",
+        "message_delta": "Retuned jump physics to be floatier.",
+        "finish_reason": "stop",
+        "usage": {
+          "input_tokens": 40,
+          "output_tokens": 15,
+          "total_tokens": 55,
+          "estimated_cost_usd": 0.0001
+        }
+      }
+    }
+  ]
+}
