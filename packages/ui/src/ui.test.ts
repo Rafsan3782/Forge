@@ -1,6 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { PACKAGE_NAME, CustomIcons } from "./index.js";
+import { PACKAGE_NAME } from "./index.js";
+import { CustomIcons } from "./Icon.js";
 
 describe("@forge/ui v2", () => {
   it("exports package name and tokens", () => {

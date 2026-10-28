@@ -246,5 +246,5 @@ export const cssVars = {
   elevationFloating: "var(--forge-elevation-floating)",
 } as const;
 
-export * from "./tailwind.ts";
+export * from "./tailwind.js";
 export default tokens;
