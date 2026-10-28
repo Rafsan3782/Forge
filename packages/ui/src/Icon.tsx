@@ -153,7 +153,9 @@ export const Icon: React.FC<IconProps> = ({
 
   // Check Lucide Icons
   const lucideKey = (name.charAt(0).toUpperCase() + name.slice(1)) as keyof typeof LucideIcons;
-  const LucideComp = (LucideIcons[lucideKey] || LucideIcons[name as keyof typeof LucideIcons]) as React.FC<any>;
+  const LucideComp = (LucideIcons[lucideKey] || LucideIcons[name as keyof typeof LucideIcons]) as
+    | React.ComponentType<{ size?: number | string; color?: string; strokeWidth?: number; className?: string }>
+    | undefined;
 
   if (LucideComp) {
     return (

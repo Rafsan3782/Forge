@@ -221,7 +221,7 @@ export const ColorInput: React.FC<ColorInputProps> = ({
   value,
   onChange,
   label,
-  sizeVariant = "sm",
+  sizeVariant: _sizeVariant = "sm",
 }) => {
   return (
     <div
