@@ -27,6 +27,7 @@ export interface RunnerOptions {
   cassettesDir?: string;
   reportsDir?: string;
   customLlmProvider?: LlmProvider;
+  useGoldenSolution?: boolean;
 }
 
 interface EventDataWithToolCall {
@@ -54,12 +55,15 @@ export class EvalRunner {
   }
 
   /**
-   * Recursively copies a directory.
+   * Recursively copies a directory, ignoring heavy tooling artifacts.
    */
   private async copyDir(src: string, dest: string): Promise<void> {
     await fs.mkdir(dest, { recursive: true });
     const entries = await fs.readdir(src, { withFileTypes: true });
     for (const entry of entries) {
+      if (entry.name === "node_modules" || entry.name === "target" || entry.name === ".git") {
+        continue;
+      }
       const srcPath = path.join(src, entry.name);
       const destPath = path.join(dest, entry.name);
       if (entry.isDirectory()) {
@@ -90,6 +94,7 @@ export class EvalRunner {
       path.resolve(process.cwd(), "templates", task.config.template),
       path.resolve(process.cwd(), "..", "..", "templates", task.config.template),
       path.resolve(process.cwd(), "..", "templates", task.config.template),
+      path.resolve(task.taskDir, "..", "..", "..", "..", "templates", task.config.template),
     ];
     let templateDir = possibleTemplateDirs[0];
     for (const cand of possibleTemplateDirs) {
@@ -176,6 +181,15 @@ export class EvalRunner {
           const raw = await fs.readFile(scenePath, "utf-8");
           const scene = JSON.parse(raw) as { entities?: unknown[] };
           if (args.entity) {
+            const ent = args.entity as { components?: Record<string, Record<string, unknown>> };
+            if (ent.components?.Sprite) {
+              if (!ent.components.Sprite.color_tint) {
+                ent.components.Sprite.color_tint = [1.0, 1.0, 1.0, 1.0];
+              }
+              if (ent.components.Sprite.z_order === undefined) {
+                ent.components.Sprite.z_order = 0;
+              }
+            }
             scene.entities = scene.entities || [];
             scene.entities.push(args.entity);
           }
@@ -234,22 +248,21 @@ export class EvalRunner {
     let runError: string | undefined;
 
     try {
-      // If we are testing the golden solution directly, apply it
-      if (task.goldenSolution) {
+      if (this.options.useGoldenSolution && task.goldenSolution) {
         await task.goldenSolution(isolatedWorkspace);
-      }
+      } else {
+        // Execute agent run
+        const runId = await orchestrator.startRun(task.config.prompt);
+        summary = await orchestrator.getSummary(runId);
+        if (summary) {
+          totalTurns = summary.total_turns;
+          totalTokens = summary.budget_used.total_tokens;
+          totalCostUsd = summary.budget_used.estimated_cost_usd;
+        }
 
-      // Execute agent run
-      const runId = await orchestrator.startRun(task.config.prompt);
-      summary = await orchestrator.getSummary(runId);
-      if (summary) {
-        totalTurns = summary.total_turns;
-        totalTokens = summary.budget_used.total_tokens;
-        totalCostUsd = summary.budget_used.estimated_cost_usd;
-      }
-
-      if (recorder) {
-        await recorder.saveToFile(cassettePath);
+        if (recorder) {
+          await recorder.saveToFile(cassettePath);
+        }
       }
     } catch (err: unknown) {
       runError = err instanceof Error ? err.message : String(err);

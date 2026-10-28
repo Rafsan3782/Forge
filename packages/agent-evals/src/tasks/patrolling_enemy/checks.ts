@@ -33,7 +33,7 @@ export async function goldenSolution(workspaceDir: string): Promise<void> {
     name: "Patroller",
     components: {
       Transform2D: { position: [200, 80], scale: [1, 1], rotation: 0 },
-      Sprite: { asset_id: "hero.png", size: [32, 32] },
+      Sprite: { asset_id: "hero.png", size: [32, 32], color_tint: [1, 1, 1, 1], z_order: 0 },
       Collider2D: { shape: { Box: { half_extents: { x: 16, y: 16 } } } },
     },
   });

@@ -165,7 +165,7 @@ test("First task set (7 tasks) are properly defined and have golden solutions", 
 });
 
 test("EvalRunner executes tasks with golden solutions cleanly", async () => {
-  const runner = new EvalRunner({ mode: "replay", maxConcurrency: 1 });
+  const runner = new EvalRunner({ mode: "replay", maxConcurrency: 1, useGoldenSolution: true });
 
   const mockTask = {
     config: {

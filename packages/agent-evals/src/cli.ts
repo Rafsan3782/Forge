@@ -12,6 +12,7 @@ export interface CliOptions {
   outputDir?: string;
   concurrency?: number;
   compareWith?: string;
+  useGolden?: boolean;
 }
 
 export async function runCli(options: CliOptions): Promise<EvalSuiteReport> {
@@ -19,6 +20,7 @@ export async function runCli(options: CliOptions): Promise<EvalSuiteReport> {
     mode: options.mode,
     maxConcurrency: options.concurrency || 4,
     recordCassette: options.record,
+    useGoldenSolution: options.useGolden,
   });
 
   let tasks = getAllTasks();
@@ -69,7 +71,10 @@ export async function runCli(options: CliOptions): Promise<EvalSuiteReport> {
 if (process.argv[1]?.includes("cli.ts") || process.argv[1]?.includes("cli.js")) {
   const modeArg = process.argv.includes("--live") ? "live" : "replay";
   const recordArg = process.argv.includes("--record");
-  runCli({ mode: modeArg, record: recordArg }).then((report) => {
+  const goldenArg = process.argv.includes("--golden");
+  const taskIdx = process.argv.indexOf("--task");
+  const tasksArg = taskIdx !== -1 && process.argv[taskIdx + 1] ? [process.argv[taskIdx + 1]] : undefined;
+  runCli({ mode: modeArg, record: recordArg, tasks: tasksArg, useGolden: goldenArg }).then((report) => {
     if (report.failedTasks > 0) {
       process.exit(1);
     }

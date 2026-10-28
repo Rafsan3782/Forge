@@ -27,6 +27,10 @@ export async function goldenSolution(workspaceDir: string): Promise<void> {
     // initialize
   }
 
-  const coinCode = `\n// Coin tracking\nexport let coinCount: number = 0;\n`;
-  await fs.writeFile(playerScript, coinCode + content, "utf-8");
+  if (content.includes("let coinCount: number = 0;")) {
+    content = content.replace("let coinCount: number = 0;", "export let coinCount: number = 0;");
+  } else if (!content.includes("coinCount")) {
+    content = `\n// Coin tracking\nexport let coinCount: number = 0;\n` + content;
+  }
+  await fs.writeFile(playerScript, content, "utf-8");
 }

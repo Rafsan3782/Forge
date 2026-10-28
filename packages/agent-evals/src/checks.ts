@@ -1,10 +1,33 @@
 import * as fs from "node:fs/promises";
+import * as fsSync from "node:fs";
 import * as path from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import type { CheckResult, CheckContext } from "./types.ts";
 
 const execFileAsync = promisify(execFile);
+
+function findBinary(name: string): string | null {
+  const exeExt = process.platform === "win32" ? ".exe" : "";
+  const candidates = [
+    path.resolve(process.cwd(), "target", "debug", `${name}${exeExt}`),
+    path.resolve(process.cwd(), "target", "release", `${name}${exeExt}`),
+    path.resolve(process.cwd(), "..", "..", "target", "debug", `${name}${exeExt}`),
+    path.resolve(process.cwd(), "..", "..", "target", "release", `${name}${exeExt}`),
+    path.resolve(process.cwd(), "..", "..", "..", "target", "debug", `${name}${exeExt}`),
+    path.resolve(process.cwd(), "..", "..", "..", "target", "release", `${name}${exeExt}`),
+  ];
+  for (const cand of candidates) {
+    try {
+      if (fsSync.existsSync(cand)) {
+        return cand;
+      }
+    } catch {
+      // ignore
+    }
+  }
+  return null;
+}
 
 interface SceneEntityLike {
   id?: string;
@@ -18,8 +41,13 @@ interface SceneJsonLike {
 
 function getErrorMessage(err: unknown): string {
   if (err instanceof Error) {
-    const execErr = err as Error & { stdout?: string; stderr?: string };
-    return execErr.stdout || execErr.stderr || execErr.message;
+    const execErr = err as Error & { stdout?: string; stderr?: string; code?: unknown };
+    const parts = [];
+    if (execErr.message) parts.push(`Error: ${execErr.message}`);
+    if (execErr.code !== undefined) parts.push(`Code: ${execErr.code}`);
+    if (execErr.stderr) parts.push(`STDERR: ${execErr.stderr}`);
+    if (execErr.stdout) parts.push(`STDOUT: ${execErr.stdout.slice(-1000)}`);
+    return parts.join("\n");
   }
   return String(err);
 }
@@ -41,15 +69,13 @@ export async function checkForgeCheckClean(ctx: CheckContext): Promise<CheckResu
       };
     }
 
-    const { stdout } = await execFileAsync("cargo", [
-      "run",
-      "-p",
-      "forge_cli",
-      "--",
-      "check",
-      "--project",
-      ctx.workspaceDir,
-    ]);
+    const cliBin = findBinary("forge");
+    const execCmd = cliBin || "cargo";
+    const execArgs = cliBin
+      ? ["check", "--project", ctx.workspaceDir]
+      : ["run", "-p", "forge_cli", "--", "check", "--project", ctx.workspaceDir];
+
+    const { stdout } = await execFileAsync(execCmd, execArgs, { timeout: 30000 });
 
     return {
       name: checkName,
@@ -87,17 +113,31 @@ export async function checkHeadlessRunNoErrors(
   }
 
   try {
-    const { stdout, stderr } = await execFileAsync("cargo", [
-      "run",
-      "-p",
-      "forge_runtime",
-      "--",
-      "--headless",
-      "--frames",
-      frames.toString(),
-      "--scene",
-      scenePath,
-    ]);
+    const runtimeBin = findBinary("forge_runtime");
+    const execCmd = runtimeBin || "cargo";
+    const execArgs = runtimeBin
+      ? [
+          "--headless",
+          "--no-bridge",
+          "--frames",
+          frames.toString(),
+          "--scene",
+          scenePath,
+        ]
+      : [
+          "run",
+          "-p",
+          "forge_runtime",
+          "--",
+          "--headless",
+          "--no-bridge",
+          "--frames",
+          frames.toString(),
+          "--scene",
+          scenePath,
+        ];
+
+    const { stdout, stderr } = await execFileAsync(execCmd, execArgs, { timeout: 30000 });
 
     const combined = `${stdout}\n${stderr}`;
     if (combined.includes("ERROR") || combined.includes("panicked at")) {

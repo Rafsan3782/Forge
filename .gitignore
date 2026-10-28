@@ -54,3 +54,5 @@ out.png
 hello_screenshot.png
 .forge/
 tools/delete-failed-runs.ps1
+
+eval-reports/
