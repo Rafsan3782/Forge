@@ -27,7 +27,7 @@ export function convertJsonSchemaToGemini(
   targetSchema?: Record<string, unknown>
 ): Record<string, unknown> {
   const schemaToConvert = targetSchema ?? rootSchema;
-  const visitedRefs = new Set<string>();
+
 
   function dereference(refStr: string): Record<string, unknown> | null {
     if (!refStr.startsWith("#/")) {
@@ -50,7 +50,7 @@ export function convertJsonSchemaToGemini(
       return input;
     }
 
-    let node = input as Record<string, unknown>;
+    const node = input as Record<string, unknown>;
 
     // Handle $ref
     if (typeof node.$ref === "string") {
