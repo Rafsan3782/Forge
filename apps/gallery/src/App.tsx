@@ -224,7 +224,7 @@ function GalleryContent() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
             <div>
               <label style={{ fontSize: "12px", color: "var(--forge-text-muted)", display: "block", marginBottom: 4 }}>Text Input</label>
-              <Input value={textInput} onChange={(e) => setTextInput(e.target.value)} icon="entity" />
+              <Input value={textInput} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTextInput(e.target.value)} icon="entity" />
             </div>
             <div>
               <label style={{ fontSize: "12px", color: "var(--forge-text-muted)", display: "block", marginBottom: 4 }}>Number Input (Drag label to scrub)</label>
@@ -284,7 +284,7 @@ function GalleryContent() {
             <div>
               <Breadcrumbs items={[{ label: "Project" }, { label: "Scenes" }, { label: "Level_01.scene" }]} />
               <div style={{ marginTop: 8 }}>
-                <TreeView nodes={treeNodes} selectedId="player" onSelect={(n) => toast({ title: `Selected ${n.label}`, type: "info" })} />
+                <TreeView nodes={treeNodes} selectedId="player" onSelect={(n: { id: string; label: string }) => toast({ title: `Selected ${n.label}`, type: "info" })} />
               </div>
             </div>
 
