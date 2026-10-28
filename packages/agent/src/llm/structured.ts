@@ -19,7 +19,7 @@ export async function generateStructuredOutput<T>(
   messages: LlmMessage[],
   options: StructuredOutputOptions = {}
 ): Promise<T> {
-  let promptMessages = [...messages];
+  const promptMessages = [...messages];
 
   // Instruct model to return pure JSON
   const instruction =
