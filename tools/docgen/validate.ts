@@ -62,7 +62,7 @@ export function validateAllQualityGates(): { success: boolean; errors: string[] 
   console.log("1. Checking schemas and links across docs/src...");
   const docFiles = collectAllDocFiles(DOCS_SRC);
   const knownDocIds = new Set<string>();
-  const pageMap = new Map<string, { frontmatter: any; content: string }>();
+  const pageMap = new Map<string, { frontmatter: any; bodyContent: string }>();
 
   for (const f of docFiles) {
     const raw = fs.readFileSync(f, "utf-8");
@@ -76,7 +76,7 @@ export function validateAllQualityGates(): { success: boolean; errors: string[] 
   }
 
   // Check related_ids and relative markdown links
-  for (const [f, { frontmatter, content }] of pageMap.entries()) {
+  for (const [f, { frontmatter, bodyContent }] of pageMap.entries()) {
     // Check related_ids
     for (const relId of frontmatter.related_ids || []) {
       if (!knownDocIds.has(relId)) {
@@ -87,7 +87,7 @@ export function validateAllQualityGates(): { success: boolean; errors: string[] 
     // Check markdown file links
     const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
     let linkMatch;
-    while ((linkMatch = linkRegex.exec(content)) !== null) {
+    while ((linkMatch = linkRegex.exec(bodyContent)) !== null) {
       const target = linkMatch[2];
       if (target.startsWith("http://") || target.startsWith("https://") || target.startsWith("#")) {
         continue;
@@ -113,8 +113,8 @@ export function validateAllQualityGates(): { success: boolean; errors: string[] 
   // Gate 2: Code example extraction
   console.log("2. Extracting and validating code blocks...");
   const allBlocks: CodeBlock[] = [];
-  for (const [f, { content }] of pageMap.entries()) {
-    const blocks = extractCodeBlocks(f, content);
+  for (const [f, { bodyContent }] of pageMap.entries()) {
+    const blocks = extractCodeBlocks(f, bodyContent);
     allBlocks.push(...blocks);
   }
   const checkBlocks = allBlocks.filter(b => b.mode === "check");
@@ -139,7 +139,7 @@ export function validateAllQualityGates(): { success: boolean; errors: string[] 
 
   // Gate 4: Style & Spelling lint for Markdown
   console.log("4. Linting markdown style and formatting invariants...");
-  for (const [f, { frontmatter, content }] of pageMap.entries()) {
+  for (const [f, { frontmatter, bodyContent }] of pageMap.entries()) {
     // Invariant: summary must end with a period
     if (!frontmatter.summary.trim().endsWith(".")) {
       errors.push(`[Style Lint] Summary in ${f} should end with a period: "${frontmatter.summary}"`);
