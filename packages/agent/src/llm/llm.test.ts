@@ -92,11 +92,15 @@ test("Replay mode deterministically streams turns from cassette fixture", async 
           name: "scene.create_entity",
           description: "create an entity",
           input_schema: { type: "object" },
+          category: "write" as const,
+          risk_level: "low" as const,
         },
         {
           name: "scene.set_component",
           description: "set component",
           input_schema: { type: "object" },
+          category: "write" as const,
+          risk_level: "low" as const,
         },
       ],
     }
