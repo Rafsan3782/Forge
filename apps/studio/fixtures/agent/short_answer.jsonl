@@ -1,0 +1,5 @@
+{"type":"run_started","run_id":"run_short_01","timestamp":1700000000000,"data":{"prompt":"What is Forge?"}}
+{"type":"message_delta","run_id":"run_short_01","timestamp":1700000000100,"data":{"delta":"Forge is an AI-native game engine "}}
+{"type":"message_delta","run_id":"run_short_01","timestamp":1700000000200,"data":{"delta":"and Windows Studio IDE."}}
+{"type":"message_done","run_id":"run_short_01","timestamp":1700000000300,"data":{"content":"Forge is an AI-native game engine and Windows Studio IDE."}}
+{"type":"run_finished","run_id":"run_short_01","timestamp":1700000000400,"data":{"status":"completed","summary":{"run_id":"run_short_01","status":"completed","start_time":1700000000000,"end_time":1700000000400,"total_turns":1,"budget_used":{"input_tokens":15,"output_tokens":12,"total_tokens":27,"estimated_cost_usd":0.0001},"error":null}}}
