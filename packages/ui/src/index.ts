@@ -6,50 +6,50 @@
 export const PACKAGE_NAME = "@forge/ui";
 
 // Theme and Density
-export * from "./theme.tsx";
+export * from "./theme.js";
 
 // Icons
-export * from "./Icon.tsx";
+export * from "./Icon.js";
 
 // Buttons & Segmented Controls
-export * from "./Button.tsx";
+export * from "./Button.js";
 
 // Inputs & Inspector Fields
-export * from "./Inputs.tsx";
+export * from "./Inputs.js";
 
 // Checkboxes, Switches, Sliders
-export * from "./Controls.tsx";
+export * from "./Controls.js";
 
 // Select & Combobox
-export * from "./Select.tsx";
+export * from "./Select.js";
 
 // Tooltips
-export * from "./Tooltip.tsx";
+export * from "./Tooltip.js";
 
 // Popover
-export * from "./Popover.tsx";
+export * from "./Popover.js";
 
 // Menus
-export * from "./Menus.tsx";
+export * from "./Menus.js";
 
 // Dialogs & Sheets
-export * from "./Overlays.tsx";
+export * from "./Overlays.js";
 
 // Tabs
-export * from "./Tabs.tsx";
+export * from "./Tabs.js";
 
 // Data Views (TreeView, List, Table)
-export * from "./DataViews.tsx";
+export * from "./DataViews.js";
 
 // Feedback, Badges, Indicators
-export * from "./Feedback.tsx";
+export * from "./Feedback.js";
 
 // Inspector & Studio Layout Primitives
-export * from "./Inspector.tsx";
+export * from "./Inspector.js";
 
 // Toast Notifications
-export * from "./Toast.tsx";
+export * from "./Toast.js";
 
 // Command Palette
-export * from "./CommandPalette.tsx";
+export * from "./CommandPalette.js";
 
