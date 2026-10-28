@@ -145,7 +145,7 @@ export function validateAllQualityGates(): { success: boolean; errors: string[] 
       errors.push(`[Style Lint] Summary in ${f} should end with a period: "${frontmatter.summary}"`);
     }
     // Check no trailing whitespace on lines
-    const lines = content.split(/\r?\n/);
+    const lines = bodyContent.split(/\r?\n/);
     for (let li = 0; li < lines.length; li++) {
       if (/[ \t]+$/.test(lines[li])) {
         // Warning or error
