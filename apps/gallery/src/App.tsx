@@ -18,16 +18,12 @@ import {
   Tooltip,
   Popover,
   DropdownMenu,
-  ContextMenu,
   Dialog,
   Sheet,
-  Tabs,
   TreeView,
-  List,
   Table,
   Badge,
   Chip,
-  Kbd,
   StatusDot,
   Spinner,
   Skeleton,
@@ -37,8 +33,6 @@ import {
   Breadcrumbs,
   EmptyState,
   SearchField,
-  ScrollArea,
-  ResizablePanels,
   DiffView,
   CommandPalette,
   ToastProvider,
@@ -46,8 +40,15 @@ import {
   Icon,
 } from "@forge/ui";
 
+interface TableRowData {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+}
+
 function GalleryContent() {
-  const { theme, density, setTheme, setDensity, toggleTheme, toggleDensity } = useTheme();
+  const { theme, density, toggleTheme, toggleDensity } = useTheme();
   const { toast } = useToast();
 
   const [search, setSearch] = useState("");
@@ -87,16 +88,16 @@ function GalleryContent() {
     },
   ];
 
-  const tableData = [
+  const tableData: TableRowData[] = [
     { id: "1", name: "PlayerEntity", type: "Entity", status: "Active" },
     { id: "2", name: "EnemyPatrol", type: "Entity", status: "Inactive" },
     { id: "3", name: "CoinSpawner", type: "Script", status: "Active" },
   ];
 
   const tableCols = [
-    { key: "name", header: "Name", render: (r: any) => <strong>{r.name}</strong> },
-    { key: "type", header: "Type", render: (r: any) => <Badge variant="accent">{r.type}</Badge> },
-    { key: "status", header: "Status", render: (r: any) => <Badge variant="default">{r.status}</Badge> },
+    { key: "name", header: "Name", render: (r: TableRowData) => <strong>{r.name}</strong> },
+    { key: "type", header: "Type", render: (r: TableRowData) => <Badge variant="accent">{r.type}</Badge> },
+    { key: "status", header: "Status", render: (r: TableRowData) => <Badge variant="default">{r.status}</Badge> },
   ];
 
   const customIcons = [
