@@ -9,6 +9,9 @@
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",
     "build": "pnpm --filter studio build",
+    "docs:build": "node --experimental-strip-types tools/docgen/build.ts",
+    "docs:validate": "node --experimental-strip-types tools/docgen/validate.ts",
+    "docs:test": "node --experimental-strip-types --test tools/docgen/tests/**/*.test.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
