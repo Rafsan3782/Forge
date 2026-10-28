@@ -1,5 +1,4 @@
 import { GoogleGenAI } from "@google/genai";
-import { parseLlmError } from "./errors.ts";
 
 export interface CacheKeyParams {
   model: string;
@@ -60,7 +59,7 @@ export class ContextCacheManager {
         });
         return created.name;
       }
-    } catch (err) {
+    } catch {
       // Fall back silently if context caching is not supported for this model or environment
       return undefined;
     }

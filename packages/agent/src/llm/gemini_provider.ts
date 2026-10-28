@@ -8,7 +8,7 @@ import type {
   LlmToolCall,
 } from "../contracts/interfaces.ts";
 import { getRoleConfig, estimateCost, type ModelRole } from "./models_config.ts";
-import { parseLlmError, redactKey, LlmError } from "./errors.ts";
+import { parseLlmError, LlmError } from "./errors.ts";
 import { withRetry } from "./retries.ts";
 import { CassettePlayer, CassetteRecorder } from "./cassette.ts";
 import { ContextCacheManager } from "./context_cache.ts";
