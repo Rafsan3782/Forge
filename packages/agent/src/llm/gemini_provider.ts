@@ -217,7 +217,10 @@ export class GeminiLlmProvider implements LlmProvider {
       if (chunk.usageMetadata) {
         promptTokens = chunk.usageMetadata.promptTokenCount ?? promptTokens;
         completionTokens = chunk.usageMetadata.candidatesTokenCount ?? completionTokens;
-        cachedTokens = (chunk.usageMetadata as Record<string, any>).cachedContentTokenCount ?? cachedTokens;
+        const usage = chunk.usageMetadata as Record<string, unknown>;
+        if (typeof usage.cachedContentTokenCount === "number") {
+          cachedTokens = usage.cachedContentTokenCount;
+        }
       }
 
       const candidate = chunk.candidates?.[0];
@@ -235,7 +238,8 @@ export class GeminiLlmProvider implements LlmProvider {
         const toolCallsInChunk: LlmToolCall[] = [];
 
         for (const part of parts) {
-          if ((part as Record<string, any>).thought) {
+          const partObj = part as Record<string, unknown>;
+          if (partObj.thought) {
             const thoughtChunk: LlmTurnChunk = { thought: part.text };
             recordedChunks.push(thoughtChunk);
             yield thoughtChunk;
