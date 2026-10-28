@@ -11,7 +11,13 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "strict": true
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@forge/ui": ["../../packages/ui/src/index.ts"],
+      "@forge/tokens": ["../../packages/tokens/src/index.ts"],
+      "@forge/tokens/*": ["../../packages/tokens/*"]
+    }
   },
   "include": ["src"]
 }

@@ -11,10 +11,10 @@
   },
   "dependencies": {
     "@forge/protocol": "workspace:*",
-    "ws": "^8.18.0"
+    "@google/genai": "^2.31.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@types/node": "^22.13.4",
-    "@types/ws": "^8.5.14"
+    "@types/node": "^22.13.4"
   }
 }

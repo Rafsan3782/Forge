@@ -138,8 +138,6 @@ export const Slider: React.FC<SliderProps> = ({
   disabled = false,
   className = "",
 }) => {
-  const percentage = Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
-
   return (
     <div
       className={className}

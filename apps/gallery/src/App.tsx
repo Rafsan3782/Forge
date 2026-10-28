@@ -18,16 +18,12 @@ import {
   Tooltip,
   Popover,
   DropdownMenu,
-  ContextMenu,
   Dialog,
   Sheet,
-  Tabs,
   TreeView,
-  List,
   Table,
   Badge,
   Chip,
-  Kbd,
   StatusDot,
   Spinner,
   Skeleton,
@@ -37,8 +33,6 @@ import {
   Breadcrumbs,
   EmptyState,
   SearchField,
-  ScrollArea,
-  ResizablePanels,
   DiffView,
   CommandPalette,
   ToastProvider,
@@ -46,8 +40,15 @@ import {
   Icon,
 } from "@forge/ui";
 
+interface TableRowData {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+}
+
 function GalleryContent() {
-  const { theme, density, setTheme, setDensity, toggleTheme, toggleDensity } = useTheme();
+  const { theme, density, toggleTheme, toggleDensity } = useTheme();
   const { toast } = useToast();
 
   const [search, setSearch] = useState("");
@@ -87,16 +88,16 @@ function GalleryContent() {
     },
   ];
 
-  const tableData = [
+  const tableData: TableRowData[] = [
     { id: "1", name: "PlayerEntity", type: "Entity", status: "Active" },
     { id: "2", name: "EnemyPatrol", type: "Entity", status: "Inactive" },
     { id: "3", name: "CoinSpawner", type: "Script", status: "Active" },
   ];
 
   const tableCols = [
-    { key: "name", header: "Name", render: (r: any) => <strong>{r.name}</strong> },
-    { key: "type", header: "Type", render: (r: any) => <Badge variant="accent">{r.type}</Badge> },
-    { key: "status", header: "Status", render: (r: any) => <Badge variant="default">{r.status}</Badge> },
+    { key: "name", header: "Name", render: (r: TableRowData) => <strong>{r.name}</strong> },
+    { key: "type", header: "Type", render: (r: TableRowData) => <Badge variant="accent">{r.type}</Badge> },
+    { key: "status", header: "Status", render: (r: TableRowData) => <Badge variant="default">{r.status}</Badge> },
   ];
 
   const customIcons = [
@@ -223,7 +224,7 @@ function GalleryContent() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
             <div>
               <label style={{ fontSize: "12px", color: "var(--forge-text-muted)", display: "block", marginBottom: 4 }}>Text Input</label>
-              <Input value={textInput} onChange={(e) => setTextInput(e.target.value)} icon="entity" />
+              <Input value={textInput} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTextInput(e.target.value)} icon="entity" />
             </div>
             <div>
               <label style={{ fontSize: "12px", color: "var(--forge-text-muted)", display: "block", marginBottom: 4 }}>Number Input (Drag label to scrub)</label>
@@ -283,7 +284,7 @@ function GalleryContent() {
             <div>
               <Breadcrumbs items={[{ label: "Project" }, { label: "Scenes" }, { label: "Level_01.scene" }]} />
               <div style={{ marginTop: 8 }}>
-                <TreeView nodes={treeNodes} selectedId="player" onSelect={(n) => toast({ title: `Selected ${n.label}`, type: "info" })} />
+                <TreeView nodes={treeNodes} selectedId="player" onSelect={(n: { id: string; label: string }) => toast({ title: `Selected ${n.label}`, type: "info" })} />
               </div>
             </div>
 

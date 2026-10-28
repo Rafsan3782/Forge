@@ -8,6 +8,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@forge/agent": path.resolve(__dirname, "../../packages/agent/src/client.ts"),
     },
   },
   server: {
