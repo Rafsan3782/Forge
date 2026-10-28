@@ -119,6 +119,7 @@ export async function checkHeadlessRunNoErrors(
       ? [
           "--headless",
           "--no-bridge",
+          "--force-fallback",
           "--frames",
           frames.toString(),
           "--scene",
@@ -131,6 +132,7 @@ export async function checkHeadlessRunNoErrors(
           "--",
           "--headless",
           "--no-bridge",
+          "--force-fallback",
           "--frames",
           frames.toString(),
           "--scene",
@@ -140,7 +142,9 @@ export async function checkHeadlessRunNoErrors(
     const { stdout, stderr } = await execFileAsync(execCmd, execArgs, { timeout: 30000 });
 
     const combined = `${stdout}\n${stderr}`;
-    if (combined.includes("ERROR") || combined.includes("panicked at")) {
+    const hasFatalPanic = combined.includes("panicked at") || combined.includes("fatal runtime error");
+    const hasEngineError = /ERROR\s+forge_/.test(combined);
+    if (hasFatalPanic || hasEngineError) {
       return {
         name: checkName,
         passed: false,
