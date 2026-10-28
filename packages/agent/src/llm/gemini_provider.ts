@@ -8,7 +8,7 @@ import type {
   LlmToolCall,
 } from "../contracts/interfaces.ts";
 import { getRoleConfig, estimateCost, type ModelRole } from "./models_config.ts";
-import { parseLlmError, redactKey, LlmError } from "./errors.ts";
+import { parseLlmError, LlmError } from "./errors.ts";
 import { withRetry } from "./retries.ts";
 import { CassettePlayer, CassetteRecorder } from "./cassette.ts";
 import { ContextCacheManager } from "./context_cache.ts";
@@ -45,7 +45,7 @@ export class GeminiLlmProvider implements LlmProvider {
     this.projectBrainPrefix = options.projectBrainPrefix;
 
     if (this.mode === "live" || this.mode === "record") {
-      if (!this.apiKey && this.mode !== "mock") {
+      if (!this.apiKey) {
         throw new LlmError(
           "Gemini API key is required for live/record mode.",
           "INVALID_KEY"
@@ -217,8 +217,10 @@ export class GeminiLlmProvider implements LlmProvider {
       if (chunk.usageMetadata) {
         promptTokens = chunk.usageMetadata.promptTokenCount ?? promptTokens;
         completionTokens = chunk.usageMetadata.candidatesTokenCount ?? completionTokens;
-        // @ts-expect-error SDK typed fields
-        cachedTokens = chunk.usageMetadata.cachedContentTokenCount ?? cachedTokens;
+        const usage = chunk.usageMetadata as Record<string, unknown>;
+        if (typeof usage.cachedContentTokenCount === "number") {
+          cachedTokens = usage.cachedContentTokenCount;
+        }
       }
 
       const candidate = chunk.candidates?.[0];
@@ -236,8 +238,8 @@ export class GeminiLlmProvider implements LlmProvider {
         const toolCallsInChunk: LlmToolCall[] = [];
 
         for (const part of parts) {
-          // @ts-expect-error SDK thought property
-          if (part.thought) {
+          const partObj = part as Record<string, unknown>;
+          if (partObj.thought) {
             const thoughtChunk: LlmTurnChunk = { thought: part.text };
             recordedChunks.push(thoughtChunk);
             yield thoughtChunk;
@@ -247,7 +249,7 @@ export class GeminiLlmProvider implements LlmProvider {
             yield textChunk;
           }
 
-          if (part.functionCall) {
+          if (part.functionCall && part.functionCall.name) {
             toolCallsInChunk.push({
               id: `call_${Math.random().toString(36).slice(2, 9)}`,
               name: part.functionCall.name,
