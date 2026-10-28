@@ -10,7 +10,9 @@
     "test": "node --experimental-strip-types --test src/**/*.test.ts"
   },
   "dependencies": {
-    "@forge/protocol": "workspace:*"
+    "@forge/protocol": "workspace:*",
+    "@google/genai": "^2.31.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/node": "^22.13.4"
