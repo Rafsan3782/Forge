@@ -1,4 +1,22 @@
 import fs from "node:fs/promises";
+import nodeFs from "node:fs";
+
+function normalizeDriveLetter(p: string): string {
+  if (process.platform === "win32" && p.length >= 2 && p[1] === ":") {
+    return p[0].toUpperCase() + p.slice(1);
+  }
+  return p;
+}
+
+function normalizeCanonicalPath(p: string): string {
+  let canonical = path.resolve(p);
+  try {
+    canonical = nodeFs.realpathSync.native ? nodeFs.realpathSync.native(canonical) : nodeFs.realpathSync(canonical);
+  } catch {
+    // Path may not exist yet
+  }
+  return normalizeDriveLetter(canonical);
+}
 import path from "node:path";
 import { ToolExecutionError } from "./errors.ts";
 import { truncateOutput, isBinaryBuffer } from "./types.ts";
@@ -9,7 +27,7 @@ export class ProjectSandbox {
   public readonly projectRoot: string;
 
   constructor(projectRoot: string) {
-    this.projectRoot = path.resolve(projectRoot);
+    this.projectRoot = normalizeCanonicalPath(projectRoot);
   }
 
   /**
@@ -25,7 +43,7 @@ export class ProjectSandbox {
       );
     }
 
-    const resolved = path.resolve(this.projectRoot, userPath);
+    const resolved = normalizeDriveLetter(path.resolve(this.projectRoot, userPath));
     const relative = path.relative(this.projectRoot, resolved);
 
     if (relative.startsWith("..") || path.isAbsolute(relative)) {
@@ -51,7 +69,8 @@ export class ProjectSandbox {
     }
 
     try {
-      const realPath = await fs.realpath(resolved);
+      const realPathRaw = await fs.realpath(resolved);
+      const realPath = normalizeDriveLetter(realPathRaw);
       const realRelative = path.relative(this.projectRoot, realPath);
       if (realRelative.startsWith("..") || path.isAbsolute(realRelative)) {
         throw new ToolExecutionError(
@@ -84,7 +103,8 @@ export class ProjectSandbox {
         let currentParent = path.dirname(resolved);
         while (currentParent.length >= this.projectRoot.length) {
           try {
-            const parentReal = await fs.realpath(currentParent);
+            const parentRealRaw = await fs.realpath(currentParent);
+            const parentReal = normalizeDriveLetter(parentRealRaw);
             const parentRel = path.relative(this.projectRoot, parentReal);
             if (parentRel.startsWith("..") || path.isAbsolute(parentRel)) {
               throw new ToolExecutionError(
