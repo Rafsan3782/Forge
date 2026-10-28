@@ -32,7 +32,7 @@ jobs:
           cache: "pnpm"
 
       - name: Install pnpm dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --dangerously-allow-all-builds
 
       - name: Run documentation generator & build
         run: pnpm docs:build
