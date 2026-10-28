@@ -6,7 +6,7 @@ tags: ["cookbook", "recipe", "tilemap", "procedural"]
 audience: both
 engine_version: "0.1.0"
 last_verified: "2026-10-27"
-related_ids: ["ref-comp-tilemap", "ref-tool-tilemap-fill_rect", "ref-tool-tilemap-set_tile"]
+related_ids: ["ref-comp-tilemap", "ref-tool-tilemap-fill-rect", "ref-tool-tilemap-set-tile"]
 ---
 
 # Procedural Tilemap Generation

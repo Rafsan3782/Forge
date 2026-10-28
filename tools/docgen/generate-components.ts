@@ -304,7 +304,7 @@ tags: ["reference", "component", "${comp.category.toLowerCase()}"]
 audience: both
 engine_version: "0.1.0"
 last_verified: "2026-10-27"
-related_ids: ["ref-components-index", "concept-ecs-architecture", "ref-tool-scene-set_component"]
+related_ids: ["ref-components-index", "concept-ecs-architecture", "ref-tool-scene-set-component"]
 ---
 
 # Component: \`${comp.name}\`
