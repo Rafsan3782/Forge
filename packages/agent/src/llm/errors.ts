@@ -42,7 +42,12 @@ export function parseLlmError(err: unknown, keyToRedact?: string): LlmError {
     return err;
   }
 
-  const rawMsg = err instanceof Error ? err.message : String(err);
+  const rawMsg =
+    err instanceof Error
+      ? err.message
+      : typeof (err as { message?: unknown })?.message === "string"
+      ? (err as { message: string }).message
+      : String(err);
   const msg = keyToRedact ? redactKey(rawMsg, keyToRedact) : rawMsg;
 
   // Extract status if available
@@ -52,7 +57,7 @@ export function parseLlmError(err: unknown, keyToRedact?: string): LlmError {
   if (
     status === 401 ||
     status === 403 ||
-    /API key not valid|invalid api key|PERMISSION_DENIED/i.test(msg)
+    /API key not valid|invalid api key|PERMISSION_DENIED|unauthorized/i.test(msg)
   ) {
     return new LlmError(
       "Invalid or unauthorized Gemini API key.",

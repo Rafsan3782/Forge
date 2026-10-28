@@ -184,7 +184,14 @@ export class CassettePlayer {
       system_instruction: systemInstruction,
     };
     const hash = hashInteractionRequest(req);
-    const interaction = this.interactionMap.get(hash);
+    let interaction = this.interactionMap.get(hash);
+    if (!interaction && systemInstruction) {
+      const fallbackHash = hashInteractionRequest({
+        messages: req.messages,
+        available_tools: req.available_tools,
+      });
+      interaction = this.interactionMap.get(fallbackHash);
+    }
     if (!interaction) {
       return null;
     }
